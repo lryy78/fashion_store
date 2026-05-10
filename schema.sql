@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(100),
     address TEXT,
     phone VARCHAR(20),
+    is_active TINYINT(1) DEFAULT 1,
+    reset_token VARCHAR(64) NULL,
+    reset_expires DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -29,9 +32,13 @@ CREATE TABLE IF NOT EXISTS products (
     category_id INT,
     name VARCHAR(100) NOT NULL,
     description TEXT,
+    size_chart TEXT,
     price DECIMAL(10, 2) NOT NULL,
     gender ENUM('Men', 'Women', 'Kids', 'Unisex') DEFAULT 'Unisex',
+    status ENUM('published', 'draft', 'scheduled') DEFAULT 'published',
+    publish_at TIMESTAMP NULL DEFAULT NULL,
     is_featured BOOLEAN DEFAULT FALSE,
+    views INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
@@ -142,3 +149,26 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
+
+-- System Settings Table
+CREATE TABLE IF NOT EXISTS system_settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value TEXT
+);
+
+-- System Alerts Table
+CREATE TABLE IF NOT EXISTS system_alerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(50),
+    priority ENUM('info', 'warning', 'critical'),
+    message TEXT,
+    reference_id INT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default Settings
+INSERT IGNORE INTO system_settings (setting_key, setting_value) VALUES 
+('low_stock_threshold', '10'),
+('overstock_threshold', '100'),
+('dashboard_active_alerts', 'out_of_stock,low_stock,overstock');

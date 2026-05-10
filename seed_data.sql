@@ -48,3 +48,9 @@ INSERT IGNORE INTO users (username, email, password, role, full_name) VALUES
 INSERT INTO vouchers (code, discount_type, discount_value, expiry_date) VALUES 
 ('WELCOME10', 'percentage', 10.00, '2026-12-31'),
 ('FASHION20', 'fixed', 20.00, '2026-12-31');
+
+-- 6. Insert System Settings
+INSERT IGNORE INTO system_settings (setting_key, setting_value) VALUES 
+('low_stock_threshold', '10'),
+('overstock_threshold', '100'),
+('dashboard_active_alerts', 'out_of_stock,low_stock,overstock');
