@@ -519,7 +519,6 @@ include $include_path . 'header.php';
                         ['value'=>'credit_card',  'icon'=>'💳', 'label'=>'Credit / Debit Card',   'sub'=>'Visa, Mastercard, AMEX'],
                         ['value'=>'online_banking','icon'=>'🏦', 'label'=>'Online Banking (FPX)',  'sub'=>'All Malaysian banks'],
                         ['value'=>'ewallet',       'icon'=>'📱', 'label'=>'e-Wallet',              'sub'=>'Touch n Go, GrabPay, Boost'],
-                        ['value'=>'cod',           'icon'=>'💵', 'label'=>'Cash on Delivery',      'sub'=>'Pay when you receive'],
                     ];
                     $selectedPayment = $_POST['payment_method'] ?? 'credit_card';
                     foreach ($payments as $pm):
