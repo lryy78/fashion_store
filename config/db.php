@@ -1,5 +1,6 @@
 <?php
 // config/db.php
+date_default_timezone_set('Asia/Kuala_Lumpur');
 
 $host = 'localhost';
 $db   = 'fashion_store';

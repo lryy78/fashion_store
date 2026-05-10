@@ -110,7 +110,9 @@ include '../includes/header.php';
                                 <td style="text-align: right; color: var(--colors-muted); font-size: 12px;">
                                     <?php 
                                         $diff = time() - strtotime($act['created_at']);
-                                        if ($diff < 3600) echo floor($diff/60) . ' mins ago';
+                                        if ($diff < 0) echo 'Just now';
+                                        elseif ($diff < 60) echo $diff . ' secs ago';
+                                        elseif ($diff < 3600) echo floor($diff/60) . ' mins ago';
                                         elseif ($diff < 86400) echo floor($diff/3600) . ' hrs ago';
                                         else echo date('M d', strtotime($act['created_at']));
                                     ?>
