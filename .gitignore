@@ -3,7 +3,7 @@ assets/uploads/products/*
 !assets/uploads/products/.gitkeep
 
 # Config
-config/db.php
+# config/db.php (Removed exclusion as per user request)
 
 # System
 .DS_Store
