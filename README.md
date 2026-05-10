@@ -19,18 +19,20 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
 
 ## 🚀 Getting Started
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/fashion_store.git
-   ```
-2. **Setup Database**:
-   - Create a database named `fashion_store`.
-   - Import `schema.sql` into your MySQL instance.
-3. **Configure Connection**:
-   - Update `config/db.php` with your database credentials.
-4. **Deploy**:
-   - Place the folder in your web server root (e.g., `htdocs` for XAMPP).
-   - Navigate to `http://localhost/fashion_store`.
+1. **Clone the repository using VS Code**:
+   - Open **VS Code**.
+   - Press `Ctrl + Shift + P` and type `Git: Clone`.
+   - Paste the repository URL: `https://github.com/lryy78/fashion_store.git`.
+   - Select **`C:\xampp\htdocs\`** as the destination folder.
+2. **Setup XAMPP**:
+   - Open the **XAMPP Control Panel**.
+   - Start **Apache** and **MySQL**.
+3. **Setup Database**:
+   - Go to `http://localhost/phpmyadmin`.
+   - Create a new database named **`fashion_store`**.
+   - Import the **`schema.sql`** file into the database.
+4. **Run the Application**:
+   - Open your browser and navigate to: **`http://localhost/fashion_store/`**.
 
 ## 🔑 Demo Credentials
 
