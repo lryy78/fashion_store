@@ -65,13 +65,14 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Performance Intelligence</div>
-                <h1 style="margin: 0; font-size: 40px;">Product Insights</h1>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Performance Intelligence</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Product Insights</h1>
             </div>
             <div style="font-size: 13px; color: var(--colors-muted);">Revenue driven view — no inventory</div>
         </header>
 
-        <div class="dashboard-split" style="grid-template-columns: 1fr 1fr; gap: 32px; align-items: start;">
+        <div class="dashboard-split" style="grid-template-columns: 1fr 1fr; align-items: stretch; margin-bottom: 32px;">
             <!-- Top Products -->
             <div class="surface-card" style="padding: 0; overflow: hidden;">
                 <div style="padding: 20px 24px; border-bottom: 1px solid var(--colors-hairline-soft); background: var(--colors-surface-soft); display: flex; justify-content: space-between; align-items: center;">
@@ -128,7 +129,7 @@ include $include_path . 'header.php';
             </div>
         </div>
 
-        <div class="dashboard-split" style="grid-template-columns: 400px 1fr; gap: 32px; margin-top: 32px; align-items: start;">
+        <div class="dashboard-split" style="grid-template-columns: 400px 1fr; align-items: stretch;">
             <!-- Category Breakdown Chart -->
             <div class="surface-card" style="padding: 24px;">
                 <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">📊 Market Share</h3>
@@ -186,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Revenue (RM)',
                 data: <?php echo json_encode($cat_revenues); ?>,
-                backgroundColor: ['#1a1f36', '#ff6b6b', '#9ca3af', '#4b5563', '#d1d5db', '#fca5a5'],
+                backgroundColor: ['#181715', '#cc785c', '#efe9de', '#6c6a64', '#8e8b82', '#faf9f5'],
                 borderRadius: 4
             }]
         },

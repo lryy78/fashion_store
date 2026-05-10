@@ -238,6 +238,11 @@ textarea:focus {
     background-color: var(--colors-canvas);
 }
 
+.dashboard-split {
+    display: grid;
+    gap: 32px;
+}
+
 .sidebar {
     background-color: var(--colors-surface-soft);
     color: var(--colors-ink);
@@ -296,7 +301,7 @@ textarea:focus {
     max-width: 1400px;
 }
 
-/* Grid & Layout Helpers */
+
 .stats-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

@@ -67,8 +67,9 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Deep Dive</div>
-                <h1 style="margin: 0; font-size: 40px;">Business Analytics</h1>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Deep Dive</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Business Analytics</h1>
             </div>
             <div style="text-align: right;">
                 <form method="GET" style="display: flex; gap: 8px; align-items: center;">
@@ -136,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Orders',
                     data: <?php echo json_encode($chart_orders); ?>,
-                    backgroundColor: '#1a1f36',
+                    backgroundColor: '#181715',
                     borderRadius: 4
                 }
             ]
@@ -168,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: <?php echo json_encode($pie_labels); ?>,
             datasets: [{
                 data: <?php echo json_encode($pie_data); ?>,
-                backgroundColor: ['#ff6b6b', '#1a1f36', '#fca5a5', '#9ca3af', '#4b5563', '#d1d5db'],
+                backgroundColor: ['#cc785c', '#181715', '#efe9de', '#6c6a64', '#8e8b82', '#faf9f5'],
                 borderWidth: 0
             }]
         },

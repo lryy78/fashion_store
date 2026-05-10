@@ -61,7 +61,7 @@ function renderSidebar($role) {
         </ul>
         
         <div style="margin-top: auto; padding-top: var(--spacing-xl); border-top: 1px solid rgba(255,255,255,0.05);">
-            <a href="../actions/logout.php" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; color: #ff6b6b; font-size: 14px; font-weight: 500; border-radius: var(--rounded-md); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,107,107,0.1)'" onmouseout="this.style.background='transparent'">
+            <a href="/fashion_store/actions/logout.php" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; color: #ff6b6b; font-size: 14px; font-weight: 500; border-radius: var(--rounded-md); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,107,107,0.1)'" onmouseout="this.style.background='transparent'">
                 <span style="font-size: 1.1rem;">⏻</span> Sign Out
             </a>
         </div>

@@ -35,6 +35,7 @@ $group_sizes = [
     'repeat' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status != 'cancelled' GROUP BY user_id HAVING COUNT(*) >= 2")->rowCount(),
     'vip' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status != 'cancelled' GROUP BY user_id HAVING SUM(total_amount) > 1000")->rowCount(),
     'inactive' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer' AND id NOT IN (SELECT user_id FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY))")->fetchColumn(),
+    'reviewers' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM reviews")->fetchColumn(),
 ];
 
 // Fetch Campaigns with Analytics
@@ -75,8 +76,9 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Campaign Hub</div>
-                <h1 style="margin: 0; font-size: 40px;">Vouchers & Rewards</h1>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Campaign Hub</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Vouchers & Rewards</h1>
             </div>
             <?php if (isset($success_msg)): ?>
                 <div class="badge badge-success" style="padding: 12px 24px; font-size: 14px;"><?php echo $success_msg; ?></div>
@@ -129,8 +131,10 @@ include $include_path . 'header.php';
                                                 🌍 All Customers
                                             <?php elseif($v['target_type'] == 'specific'): ?>
                                                 👤 Specific User
+                                            <?php elseif($v['target_type'] == 'group'): ?>
+                                                👥 <?php echo $v['target_group'] == 'reviewers' ? 'Product Reviewers' : ucfirst($v['target_group']) . ' Segment'; ?>
                                             <?php else: ?>
-                                                👥 <?php echo ucfirst($v['target_group']); ?> Segment
+                                                👥 Other Segment
                                             <?php endif; ?>
                                         </div>
                                         <div style="font-size: 11px; color: var(--colors-muted); margin-top: 4px;">
@@ -227,6 +231,7 @@ include $include_path . 'header.php';
                                 <option value="repeat">Repeat Customers (2+ orders)</option>
                                 <option value="vip">VIP Customers (>RM1000)</option>
                                 <option value="inactive">Inactive Customers (60d+)</option>
+                                <option value="reviewers">Product Reviewers (Loyalists)</option>
                             </select>
                         </div>
                     </div>

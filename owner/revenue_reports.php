@@ -89,8 +89,9 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Financial Intelligence</div>
-                <h1 style="margin: 0; font-size: 40px;">Revenue Reports</h1>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Financial Intelligence</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Revenue Reports</h1>
             </div>
             <div style="font-size: 13px; color: var(--colors-muted);">True margin model (Cost-Basis)</div>
         </header>
@@ -205,8 +206,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Gross Revenue',
                     data: <?php echo json_encode($month_revenue); ?>,
-                    borderColor: '#ff6b6b',
-                    backgroundColor: 'rgba(255,107,107,0.05)',
+                    borderColor: '#cc785c',
+                    backgroundColor: 'rgba(204,120,92,0.05)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4
@@ -214,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Net Profit',
                     data: <?php echo json_encode($month_profit); ?>,
-                    borderColor: '#1a1f36',
+                    borderColor: '#181715',
                     backgroundColor: 'transparent',
                     borderWidth: 2,
                     borderDash: [5, 5],

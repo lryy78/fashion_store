@@ -69,8 +69,9 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Audience Analytics</div>
-                <h1 style="margin: 0; font-size: 40px;">Customer Intelligence</h1>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Audience Analytics</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Customer Intelligence</h1>
             </div>
             <div style="font-size: 13px; color: var(--colors-muted);">Generated <?php echo date('M d, Y'); ?></div>
         </header>
@@ -101,17 +102,17 @@ include $include_path . 'header.php';
 
         <!-- Insights Banner -->
         <?php if ($top_20_pct > 0): ?>
-        <div style="margin-top: 24px; padding: 16px 24px; background: linear-gradient(90deg, #1a1f36 0%, #2d3250 100%); border-radius: 12px; display: flex; align-items: center; gap: 16px;">
+        <div style="margin-top: 24px; padding: 16px 24px; background: linear-gradient(90deg, #181715 0%, #252320 100%); border-radius: 12px; display: flex; align-items: center; gap: 16px;">
             <span style="font-size: 28px;">💡</span>
             <div>
-                <div style="font-weight: 700; color: #fff; font-size: 15px;">Top <?php echo ceil(0.2 * 100); ?>% of customers generate <?php echo $top_20_pct; ?>% of total revenue</div>
+                <div style="font-weight: 700; color: #fff; font-size: 15px; font-family: var(--typography-body-font);">Top <?php echo ceil(0.2 * 100); ?>% of customers generate <?php echo $top_20_pct; ?>% of total revenue</div>
                 <div style="color: rgba(255,255,255,0.65); font-size: 13px; margin-top: 4px;">Consider launching a VIP loyalty tier targeting your high-value segment to increase retention.</div>
             </div>
         </div>
         <?php endif; ?>
 
-        <div class="dashboard-split" style="grid-template-columns: 1fr 340px; gap: 32px; align-items: start; margin-top: 32px;">
-            <!-- LTV Table -->
+        <div style="display: flex; flex-direction: column; gap: 32px; margin-top: 32px;">
+            <!-- LTV Table (Full Width) -->
             <div class="surface-card" style="padding: 0; overflow: hidden;">
                 <div style="padding: 20px 24px; border-bottom: 1px solid var(--colors-hairline-soft); display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Lifetime Value (LTV) Registry</h3>
@@ -150,47 +151,60 @@ include $include_path . 'header.php';
                     </tbody>
                 </table>
             </div>
-
-            <!-- Customer Segmentation Chart -->
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-                <div class="surface-card" style="padding: 24px;">
-                    <h3 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">Customer Segmentation</h3>
-                    <div style="height: 240px; width: 100%; display: flex; justify-content: center;">
-                        <canvas id="segmentChart"></canvas>
+            
+            <!-- Segmentation & Behavioral Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <!-- Customer Segmentation Chart -->
+                <div class="surface-card" style="padding: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center;">
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">Customer Segmentation</h3>
+                        <div style="height: 200px; width: 100%; display: flex; justify-content: center;">
+                            <canvas id="segmentChart"></canvas>
+                        </div>
                     </div>
-                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--colors-hairline-soft); display: flex; flex-direction: column; gap: 10px;">
+                    <div style="padding-left: 32px; border-left: 1px solid var(--colors-hairline-soft); display: flex; flex-direction: column; gap: 16px;">
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; background: #1a1f36; border-radius: 50%; display: inline-block;"></span> VIP (≥ RM 1,000)</span>
+                            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; background: #181715; border-radius: 50%; display: inline-block;"></span> VIP (≥ RM 1,000)</span>
                             <strong><?php echo $high_value; ?> users</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; display: inline-block;"></span> Mid (RM 200–1,000)</span>
+                            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; background: #cc785c; border-radius: 50%; display: inline-block;"></span> Mid (RM 200–1,000)</span>
                             <strong><?php echo $medium_value; ?> users</strong>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; background: #e5e7eb; border-radius: 50%; display: inline-block;"></span> Low (< RM 200)</span>
+                            <span style="display: flex; align-items: center; gap: 8px;"><span style="width: 10px; height: 10px; background: #efe9de; border-radius: 50%; display: inline-block;"></span> Low (< RM 200)</span>
                             <strong><?php echo $low_value; ?> users</strong>
                         </div>
                     </div>
                 </div>
 
-                <div class="surface-card" style="padding: 24px;">
-                    <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">Behavioral Signals</h3>
-                    <div style="display: flex; flex-direction: column; gap: 14px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: var(--colors-muted);">Repeat Purchase Rate</span>
-                            <strong><?php echo number_format($repeat_rate, 1); ?>%</strong>
+                <!-- Behavioral Signals -->
+                <div class="surface-card" style="padding: 32px;">
+                    <h3 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 32px;">Behavioral Signals</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px;">
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                <span style="color: var(--colors-muted);">Repeat Purchase Rate</span>
+                                <strong style="color: var(--colors-primary); font-size: 18px;"><?php echo number_format($repeat_rate, 1); ?>%</strong>
+                            </div>
+                            <div style="height: 6px; background: var(--colors-hairline-soft); border-radius: 3px; overflow: hidden;">
+                                <div style="height: 100%; width: <?php echo min(100, $repeat_rate); ?>%; background: var(--colors-primary);"></div>
+                            </div>
+                            <div style="font-size: 12px; color: var(--colors-muted);">Retention health index</div>
                         </div>
-                        <div style="height: 6px; background: var(--colors-hairline); border-radius: 3px;">
-                            <div style="height: 100%; width: <?php echo min(100, $repeat_rate); ?>%; background: var(--colors-primary); border-radius: 3px;"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: var(--colors-muted);">New vs Returning</span>
-                            <strong><?php echo $new_buyers; ?> new / <?php echo $repeat_buyers; ?> returning</strong>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: var(--colors-muted);">Global AOV</span>
-                            <strong>RM <?php echo number_format($aov, 2); ?></strong>
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center;">
+                                <span style="color: var(--colors-muted);">New vs Returning</span>
+                                <span style="font-weight: 700; font-family: var(--typography-code-font);"><?php echo $new_buyers; ?> / <?php echo $repeat_buyers; ?></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center;">
+                                <span style="color: var(--colors-muted);">Global AOV</span>
+                                <span style="font-weight: 700; font-family: var(--typography-code-font);">RM <?php echo number_format($aov, 2); ?></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 13px; align-items: center;">
+                                <span style="color: var(--colors-muted);">Churn Risk</span>
+                                <span class="badge badge-success" style="font-size: 10px;">Low</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -208,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: ['VIP (≥RM1000)', 'Mid (RM200-1000)', 'Low (<RM200)'],
             datasets: [{
                 data: [<?php echo $high_value; ?>, <?php echo $medium_value; ?>, <?php echo $low_value; ?>],
-                backgroundColor: ['#1a1f36', '#ff6b6b', '#e5e7eb'],
+                backgroundColor: ['#181715', '#cc785c', '#efe9de'],
                 borderWidth: 0
             }]
         },

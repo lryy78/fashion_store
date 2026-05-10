@@ -41,8 +41,9 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Inventory Economics</div>
-                <h1 style="margin: 0; font-size: 40px;">Product Profitability</h1>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Inventory Economics</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Product Profitability</h1>
             </div>
             <div style="width: 300px;">
                 <form method="GET" style="position: relative;">
@@ -93,7 +94,7 @@ include $include_path . 'header.php';
                             <td style="text-align: right;">
                                 <div style="display: inline-flex; align-items: center; gap: 8px;">
                                     <span style="font-family: var(--typography-code-font); font-weight: 600; color: var(--colors-muted);"><?php echo number_format($margin, 1); ?>%</span>
-                                    <div style="width: 60px; height: 6px; background: var(--colors-hairline); border-radius: 3px; overflow: hidden;">
+                                    <div style="width: 60px; height: 6px; background: var(--colors-surface-soft); border-radius: 3px; overflow: hidden; border: 1px solid var(--colors-hairline-soft);">
                                         <div style="height: 100%; width: <?php echo min(max($margin, 0), 100); ?>%; background: <?php echo $margin > 30 ? 'var(--colors-success)' : ($margin > 10 ? 'var(--colors-primary)' : 'var(--colors-error)'); ?>;"></div>
                                     </div>
                                 </div>

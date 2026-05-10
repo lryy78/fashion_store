@@ -41,10 +41,10 @@ require_once '../includes/sidebar.php';
     <?php renderSidebar($role); ?>
 
     <div class="dashboard-main fade-in-up">
-        <header style="margin-bottom: var(--spacing-xl);">
-            <h1 style="margin: 0; font-size: 32px; font-family: var(--typography-display-font);">Profile Settings</h1>
-            <p style="color: var(--colors-muted);">Manage your account details and password.</p>
-        </header>
+            <div>
+                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Account Identity</div>
+                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Profile Settings</h1>
+            </div>
 
         <div class="surface-card" style="padding: var(--spacing-xl); border-radius: var(--rounded-lg); max-width: 600px;">
             <?php if ($msg): ?>
