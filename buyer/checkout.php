@@ -65,7 +65,7 @@ if ($selected_voucher_id) {
 }
 
 $shipping = $subtotal >= 100 ? 0 : 9.99;
-$total = max(0, $subtotal - $discount) + RMshipping;
+$total = max(0, $subtotal - $discount) + $shipping;
 
 $errors = [];
 
