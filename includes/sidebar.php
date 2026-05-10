@@ -43,7 +43,7 @@ function renderSidebar($role) {
     }
     ?>
     <div class="sidebar">
-        <div class="sidebar-logo">FASHION STUDIO</div>
+        <div class="sidebar-logo">HYPETHREAD</div>
         <ul class="sidebar-nav">
             <?php foreach ($menu as $item): 
                 $isActive = ($current_page == basename($item['link']));

@@ -37,7 +37,7 @@ include $include_path . 'header.php';
 
     <div class="dashboard-main fade-in-up">
         <header style="margin-bottom: 40px;">
-            <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">Creative Studio</div>
+            <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">HypeThread Creative</div>
             <h1 style="margin: 0; font-size: 40px;">Add New Piece</h1>
         </header>
 

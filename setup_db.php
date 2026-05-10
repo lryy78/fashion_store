@@ -10,7 +10,7 @@ try {
     $pdo = new PDO("mysql:host=$host", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    echo "<h2>Setting up Fashion Store Database...</h2>";
+    echo "<h2>Setting up HypeThread Database...</h2>";
 
     // 2. Create the Database
     $pdo->exec("CREATE DATABASE IF NOT EXISTS fashion_store");

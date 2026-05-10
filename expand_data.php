@@ -1,7 +1,7 @@
 <?php
 require_once 'config/db.php';
 
-echo "<h2>Expanding Fashion Store Data...</h2>";
+echo "<h2>Expanding HypeThread Data...</h2>";
 
 try {
     // 1. Add More Categories

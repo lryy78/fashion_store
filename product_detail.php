@@ -217,7 +217,7 @@ $reviews = $stmt->fetchAll();
         <!-- Info -->
         <div class="product-info-studio">
             <div class="breadcrumb" style="margin-bottom: 24px; font-size: 12px; color: var(--colors-muted);">
-                <a href="index.php">Studio</a> / 
+                <a href="index.php">HypeThread</a> / 
                 <a href="products.php?gender=<?php echo $product['gender']; ?>"><?php echo $product['gender']; ?></a> / 
                 <span style="color: var(--colors-ink);"><?php echo htmlspecialchars($product['name']); ?></span>
             </div>
@@ -275,7 +275,7 @@ $reviews = $stmt->fetchAll();
 
                 <div style="margin-top: 24px;">
                     <?php if ($is_visual_mode): ?>
-                        <a href="/fashion_store/manager/edit_product.php?id=<?php echo $product_id; ?>" class="button-primary" style="width: 100%; display: block; text-align: center; padding: 20px; font-size: 16px; background: var(--colors-accent-teal);">✎ Edit Piece in Studio</a>
+                        <a href="/fashion_store/manager/edit_product.php?id=<?php echo $product_id; ?>" class="button-primary" style="width: 100%; display: block; text-align: center; padding: 20px; font-size: 16px; background: var(--colors-accent-teal);">✎ Edit Piece in HypeThread</a>
                     <?php else: ?>
                         <button type="submit" class="button-primary" id="add-to-cart-btn" style="width: 100%; padding: 20px; font-size: 16px;" disabled>Add to Bag</button>
                     <?php endif; ?>
