@@ -50,9 +50,9 @@ WHERE p.id BETWEEN 1 AND 18;
 
 -- 4. Images
 INSERT IGNORE INTO product_images (product_id, image_path) VALUES
-(1, 'assets/img/products/silk_evening_blouse.png'),
-(2, 'assets/img/products/high_rise_jeans.png'),
-(3, 'assets/img/products/leather_tote_bag.png'),
+(1, 'assets/img/dress.png'),
+(2, 'assets/img/hero.png'),
+(3, 'assets/img/bag.png'),
 (4, 'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?q=80&w=800'),
 (5, 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800'),
 (6, 'https://images.unsplash.com/photo-1516750105099-4b8a83e217ee?q=80&w=800'),

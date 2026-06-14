@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     size_chart TEXT,
     price DECIMAL(10, 2) NOT NULL,
+    cost_price DECIMAL(10, 2) DEFAULT 0.00,
+    discount_price DECIMAL(10, 2) DEFAULT NULL,
     gender ENUM('Men', 'Women', 'Kids', 'Unisex') DEFAULT 'Unisex',
     status ENUM('published', 'draft', 'scheduled') DEFAULT 'published',
     publish_at TIMESTAMP NULL DEFAULT NULL,
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS product_images (
 CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
+    voucher_id INT DEFAULT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
     status ENUM('pending', 'processing', 'shipped', 'completed', 'cancelled') DEFAULT 'pending',
     address TEXT,
@@ -103,9 +106,28 @@ CREATE TABLE IF NOT EXISTS vouchers (
     code VARCHAR(20) NOT NULL UNIQUE,
     discount_type ENUM('percentage', 'fixed') NOT NULL,
     discount_value DECIMAL(10, 2) NOT NULL,
+    min_spend DECIMAL(10, 2) DEFAULT 0.00,
     expiry_date DATE,
+    usage_limit INT DEFAULT NULL,
+    is_one_time BOOLEAN DEFAULT TRUE,
+    is_used BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    user_id INT DEFAULT NULL,
+    target_type ENUM('all', 'specific', 'group') DEFAULT 'all',
+    target_user_id INT DEFAULT NULL,
+    target_group VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS voucher_redemptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    voucher_id INT NOT NULL,
+    user_id INT NOT NULL,
+    order_id INT DEFAULT NULL,
+    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (voucher_id) REFERENCES vouchers(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
 );
 
 -- Cart Table
@@ -164,6 +186,13 @@ CREATE TABLE IF NOT EXISTS system_alerts (
     message TEXT,
     reference_id INT NULL,
     is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS faqs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question VARCHAR(255) NOT NULL,
+    answer TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

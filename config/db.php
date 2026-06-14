@@ -2,7 +2,7 @@
 // config/db.php
 date_default_timezone_set('Asia/Kuala_Lumpur');
 
-$host = 'localhost';
+$host = '127.0.0.1';
 $db   = 'fashion_store';
 $user = 'root';
 $pass = ''; // Default XAMPP password is empty
