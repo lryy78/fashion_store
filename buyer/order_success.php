@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $order_id = intval($_GET['id'] ?? 0);
 $user_id  = $_SESSION['user_id'];
+$is_detail_view = ($_GET['view'] ?? '') === 'details';
 
 // Fetch order
 $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
@@ -202,11 +203,13 @@ include '../includes/header.php';
 
 <div class="success-wrapper">
     <!-- Hero -->
+    <?php if (!$is_detail_view): ?>
     <div class="success-hero">
         <div class="success-check">✓</div>
         <h1>Order Confirmed!</h1>
         <p>Thank you for your purchase. Your order <strong>#<?php echo $order_id; ?></strong> has been placed.</p>
     </div>
+    <?php endif; ?>
 
     <!-- Order Meta -->
     <div class="order-card">

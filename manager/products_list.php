@@ -69,7 +69,11 @@ $low_stock_limit = $settings['low_stock_threshold'] ?? 10;
 $query = "SELECT p.*, c.name as category_name, 
           (SELECT SUM(stock_quantity) FROM product_variations WHERE product_id = p.id) as total_stock,
           (SELECT MIN(stock_quantity) FROM product_variations WHERE product_id = p.id) as min_stock,
-          (SELECT SUM(quantity) FROM order_items oi JOIN product_variations pv ON oi.variation_id = pv.id WHERE pv.product_id = p.id) as total_sales
+          (SELECT SUM(oi.quantity)
+           FROM order_items oi
+           JOIN product_variations pv ON oi.variation_id = pv.id
+           JOIN orders o ON oi.order_id = o.id
+           WHERE pv.product_id = p.id AND o.status NOT IN ('cancelled','refunded')) as total_sales
           FROM products p 
           LEFT JOIN categories c ON p.category_id = c.id 
           WHERE 1=1";
@@ -97,9 +101,10 @@ $products = $stmt->fetchAll();
 // Filter by Stock Status in PHP (easier due to aggregate min_stock)
 if ($filter_stock != 'all') {
     $products = array_filter($products, function($p) use ($filter_stock, $low_stock_limit) {
-        if ($filter_stock == 'out') return $p['min_stock'] === "0" || $p['total_stock'] === null;
-        if ($filter_stock == 'low') return $p['min_stock'] > 0 && $p['min_stock'] <= $low_stock_limit;
-        if ($filter_stock == 'healthy') return $p['min_stock'] > $low_stock_limit;
+        $total_stock = (int)($p['total_stock'] ?? 0);
+        if ($filter_stock == 'out') return $total_stock <= 0;
+        if ($filter_stock == 'low') return $total_stock > 0 && $total_stock <= $low_stock_limit;
+        if ($filter_stock == 'healthy') return $total_stock > $low_stock_limit;
         return true;
     });
 }
@@ -295,9 +300,10 @@ include '../includes/header.php';
                 <tbody>
                     <?php foreach ($products as $p): 
                         // Stock Status logic
-                        if ($p['min_stock'] === "0" || $p['total_stock'] === null) {
+                        $total_stock = (int)($p['total_stock'] ?? 0);
+                        if ($total_stock <= 0) {
                             $stock_cls = 'status-out'; $stock_lbl = 'Out of Stock';
-                        } elseif ($p['min_stock'] <= $low_stock_limit) {
+                        } elseif ($total_stock <= $low_stock_limit) {
                             $stock_cls = 'status-low'; $stock_lbl = 'Low Stock';
                         } else {
                             $stock_cls = 'status-healthy'; $stock_lbl = 'Healthy';

@@ -8,6 +8,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'manager') {
 }
 
 $id = $_GET['id'];
+$min_publish_at = date('Y-m-d\TH:i');
+$error_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
@@ -20,11 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $publish_at = !empty($_POST['publish_at']) ? $_POST['publish_at'] : null;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
 
-    $stmt = $pdo->prepare("UPDATE products SET name = ?, category_id = ?, gender = ?, description = ?, size_chart = ?, price = ?, status = ?, publish_at = ?, is_featured = ? WHERE id = ?");
-    $stmt->execute([$name, $category_id, $gender, $description, $size_chart, $price, $status, $publish_at, $is_featured, $id]);
-    
-    header("Location: products_list.php?msg=Product updated");
-    exit();
+    if ($publish_at && strtotime($publish_at) < strtotime(date('Y-m-d H:i'))) {
+        $error_message = 'Release date and time cannot be before the current date and time.';
+    } else {
+        $stmt = $pdo->prepare("UPDATE products SET name = ?, category_id = ?, gender = ?, description = ?, size_chart = ?, price = ?, status = ?, publish_at = ?, is_featured = ? WHERE id = ?");
+        $stmt->execute([$name, $category_id, $gender, $description, $size_chart, $price, $status, $publish_at, $is_featured, $id]);
+        
+        header("Location: products_list.php?msg=Product updated");
+        exit();
+    }
 }
 
 $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
@@ -48,6 +54,11 @@ include $include_path . 'header.php';
 
         <div class="surface-card" style="max-width: 900px; padding: 40px; border: 1px solid var(--colors-hairline);">
             <h3 style="font-size: 18px; margin-bottom: 32px; border-bottom: 1px solid var(--colors-hairline-soft); padding-bottom: 16px;">Product Specification</h3>
+            <?php if ($error_message): ?>
+                <div style="margin-bottom: 24px; padding: 14px 16px; border: 1px solid var(--colors-error); color: var(--colors-error); background: #fff;">
+                    <?php echo htmlspecialchars($error_message); ?>
+                </div>
+            <?php endif; ?>
             <form method="POST">
                 <div class="form-group">
                     <label class="form-label">Piece Name</label>
@@ -98,7 +109,7 @@ include $include_path . 'header.php';
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label class="form-label">Release Date & Time</label>
-                            <input type="datetime-local" name="publish_at" value="<?php echo $product['publish_at'] ? date('Y-m-d\TH:i', strtotime($product['publish_at'])) : ''; ?>" class="form-input" style="background: var(--colors-surface-soft); font-weight: 600;">
+                            <input type="datetime-local" name="publish_at" min="<?php echo $min_publish_at; ?>" value="<?php echo htmlspecialchars($_POST['publish_at'] ?? ($product['publish_at'] ? date('Y-m-d\TH:i', strtotime($product['publish_at'])) : '')); ?>" class="form-input" style="background: var(--colors-surface-soft); font-weight: 600;">
                         </div>
                     </div>
                 </div>

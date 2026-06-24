@@ -11,7 +11,7 @@ $range = $_GET['range'] ?? 30; // 7, 30, 90
 $range = (int)$range;
 
 // 1. High-Level KPIs
-$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
+$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 
 $net_profit = $pdo->query("
     SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
@@ -19,15 +19,15 @@ $net_profit = $pdo->query("
     JOIN product_variations pv ON oi.variation_id = pv.id 
     JOIN products p ON pv.product_id = p.id 
     JOIN orders o ON oi.order_id = o.id 
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
 ")->fetchColumn() ?: 0;
 
-$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
+$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 $total_customers = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer'")->fetchColumn() ?: 0;
 
 // 2. Growth Calculation (Last 30 Days vs Previous 30 Days)
-$revenue_last_30 = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
-$revenue_prev_30 = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled' AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
+$revenue_last_30 = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
+$revenue_prev_30 = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
 $growth_percent = $revenue_prev_30 > 0 ? (($revenue_last_30 - $revenue_prev_30) / $revenue_prev_30) * 100 : ($revenue_last_30 > 0 ? 100 : 0);
 
 // 3. Daily Analytics for Chart.js
@@ -41,7 +41,7 @@ $daily_sales_raw = $pdo->query("
     LEFT JOIN order_items oi ON o.id = oi.order_id
     LEFT JOIN product_variations pv ON oi.variation_id = pv.id
     LEFT JOIN products p ON pv.product_id = p.id
-    WHERE o.status != 'cancelled' AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL ".($display_days-1)." DAY)
+    WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL ".($display_days-1)." DAY)
     GROUP BY date
     ORDER BY date ASC
 ")->fetchAll();
@@ -75,7 +75,7 @@ $top_products = $pdo->query("
     JOIN product_variations pv ON oi.variation_id = pv.id
     JOIN products p ON pv.product_id = p.id
     JOIN orders o ON oi.order_id = o.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY p.id
     ORDER BY revenue DESC
     LIMIT 3
@@ -85,7 +85,7 @@ $top_customers = $pdo->query("
     SELECT u.username, COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent
     FROM users u 
     JOIN orders o ON u.id = o.user_id 
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY u.id 
     ORDER BY total_spent DESC 
     LIMIT 3
@@ -99,7 +99,7 @@ $categories_raw = $pdo->query("
     JOIN products p ON pv.product_id = p.id
     JOIN categories c ON p.category_id = c.id
     JOIN orders o ON oi.order_id = o.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY c.id
     ORDER BY revenue DESC
     LIMIT 5

@@ -15,7 +15,7 @@ $top_products = $pdo->query("
     JOIN products p ON pv.product_id = p.id
     JOIN categories c ON p.category_id = c.id
     JOIN orders o ON oi.order_id = o.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY p.id
     ORDER BY revenue DESC
     LIMIT 10
@@ -42,7 +42,7 @@ $categories_raw = $pdo->query("
     JOIN products p ON pv.product_id = p.id
     JOIN categories c ON p.category_id = c.id
     JOIN orders o ON oi.order_id = o.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY c.id
     ORDER BY revenue DESC
 ")->fetchAll();

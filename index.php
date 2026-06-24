@@ -460,13 +460,15 @@ if (!$selected_gender) {
     </section>
 <?php endif; ?>
 
-<section class="promo-banner-studio">
-    <div class="container" style="position: relative; z-index: 1;">
-        <div style="font-size: 12px; letter-spacing: 0.4em; margin-bottom: 24px; color: var(--colors-primary); font-weight: 700;">MEMBERSHIP EXCLUSIVE</div>
-        <h2>Earn points with every purchase.</h2>
-        <p>Sign up now to get 15% off your first order and free shipping on all orders over RM100.</p>
-        <a href="signup.php" class="button-primary" style="padding: 18px 56px; border-radius: 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px;">Join HypeThread Rewards</a>
-    </div>
-</section>
+<?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer'): ?>
+    <section class="promo-banner-studio">
+        <div class="container" style="position: relative; z-index: 1;">
+            <div style="font-size: 12px; letter-spacing: 0.4em; margin-bottom: 24px; color: var(--colors-primary); font-weight: 700;">MEMBERSHIP EXCLUSIVE</div>
+            <h2>Earn points with every purchase.</h2>
+            <p>Sign up now to get 15% off your first order and free shipping on all orders over RM100.</p>
+            <a href="signup.php" class="button-primary" style="padding: 18px 56px; border-radius: 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px;">Join HypeThread Rewards</a>
+        </div>
+    </section>
+<?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

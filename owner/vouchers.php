@@ -32,8 +32,8 @@ $buyers = $pdo->query("SELECT id, username FROM users WHERE role = 'buyer' ORDER
 $group_sizes = [
     'all' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer'")->fetchColumn(),
     'new' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn(),
-    'repeat' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status != 'cancelled' GROUP BY user_id HAVING COUNT(*) >= 2")->rowCount(),
-    'vip' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status != 'cancelled' GROUP BY user_id HAVING SUM(total_amount) > 1000")->rowCount(),
+    'repeat' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status NOT IN ('cancelled','refunded') GROUP BY user_id HAVING COUNT(*) >= 2")->rowCount(),
+    'vip' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status NOT IN ('cancelled','refunded') GROUP BY user_id HAVING SUM(total_amount) > 1000")->rowCount(),
     'inactive' => (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer' AND id NOT IN (SELECT user_id FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY))")->fetchColumn(),
     'reviewers' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM reviews")->fetchColumn(),
 ];
@@ -43,7 +43,7 @@ $vouchers = $pdo->query("
     SELECT 
         v.*,
         (SELECT COUNT(*) FROM voucher_redemptions vr WHERE vr.voucher_id = v.id) as redemption_count,
-        (SELECT SUM(total_amount) FROM orders o WHERE o.voucher_id = v.id AND o.status != 'cancelled') as influenced_revenue
+        (SELECT SUM(total_amount) FROM orders o WHERE o.voucher_id = v.id AND o.status NOT IN ('cancelled','refunded')) as influenced_revenue
     FROM vouchers v
     ORDER BY created_at DESC
 ")->fetchAll();
@@ -55,7 +55,7 @@ $top_vouchers = $pdo->query("
     SELECT v.code, SUM(o.total_amount) as rev 
     FROM vouchers v 
     JOIN orders o ON v.id = o.voucher_id 
-    WHERE o.status != 'cancelled' 
+    WHERE o.status NOT IN ('cancelled','refunded') 
     GROUP BY v.id 
     ORDER BY rev DESC 
     LIMIT 5

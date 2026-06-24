@@ -8,12 +8,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'owner') {
 }
 
 // 1. Core KPIs
-$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
-$total_valid_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
+$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
+$total_valid_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 $aov = $total_valid_orders > 0 ? $total_revenue / $total_valid_orders : 0;
 
-$total_buyers = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
-$repeat_buyers = $pdo->query("SELECT COUNT(*) FROM (SELECT user_id FROM orders WHERE status != 'cancelled' GROUP BY user_id HAVING COUNT(*) > 1) as r")->fetchColumn() ?: 0;
+$total_buyers = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
+$repeat_buyers = $pdo->query("SELECT COUNT(*) FROM (SELECT user_id FROM orders WHERE status NOT IN ('cancelled','refunded') GROUP BY user_id HAVING COUNT(*) > 1) as r")->fetchColumn() ?: 0;
 $new_buyers = $total_buyers - $repeat_buyers;
 $repeat_rate = $total_buyers > 0 ? ($repeat_buyers / $total_buyers) * 100 : 0;
 
@@ -22,7 +22,7 @@ $segments_raw = $pdo->query("
     SELECT SUM(o.total_amount) as total_spent
     FROM users u 
     JOIN orders o ON u.id = o.user_id 
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY u.id 
 ")->fetchAll(PDO::FETCH_COLUMN);
 
@@ -38,7 +38,7 @@ $top_customers = $pdo->query("
     SELECT u.username, u.email, COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent, MAX(o.created_at) as last_order
     FROM users u 
     JOIN orders o ON u.id = o.user_id 
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY u.id 
     ORDER BY total_spent DESC 
     LIMIT 20
@@ -51,7 +51,7 @@ $stmt = $pdo->query("
     SELECT SUM(o.total_amount) as total_spent
     FROM users u 
     JOIN orders o ON u.id = o.user_id 
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY u.id 
     ORDER BY total_spent DESC
     LIMIT $top_20_count

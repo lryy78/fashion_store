@@ -25,29 +25,15 @@ $top_selling_query = "SELECT p.name, SUM(oi.quantity) as total_sold
                       JOIN orders o ON oi.order_id = o.id
                       JOIN product_variations pv ON oi.variation_id = pv.id 
                       JOIN products p ON pv.product_id = p.id 
-                      WHERE o.status != 'cancelled' $top_where
+                      WHERE o.status NOT IN ('cancelled','refunded') $top_where
                       GROUP BY p.id ORDER BY total_sold DESC LIMIT 5";
 $top_selling = $pdo->query($top_selling_query)->fetchAll();
 
-// 2. Revenue by Category
-$rev_where = $time_range;
-if ($filter_category != 'all') $rev_where .= " AND p.category_id = " . (int)$filter_category;
-
-$revenue_query = "SELECT c.name, SUM(oi.price * oi.quantity) as revenue 
-                  FROM order_items oi 
-                  JOIN orders o ON oi.order_id = o.id
-                  JOIN product_variations pv ON oi.variation_id = pv.id 
-                  JOIN products p ON pv.product_id = p.id 
-                  JOIN categories c ON p.category_id = c.id
-                  WHERE o.status != 'cancelled' $rev_where
-                  GROUP BY c.id ORDER BY revenue DESC";
-$revenue_by_cat = $pdo->query($revenue_query)->fetchAll();
-
-// 3. Most Viewed Products
+// 2. Most Viewed Products
 $view_where = ($filter_category != 'all') ? " WHERE category_id = " . (int)$filter_category : "";
 $most_viewed = $pdo->query("SELECT name, views FROM products $view_where ORDER BY views DESC LIMIT 5")->fetchAll();
 
-// 4. Low Conversion Products
+// 3. Low Conversion Products
 $conv_p_where = ($filter_category != 'all') ? " AND p.category_id = " . (int)$filter_category : "";
 
 $conversion_query = "SELECT p.name, p.views, IFNULL(SUM(oi.total_sold), 0) as total_sold, 
@@ -58,7 +44,7 @@ $conversion_query = "SELECT p.name, p.views, IFNULL(SUM(oi.total_sold), 0) as to
                         FROM order_items oi 
                         JOIN orders o ON oi.order_id = o.id 
                         JOIN product_variations pv ON oi.variation_id = pv.id
-                        WHERE o.status != 'cancelled' $time_range
+                        WHERE o.status NOT IN ('cancelled','refunded') $time_range
                         GROUP BY pv.product_id
                      ) oi ON p.id = oi.product_id
                      WHERE p.views > 10 $conv_p_where
@@ -110,17 +96,11 @@ include '../includes/header.php';
             </form>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px;">
+        <div style="margin-bottom: 32px;">
             <!-- Top Selling Chart -->
             <div class="surface-card" style="padding: 32px;">
                 <h3 style="font-size: 18px; margin-bottom: 24px;">Top Selling Products (Volume)</h3>
                 <canvas id="topSellingChart" height="250"></canvas>
-            </div>
-
-            <!-- Revenue by Category -->
-            <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Revenue by Category (RM)</h3>
-                <canvas id="revenueChart" height="250"></canvas>
             </div>
         </div>
 
@@ -200,25 +180,6 @@ new Chart(topSellingCtx, {
     }
 });
 
-// Revenue Chart
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-new Chart(revenueCtx, {
-    type: 'doughnut',
-    data: {
-        labels: <?php echo json_encode(array_column($revenue_by_cat, 'name')); ?>,
-        datasets: [{
-            data: <?php echo json_encode(array_column($revenue_by_cat, 'revenue')); ?>,
-            backgroundColor: ['#1a2b4b', '#ff6b6b', '#2dd4bf', '#fbbf24', '#a855f7'],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        plugins: {
-            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
-        },
-        cutout: '70%'
-    }
-});
 </script>
 
 <?php include '../includes/footer.php'; ?>

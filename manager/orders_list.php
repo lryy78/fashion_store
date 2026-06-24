@@ -8,10 +8,58 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'manager') {
 }
 
 if (isset($_POST['update_status'])) {
-    $order_id = $_POST['order_id'];
+    $order_id = (int)$_POST['order_id'];
     $status = $_POST['status'];
-    $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
-    $stmt->execute([$status, $order_id]);
+    $valid_statuses = ['pending', 'processing', 'shipped', 'completed', 'refund_requested', 'cancelled', 'refunded'];
+
+    if (in_array($status, $valid_statuses, true)) {
+        $pdo->beginTransaction();
+
+        $stmt = $pdo->prepare("SELECT status, stock_restored FROM orders WHERE id = ? FOR UPDATE");
+        $stmt->execute([$order_id]);
+        $order_state = $stmt->fetch();
+        $current_status = $order_state['status'] ?? null;
+        $stock_restored = (int)($order_state['stock_restored'] ?? 0);
+
+        $is_allowed_change = $current_status;
+        if (in_array($current_status, ['completed', 'cancelled', 'refunded'], true)) {
+            $is_allowed_change = false;
+        }
+        if ($current_status === 'refund_requested' && $status !== 'refunded') {
+            $is_allowed_change = false;
+        }
+        if ($status === 'cancelled' && !in_array($current_status, ['pending', 'processing'], true)) {
+            $is_allowed_change = false;
+        }
+        if ($status === 'refunded' && $current_status !== 'refund_requested') {
+            $is_allowed_change = false;
+        }
+
+        if ($is_allowed_change) {
+            $should_restore_stock = in_array($status, ['cancelled', 'refunded'], true) && $stock_restored === 0;
+
+            if ($should_restore_stock) {
+                $stmt = $pdo->prepare("
+                    UPDATE product_variations pv
+                    JOIN order_items oi ON oi.variation_id = pv.id
+                    SET pv.stock_quantity = pv.stock_quantity + oi.quantity
+                    WHERE oi.order_id = ?
+                ");
+                $stmt->execute([$order_id]);
+            }
+
+            $stmt = $pdo->prepare("
+                UPDATE orders
+                SET status = ?,
+                    completed_at = CASE WHEN ? = 'completed' AND completed_at IS NULL THEN NOW() ELSE completed_at END,
+                    stock_restored = CASE WHEN ? THEN 1 ELSE stock_restored END
+                WHERE id = ?
+            ");
+            $stmt->execute([$status, $status, $should_restore_stock ? 1 : 0, $order_id]);
+        }
+
+        $pdo->commit();
+    }
 }
 
 // Handle Filters
@@ -56,6 +104,9 @@ include $include_path . 'header.php';
 .status-processing { background: #fdf4ff; color: #a21caf; }
 .status-shipped { background: #eff6ff; color: #2563eb; }
 .status-completed { background: #f0fdf4; color: #16a34a; }
+.status-refund_requested { background: #fff7ed; color: #c2410c; }
+.status-cancelled { background: #fef2f2; color: #dc2626; }
+.status-refunded { background: #fff7ed; color: #c2410c; }
 </style>
 
 <?php require_once '../includes/sidebar.php'; ?>
@@ -81,6 +132,9 @@ include $include_path . 'header.php';
                         <option value="processing" <?php echo $filter_status == 'processing' ? 'selected' : ''; ?>>Processing</option>
                         <option value="shipped" <?php echo $filter_status == 'shipped' ? 'selected' : ''; ?>>Shipped</option>
                         <option value="completed" <?php echo $filter_status == 'completed' ? 'selected' : ''; ?>>Completed</option>
+                        <option value="refund_requested" <?php echo $filter_status == 'refund_requested' ? 'selected' : ''; ?>>Refund Requested</option>
+                        <option value="cancelled" <?php echo $filter_status == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                        <option value="refunded" <?php echo $filter_status == 'refunded' ? 'selected' : ''; ?>>Refunded</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin: 0; flex: 1;">
@@ -123,16 +177,28 @@ include $include_path . 'header.php';
                             </td>
                             <td style="text-align: right;">
                                 <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-                                    <form method="POST" style="display: flex; gap: 4px;">
-                                        <input type="hidden" name="order_id" value="<?php echo $o['id']; ?>">
-                                        <select name="status" class="form-input" style="width: auto; padding: 4px 8px; font-size: 11px; height: 28px; background: var(--colors-surface-soft);">
-                                            <option value="pending" <?php echo $o['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                            <option value="processing" <?php echo $o['status'] == 'processing' ? 'selected' : ''; ?>>Processing</option>
-                                            <option value="shipped" <?php echo $o['status'] == 'shipped' ? 'selected' : ''; ?>>Shipped</option>
-                                            <option value="completed" <?php echo $o['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                        </select>
-                                        <button type="submit" name="update_status" class="button-primary" style="padding: 0 10px; height: 28px; font-size: 10px; background: var(--colors-ink);">Update</button>
-                                    </form>
+                                    <?php if (in_array($o['status'], ['completed', 'cancelled', 'refunded'], true)): ?>
+                                        <span style="font-size: 12px; color: var(--colors-muted);">Final</span>
+                                    <?php else: ?>
+                                        <form method="POST" style="display: flex; gap: 4px;">
+                                            <input type="hidden" name="order_id" value="<?php echo $o['id']; ?>">
+                                            <select name="status" class="form-input" style="width: auto; padding: 4px 8px; font-size: 11px; height: 28px; background: var(--colors-surface-soft);">
+                                                <?php if ($o['status'] == 'refund_requested'): ?>
+                                                    <option value="refund_requested" selected>Refund Requested</option>
+                                                    <option value="refunded">Refunded</option>
+                                                <?php else: ?>
+                                                    <option value="pending" <?php echo $o['status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                    <option value="processing" <?php echo $o['status'] == 'processing' ? 'selected' : ''; ?>>Processing</option>
+                                                    <option value="shipped" <?php echo $o['status'] == 'shipped' ? 'selected' : ''; ?>>Shipped</option>
+                                                    <option value="completed" <?php echo $o['status'] == 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                                    <?php if (in_array($o['status'], ['pending', 'processing'], true)): ?>
+                                                        <option value="cancelled">Cancelled</option>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+                                            </select>
+                                            <button type="submit" name="update_status" class="button-primary" style="padding: 0 10px; height: 28px; font-size: 10px; background: var(--colors-ink);">Update</button>
+                                        </form>
+                                    <?php endif; ?>
                                     <a href="order_details.php?id=<?php echo $o['id']; ?>" class="button-secondary" style="padding: 6px 12px; font-size: 11px;">Details</a>
                                 </div>
                             </td>

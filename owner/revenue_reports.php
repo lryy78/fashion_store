@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'owner') {
 }
 
 // 1. Total Revenue & True Profit
-$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
+$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 
 $net_profit = $pdo->query("
     SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
@@ -16,14 +16,14 @@ $net_profit = $pdo->query("
     JOIN product_variations pv ON oi.variation_id = pv.id 
     JOIN products p ON pv.product_id = p.id 
     JOIN orders o ON oi.order_id = o.id 
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
 ")->fetchColumn() ?: 0;
 
-$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
+$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 
 // 2. Month-over-Month Growth
-$this_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())")->fetchColumn() ?: 0;
-$last_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled' AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchColumn() ?: 0;
+$this_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())")->fetchColumn() ?: 0;
+$last_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchColumn() ?: 0;
 $mom_growth = $last_month_rev > 0 ? (($this_month_rev - $last_month_rev) / $last_month_rev) * 100 : ($this_month_rev > 0 ? 100 : 0);
 
 // 3. Monthly Revenue & Profit Data for Chart (Last 12 months)
@@ -36,7 +36,7 @@ $monthly_raw = $pdo->query("
     LEFT JOIN order_items oi ON o.id = oi.order_id
     LEFT JOIN product_variations pv ON oi.variation_id = pv.id
     LEFT JOIN products p ON pv.product_id = p.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY month
     ORDER BY month ASC
     LIMIT 12
@@ -62,7 +62,7 @@ $daily_raw = $pdo->query("
     LEFT JOIN order_items oi ON o.id = oi.order_id
     LEFT JOIN product_variations pv ON oi.variation_id = pv.id
     LEFT JOIN products p ON pv.product_id = p.id
-    WHERE o.status != 'cancelled' AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
+    WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
     GROUP BY date
     ORDER BY date ASC
 ")->fetchAll();
@@ -75,7 +75,7 @@ $cat_raw = $pdo->query("
     JOIN products p ON pv.product_id = p.id
     JOIN categories c ON p.category_id = c.id
     JOIN orders o ON oi.order_id = o.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY c.id ORDER BY revenue DESC
 ")->fetchAll();
 

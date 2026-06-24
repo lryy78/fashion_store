@@ -11,7 +11,7 @@ $range = $_GET['range'] ?? 30;
 $range = (int)$range;
 
 // 1. Order Volume Trend
-$stmt = $pdo->prepare("SELECT DATE(created_at) as date, COUNT(*) as volume FROM orders WHERE status != 'cancelled' AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY DATE(created_at) ORDER BY date ASC");
+$stmt = $pdo->prepare("SELECT DATE(created_at) as date, COUNT(*) as volume FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY DATE(created_at) ORDER BY date ASC");
 $stmt->execute([$range - 1]);
 $daily_orders_raw = $stmt->fetchAll();
 
@@ -33,8 +33,8 @@ for ($i = $range - 1; $i >= 0; $i--) {
 }
 
 // 2. Average Order Value (AOV) over time
-$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
-$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status != 'cancelled'")->fetchColumn() ?: 0;
+$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
+$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 $global_aov = $total_orders > 0 ? $total_revenue / $total_orders : 0;
 
 // 3. Category Performance (Pie Chart)
@@ -45,7 +45,7 @@ $categories_raw = $pdo->query("
     JOIN products p ON pv.product_id = p.id
     JOIN categories c ON p.category_id = c.id
     JOIN orders o ON oi.order_id = o.id
-    WHERE o.status != 'cancelled'
+    WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY c.id
     ORDER BY revenue DESC
 ")->fetchAll();

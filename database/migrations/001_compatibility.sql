@@ -28,6 +28,30 @@ ALTER TABLE vouchers
     MODIFY COLUMN target_group ENUM('new','repeat','vip','inactive','reviewers') DEFAULT NULL;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS voucher_id INT UNSIGNED DEFAULT NULL AFTER user_id;
+UPDATE orders SET status = 'processing' WHERE status = 'cancel_requested';
+ALTER TABLE orders MODIFY COLUMN status ENUM('pending','processing','shipped','completed','refund_requested','cancelled','refunded') NOT NULL DEFAULT 'pending';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS completed_at DATETIME DEFAULT NULL AFTER address;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_restored TINYINT(1) NOT NULL DEFAULT 0 AFTER completed_at;
+UPDATE orders SET completed_at = created_at WHERE status IN ('completed','refund_requested','refunded') AND completed_at IS NULL;
+UPDATE orders SET stock_restored = 1 WHERE status IN ('cancelled','refunded') AND stock_restored = 0;
+
+DELETE FROM products
+WHERE id IN (
+    SELECT id FROM (
+        SELECT p.id
+        FROM products p
+        LEFT JOIN product_variations pv ON pv.product_id = p.id
+        WHERE pv.id IS NULL
+          AND EXISTS (
+              SELECT 1
+              FROM products p2
+              JOIN product_variations pv2 ON pv2.product_id = p2.id
+              WHERE p2.name = p.name
+                AND p2.gender = p.gender
+                AND p2.id <> p.id
+          )
+    ) AS duplicate_products
+);
 
 CREATE TABLE IF NOT EXISTS system_settings (
     setting_key VARCHAR(50) PRIMARY KEY,

@@ -17,6 +17,10 @@ $options = [
 
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
+     require_once __DIR__ . '/../includes/order_status_sync.php';
+     if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+          syncOrderStatuses($pdo);
+     }
 } catch (\PDOException $e) {
      throw new \PDOException($e->getMessage(), (int)$e->getCode());
 }

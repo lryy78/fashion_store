@@ -56,7 +56,9 @@ include $include_path . 'header.php';
                     <a href="orders_monitoring.php?status=processing&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'processing' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Processing</a>
                     <a href="orders_monitoring.php?status=shipped&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'shipped' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Shipped</a>
                     <a href="orders_monitoring.php?status=completed&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'completed' ? 'badge-pill-dark' : 'badge-success'; ?>" style="text-decoration: none;">Completed</a>
+                    <a href="orders_monitoring.php?status=refund_requested&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'refund_requested' ? 'badge-pill-dark' : 'badge-pending'; ?>" style="text-decoration: none;">Refund Requested</a>
                     <a href="orders_monitoring.php?status=cancelled&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'cancelled' ? 'badge-pill-dark' : 'badge-error'; ?>" style="text-decoration: none;">Cancelled</a>
+                    <a href="orders_monitoring.php?status=refunded&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'refunded' ? 'badge-pill-dark' : 'badge-error'; ?>" style="text-decoration: none;">Refunded</a>
                 </div>
             </div>
         </header>
@@ -80,7 +82,7 @@ include $include_path . 'header.php';
                             <td style="font-size: 13px; color: var(--colors-muted);"><?php echo date('M d, Y H:i', strtotime($o['created_at'])); ?></td>
                             <td style="font-family: var(--typography-code-font); font-weight: 600;">RM <?php echo number_format($o['total_amount'], 2); ?></td>
                             <td style="text-align: right;">
-                                <span class="badge badge-<?php echo ($o['status'] == 'completed' ? 'success' : ($o['status'] == 'cancelled' ? 'error' : 'pending')); ?>">
+                                <span class="badge badge-<?php echo ($o['status'] == 'completed' ? 'success' : (in_array($o['status'], ['cancelled', 'refunded']) ? 'error' : 'pending')); ?>">
                                     <?php echo strtoupper($o['status']); ?>
                                 </span>
                             </td>

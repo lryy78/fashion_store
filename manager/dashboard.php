@@ -31,7 +31,7 @@ $health_low_pct = ($total_skus > 0) ? round(($health_low / $total_skus) * 100) :
 $health_healthy_pct = 100 - $health_out_pct - $health_low_pct;
 
 // 3. Sales Trend (Last 7 Days)
-$sales_trend = $pdo->query("SELECT DATE(created_at) as date, SUM(total_amount) as daily_total FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY DATE(created_at) ORDER BY date ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
+$sales_trend = $pdo->query("SELECT DATE(created_at) as date, SUM(total_amount) as daily_total FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY DATE(created_at) ORDER BY date ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
 
 // 4. Recent Activity (Enhanced)
 $recent_orders = $pdo->query("SELECT o.*, u.username, 
@@ -45,6 +45,8 @@ $top_products = $pdo->query("SELECT p.name, c.name as category_name, SUM(oi.quan
                              JOIN product_variations pv ON oi.variation_id = pv.id 
                              JOIN products p ON pv.product_id = p.id 
                              LEFT JOIN categories c ON p.category_id = c.id
+                             JOIN orders o ON oi.order_id = o.id
+                             WHERE o.status NOT IN ('cancelled','refunded')
                              GROUP BY p.id ORDER BY total_sold DESC LIMIT 5")->fetchAll();
 
 include '../includes/header.php';
@@ -107,7 +109,7 @@ include '../includes/header.php';
                     </div>
                     <div onclick="location.href='product_analytics.php'" class="surface-card" style="cursor:pointer; padding: 24px; border-left: 4px solid var(--colors-accent-teal);">
                         <div style="font-size: 11px; font-weight: 700; color: var(--colors-accent-teal); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Revenue Stream</div>
-                        <div style="font-size: 28px; font-weight: 600;">💰 RM<?php echo number_format($pdo->query("SELECT SUM(total_amount) FROM orders")->fetchColumn(), 0); ?></div>
+                        <div style="font-size: 28px; font-weight: 600;">💰 RM<?php echo number_format($pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn(), 0); ?></div>
                         <div style="font-size: 11px; color: var(--colors-success); margin-top: 8px;">↑ 15.4% this month</div>
                     </div>
                 </div>
@@ -189,7 +191,7 @@ include '../includes/header.php';
                                         <td style="font-weight: 500; font-size: 12px;"><?php echo htmlspecialchars($order['username']); ?></td>
                                         <td style="font-family: var(--typography-code-font); font-size: 12px;">RM <?php echo number_format($order['total_amount'], 2); ?></td>
                                         <td>
-                                            <span class="badge badge-<?php echo ($order['status'] == 'completed' ? 'success' : ($order['status'] == 'shipped' ? 'primary' : 'pending')); ?>" style="font-size: 10px;">
+                                            <span class="badge badge-<?php echo ($order['status'] == 'completed' ? 'success' : ($order['status'] == 'shipped' ? 'primary' : (in_array($order['status'], ['cancelled', 'refunded']) ? 'error' : 'pending'))); ?>" style="font-size: 10px;">
                                                 <?php echo htmlspecialchars($order['status']); ?>
                                             </span>
                                         </td>

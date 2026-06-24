@@ -71,8 +71,10 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id INT,
     voucher_id INT DEFAULT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
-    status ENUM('pending', 'processing', 'shipped', 'completed', 'cancelled') DEFAULT 'pending',
+    status ENUM('pending', 'processing', 'shipped', 'completed', 'refund_requested', 'cancelled', 'refunded') DEFAULT 'pending',
     address TEXT,
+    completed_at DATETIME DEFAULT NULL,
+    stock_restored TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
