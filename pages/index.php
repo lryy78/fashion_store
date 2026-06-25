@@ -6,7 +6,9 @@ include __DIR__ . '/../includes/header.php';
 $selected_gender = $_GET['gender'] ?? '';
 
 // Featured Products Query
-$featured_query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id 
+$featured_query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+                  COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
+                  (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
                   FROM products p 
                   LEFT JOIN categories c ON p.category_id = c.id 
                   WHERE is_featured = 1 AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))";
@@ -321,6 +323,29 @@ if (!$selected_gender) {
                         <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                         <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
                         <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                            <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                                <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+                                    <?php 
+                                    if ($product['review_count'] > 0) {
+                                        $avg = round($product['avg_rating'] * 2) / 2;
+                                        $full = floor($avg);
+                                        $half = ($avg - $full) >= 0.5 ? 1 : 0;
+                                        echo str_repeat('★', $full);
+                                        if ($half) echo '½';
+                                        echo str_repeat('☆', 5 - $full - $half);
+                                    } else {
+                                        echo '☆☆☆☆☆';
+                                    }
+                                    ?>
+                                </span>
+                                <span style="color: var(--colors-muted); font-size: 10px;">
+                                    <?php if ($product['review_count'] > 0): ?>
+                                        (<?php echo $product['review_count']; ?>)
+                                    <?php else: ?>
+                                        No ratings
+                                    <?php endif; ?>
+                                </span>
+                            </div>
                     </div>
                 </div>
             <?php endforeach; ?>

@@ -13,7 +13,11 @@ $selected_gender = $_GET['gender'] ?? '';
 $in_stock = isset($_GET['in_stock']);
 $on_sale = isset($_GET['on_sale']);
 
-$query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id 
+$sort_rating = $_GET['sort_rating'] ?? '';
+
+$query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+          COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
+          (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
           FROM products p 
           LEFT JOIN categories c ON p.category_id = c.id 
           LEFT JOIN product_variations pv ON p.id = pv.product_id
@@ -52,6 +56,13 @@ $params[] = $min_price;
 $params[] = $max_price;
 
 $query .= " GROUP BY p.id";
+
+// Apply rating sort
+if ($sort_rating === 'high') {
+    $query .= " ORDER BY avg_rating DESC, review_count DESC";
+} elseif ($sort_rating === 'low') {
+    $query .= " ORDER BY avg_rating ASC, review_count DESC";
+}
 
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
@@ -282,8 +293,17 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </label>
             </div>
 
+            <div class="filter-group" style="margin-bottom: 32px;">
+                <h4>Sort by Rating</h4>
+                <select name="sort_rating" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
+                    <option value="" <?php echo $sort_rating == '' ? 'selected' : ''; ?>>Default</option>
+                    <option value="high" <?php echo $sort_rating == 'high' ? 'selected' : ''; ?>>Highest Rated</option>
+                    <option value="low" <?php echo $sort_rating == 'low' ? 'selected' : ''; ?>>Lowest Rated</option>
+                </select>
+            </div>
+
             <button type="submit" class="button-primary" style="width: 100%; padding: 16px;">Apply Filters</button>
-            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $on_sale): ?>
+            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $on_sale || $sort_rating): ?>
                 <a href="products.php" style="display: block; text-align: center; margin-top: 16px; font-size: 13px; text-decoration: underline; color: var(--colors-muted);">Reset Filters</a>
             <?php endif; ?>
         </form>
@@ -315,6 +335,29 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                                 <?php else: ?>
                                     <span class="current-price">RM <?php echo number_format($product['price'], 2); ?></span>
                                 <?php endif; ?>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; min-height: 18px;">
+                                <span style="color: #fbbf24; letter-spacing: 2px; font-size: 12px;">
+                                    <?php 
+                                    if ($product['review_count'] > 0) {
+                                        $avg = round($product['avg_rating'] * 2) / 2;
+                                        $full = floor($avg);
+                                        $half = ($avg - $full) >= 0.5 ? 1 : 0;
+                                        echo str_repeat('★', $full);
+                                        if ($half) echo '½';
+                                        echo str_repeat('☆', 5 - $full - $half);
+                                    } else {
+                                        echo '☆☆☆☆☆';
+                                    }
+                                    ?>
+                                </span>
+                                <span style="color: var(--colors-muted); font-size: 11px;">
+                                    <?php if ($product['review_count'] > 0): ?>
+                                        (<?php echo $product['review_count']; ?>)
+                                    <?php else: ?>
+                                        No ratings
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
                     </div>

@@ -231,6 +231,37 @@ $reviews = $stmt->fetchAll();
                     <span style="font-size: 14px; background: var(--colors-error); color: #fff; padding: 4px 12px; border-radius: 100px; vertical-align: middle; margin-left: 12px; font-family: var(--typography-body-font);">OUT OF STOCK</span>
                 <?php endif; ?>
             </h1>
+            <!-- Average Rating -->
+            <?php
+            $avg_stmt = $pdo->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as review_count FROM reviews WHERE product_id = ?");
+            $avg_stmt->execute([$product_id]);
+            $rating_data = $avg_stmt->fetch();
+            $avg_rating = round($rating_data['avg_rating'], 1);
+            $review_count = $rating_data['review_count'];
+            ?>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                <span style="color: #fbbf24; letter-spacing: 2px; font-size: 16px;">
+                    <?php
+                    if ($review_count > 0) {
+                        $full = floor($avg_rating);
+                        $half = ($avg_rating - $full) >= 0.5 ? 1 : 0;
+                        $empty = 5 - $full - $half;
+                        echo str_repeat('★', $full);
+                        if ($half) echo '½';
+                        echo str_repeat('☆', $empty);
+                    } else {
+                        echo '☆☆☆☆☆';
+                    }
+                    ?>
+                </span>
+                <?php if ($review_count > 0): ?>
+                    <span style="color: var(--colors-ink); font-weight: 600; font-size: 14px;"><?php echo number_format($avg_rating, 1); ?></span>
+                    <span style="color: var(--colors-muted); font-size: 13px;">(<?php echo $review_count; ?> review<?php echo $review_count > 1 ? 's' : ''; ?>)</span>
+                <?php else: ?>
+                    <span style="color: var(--colors-muted); font-size: 13px;">No reviews yet</span>
+                <?php endif; ?>
+            </div>
+
             <span class="product-price-studio">RM <?php echo number_format($product['price'], 2); ?></span>
 
             <p style="color: var(--colors-muted); margin-bottom: 40px; line-height: 1.6;"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
