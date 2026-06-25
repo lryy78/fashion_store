@@ -95,7 +95,18 @@ $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual
     <header class="top-nav">
         <div class="container">
             <div class="nav-left">
-                <a href="/fashion_store/index.php" class="brand-logo">
+                <?php 
+                $nav_role = $_SESSION['role'] ?? 'guest';
+                $brand_href = '/fashion_store/index.php';
+                if ($nav_role === 'manager') {
+                    $brand_href = '/fashion_store/manager/dashboard.php';
+                } elseif ($nav_role === 'admin') {
+                    $brand_href = '/fashion_store/admin/dashboard.php';
+                } elseif ($nav_role === 'owner') {
+                    $brand_href = '/fashion_store/owner/dashboard.php';
+                }
+                ?>
+                <a href="<?php echo $brand_href; ?>" class="brand-logo">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2L12 10M12 10L20 10M12 10L12 18M12 10L4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         <circle cx="12" cy="12" r="2" fill="currentColor"/>
