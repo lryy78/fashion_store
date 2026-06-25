@@ -22,15 +22,18 @@ $users = $stmt->fetchAll();
 ?>
 <div class="container">
     <h1>Accounts</h1>
-    <form method="GET" class="filter-form" style="margin-bottom:20px;">
+    <form method="GET" class="filter-form" style="margin-bottom:20px; display: flex; gap: 12px; align-items: center;">
         <label>Filter by role:</label>
-        <select name="role" onchange="this.form.submit()">
+        <select name="role" onchange="this.form.submit()" class="form-input" style="padding: 8px 12px;">
             <option value="">All Roles</option>
             <option value="buyer" <?php if($filter_role=='buyer') echo 'selected'; ?>>Buyer</option>
             <option value="manager" <?php if($filter_role=='manager') echo 'selected'; ?>>Manager</option>
             <option value="admin" <?php if($filter_role=='admin') echo 'selected'; ?>>Admin</option>
             <option value="owner" <?php if($filter_role=='owner') echo 'selected'; ?>>Owner</option>
         </select>
+        <?php if (!empty($filter_role)): ?>
+            <a href="accounts.php" class="button-secondary" style="padding: 8px 16px; text-decoration: none; font-size: 12px;">Reset Filter</a>
+        <?php endif; ?>
     </form>
     <table class="data-table">
         <thead>

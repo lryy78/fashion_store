@@ -80,12 +80,15 @@ include $include_path . 'header.php';
                     <input type="text" name="search" placeholder="Search username or email..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 8px 16px; border-radius: 20px; font-size: 13px; width: 250px;">
                     <button type="submit" class="button-secondary" style="padding: 8px 16px; border-radius: 20px;">Search</button>
                 </form>
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <a href="users_list.php?role=all&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'all' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">All</a>
                     <a href="users_list.php?role=buyer&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'buyer' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Buyers</a>
                     <a href="users_list.php?role=manager&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'manager' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Managers</a>
                     <a href="users_list.php?role=admin&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'admin' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Admins</a>
                     <a href="users_list.php?role=owner&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'owner' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Owners</a>
+                    <?php if ($filter_role != 'all' || !empty($search_query)): ?>
+                        <a href="users_list.php" class="button-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none; margin-left: 8px;">Reset Filters</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </header>

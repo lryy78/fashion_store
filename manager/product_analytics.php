@@ -93,6 +93,9 @@ include '../includes/header.php';
                     </select>
                 </div>
                 <button type="submit" class="button-primary" style="padding: 12px;">Apply Analysis</button>
+                <?php if ($start_date != date('Y-m-d', strtotime('-30 days')) || $end_date != date('Y-m-d') || $filter_category != 'all'): ?>
+                    <a href="product_analytics.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
+                <?php endif; ?>
             </form>
         </div>
 

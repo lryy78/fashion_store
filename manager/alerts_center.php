@@ -153,11 +153,14 @@ include '../includes/header.php';
         </div>
 
         <!-- Filters -->
-        <div style="display: flex; gap: 12px; margin-bottom: 32px; border-top: 1px solid var(--colors-hairline); padding-top: 32px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 32px; border-top: 1px solid var(--colors-hairline); padding-top: 32px; align-items: center; flex-wrap: wrap;">
             <a href="alerts_center.php?priority=all" class="button-secondary <?php echo $filter_priority == 'all' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px;">All Levels</a>
             <a href="alerts_center.php?priority=critical" class="button-secondary <?php echo $filter_priority == 'critical' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px; color: var(--colors-error);">Critical</a>
             <a href="alerts_center.php?priority=warning" class="button-secondary <?php echo $filter_priority == 'warning' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px; color: #f59e0b;">Warning</a>
             <a href="alerts_center.php?priority=info" class="button-secondary <?php echo $filter_priority == 'info' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px; color: var(--colors-accent-teal);">Info</a>
+            <?php if ($filter_priority != 'all'): ?>
+                <a href="alerts_center.php" class="button-secondary" style="padding: 8px 16px; font-size: 12px; text-decoration: none; margin-left: 8px;">Reset Filter</a>
+            <?php endif; ?>
         </div>
 
         <div class="alerts-list">

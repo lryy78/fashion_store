@@ -45,11 +45,14 @@ include $include_path . 'header.php';
                 <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Inventory Economics</div>
                 <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Product Profitability</h1>
             </div>
-            <div style="width: 300px;">
-                <form method="GET" style="position: relative;">
+            <div style="width: 300px; display: flex; gap: 8px; align-items: center;">
+                <form method="GET" style="position: relative; flex: 1;">
                     <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search product..." class="form-input" style="padding-left: 40px;">
                     <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
                 </form>
+                <?php if (!empty($search)): ?>
+                    <a href="product_profitability.php" class="button-secondary" style="padding: 8px 16px; text-decoration: none; white-space: nowrap;">Reset</a>
+                <?php endif; ?>
             </div>
         </header>
 

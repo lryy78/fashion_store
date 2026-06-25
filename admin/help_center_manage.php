@@ -82,10 +82,13 @@ include $include_path . 'header.php';
                     <button type="submit" class="button-secondary" style="padding: 6px 12px; font-size: 12px;">Go</button>
                 </form>
 
-                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <a href="help_center_manage.php?status=all&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'all' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none; cursor: pointer;">All</a>
                     <a href="help_center_manage.php?status=open&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'open' ? 'badge-pill-dark' : 'badge-pending'; ?>" style="text-decoration: none; cursor: pointer;">Open</a>
                     <a href="help_center_manage.php?status=closed&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'closed' ? 'badge-pill-dark' : 'badge-success'; ?>" style="text-decoration: none; cursor: pointer;">Closed</a>
+                    <?php if ($filter_status != 'all' || !empty($search_query)): ?>
+                        <a href="help_center_manage.php" class="button-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none; margin-left: 8px;">Reset Filters</a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div style="flex: 1; overflow-y: auto;">

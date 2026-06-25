@@ -281,6 +281,9 @@ include '../includes/header.php';
                     </select>
                 </div>
                 <button type="submit" class="button-secondary" style="padding: 12px;">Filter</button>
+                <?php if (!empty($search) || $filter_category != 'all' || $filter_stock != 'all' || $filter_status != 'all'): ?>
+                    <a href="products_list.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
+                <?php endif; ?>
             </form>
         </div>
 

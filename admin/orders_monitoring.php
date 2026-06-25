@@ -50,7 +50,7 @@ include $include_path . 'header.php';
                     <input type="text" name="search" placeholder="Search customer or Order ID..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 8px 16px; border-radius: 20px; font-size: 13px; width: 250px;">
                     <button type="submit" class="button-secondary" style="padding: 8px 16px; border-radius: 20px;">Search</button>
                 </form>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 400px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 400px; align-items: center;">
                     <a href="orders_monitoring.php?status=all&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'all' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">All</a>
                     <a href="orders_monitoring.php?status=pending&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'pending' ? 'badge-pill-dark' : 'badge-pending'; ?>" style="text-decoration: none;">Pending</a>
                     <a href="orders_monitoring.php?status=processing&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'processing' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Processing</a>
@@ -59,6 +59,9 @@ include $include_path . 'header.php';
                     <a href="orders_monitoring.php?status=refund_requested&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'refund_requested' ? 'badge-pill-dark' : 'badge-pending'; ?>" style="text-decoration: none;">Refund Requested</a>
                     <a href="orders_monitoring.php?status=cancelled&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'cancelled' ? 'badge-pill-dark' : 'badge-error'; ?>" style="text-decoration: none;">Cancelled</a>
                     <a href="orders_monitoring.php?status=refunded&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'refunded' ? 'badge-pill-dark' : 'badge-error'; ?>" style="text-decoration: none;">Refunded</a>
+                    <?php if ($filter_status != 'all' || !empty($search_query)): ?>
+                        <a href="orders_monitoring.php" class="button-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none; margin-left: 8px;">Reset Filters</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </header>

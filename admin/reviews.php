@@ -74,11 +74,14 @@ include $include_path . 'header.php';
                 <h1 style="margin: 0; font-size: 32px;">Manage Reviews</h1>
             </div>
             
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <a href="?rating=all" class="button-secondary" style="font-size: 12px; padding: 8px 16px; <?php echo $rating_filter == 'all' ? 'background: var(--colors-ink); color: #fff;' : ''; ?>">All</a>
                 <?php for($i=5; $i>=1; $i--): ?>
                     <a href="?rating=<?php echo $i; ?>" class="button-secondary" style="font-size: 12px; padding: 8px 16px; <?php echo $rating_filter == $i ? 'background: var(--colors-ink); color: #fff;' : ''; ?>"><?php echo $i; ?> ★</a>
                 <?php endfor; ?>
+                <?php if ($rating_filter != 'all'): ?>
+                    <a href="reviews.php" class="button-secondary" style="font-size: 12px; padding: 8px 16px; text-decoration: none; margin-left: 8px;">Reset Filter</a>
+                <?php endif; ?>
             </div>
         </header>
 

@@ -146,6 +146,9 @@ include $include_path . 'header.php';
                     </select>
                 </div>
                 <button type="submit" class="button-secondary" style="padding: 12px 24px;">Filter</button>
+                <?php if ($filter_status != 'all' || $filter_date != 'all'): ?>
+                    <a href="orders_list.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
+                <?php endif; ?>
             </form>
         </div>
 
