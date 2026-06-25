@@ -14,23 +14,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $full_name = $_POST['full_name'];
     $email = $_POST['email'];
     $phone = $_POST['phone'];
-    $address = $_POST['address'];
+    $address_line = trim($_POST['address_line'] ?? '');
+    $address_city = trim($_POST['address_city'] ?? '');
+    $address_postcode = trim($_POST['address_postcode'] ?? '');
+    $address_country = trim($_POST['address_country'] ?? '');
     $password = $_POST['password'];
 
-    if (!empty($password)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, password = ? WHERE id = ?");
-        $stmt->execute([$full_name, $email, $phone, $address, $hashed_password, $user_id]);
-    } else {
-        $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ? WHERE id = ?");
-        $stmt->execute([$full_name, $email, $phone, $address, $user_id]);
+    // Validate all address fields are filled
+    $address_error = '';
+    if (empty($address_line) || empty($address_city) || empty($address_postcode) || empty($address_country)) {
+        $address_error = 'Please fill in all address fields (street address, city, postcode, and country) to save a valid default address.';
     }
-    $msg = "Profile updated successfully!";
+
+    if (empty($address_error)) {
+        // Combine address parts into single address field
+        $address = "$address_line, $address_city, $address_postcode, $address_country";
+
+        if (!empty($password)) {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, password = ? WHERE id = ?");
+            $stmt->execute([$full_name, $email, $phone, $address, $hashed_password, $user_id]);
+        } else {
+            $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ? WHERE id = ?");
+            $stmt->execute([$full_name, $email, $phone, $address, $user_id]);
+        }
+        $msg = "Profile updated successfully!";
+    } else {
+        $msg = $address_error;
+    }
 }
 
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
+
+// Parse saved address into structured fields for display
+// Address format: "full_name, street_address, city, postcode, country"
+$saved_address = $user['address'] ?? '';
+$address_parts = [];
+if ($saved_address) {
+    $address_parts = explode(', ', $saved_address);
+    // Skip first element (full_name) - it's stored separately in the users table
+    $user['address_line'] = $address_parts[1] ?? '';
+    $user['address_city'] = $address_parts[2] ?? '';
+    $user['address_postcode'] = $address_parts[3] ?? '';
+    $user['address_country'] = $address_parts[4] ?? '';
+} else {
+    $user['address_line'] = '';
+    $user['address_city'] = '';
+    $user['address_postcode'] = '';
+    $user['address_country'] = '';
+}
 
 $include_path = '../includes/';
 include $include_path . 'header.php';
@@ -64,7 +98,22 @@ include $include_path . 'header.php';
                 </div>
                 <div class="form-group">
                     <label class="form-label">Default Shipping Address</label>
-                    <textarea name="address" rows="4"><?php echo htmlspecialchars($user['address'] ?? ''); ?></textarea>
+                    <input type="text" name="address_line" placeholder="Street address" value="<?php echo htmlspecialchars($user['address_line'] ?? ''); ?>" style="width: 100%; padding: 10px 16px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md); margin-bottom: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <input type="text" name="address_city" placeholder="City" value="<?php echo htmlspecialchars($user['address_city'] ?? ''); ?>" style="width: 100%; padding: 10px 16px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
+                        <input type="text" name="address_postcode" placeholder="Postcode" value="<?php echo htmlspecialchars($user['address_postcode'] ?? ''); ?>" style="width: 100%; padding: 10px 16px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
+                    </div>
+                    <select name="address_country" style="width: 100%; padding: 10px 16px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md); margin-top: 8px;">
+                        <option value="">Select country…</option>
+                        <?php
+                        $countries = ['Malaysia','Singapore','Indonesia','Thailand','Philippines','Vietnam','United States','United Kingdom','Australia'];
+                        $selectedCountry = $user['address_country'] ?? '';
+                        foreach ($countries as $c) {
+                            $sel = ($c === $selectedCountry) ? 'selected' : '';
+                            echo "<option value=\"$c\" $sel>$c</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
                 <div class="form-group" style="margin-top: var(--spacing-xl); border-top: 1px solid var(--colors-hairline); padding-top: var(--spacing-lg);">
                     <label class="form-label">New Password</label>

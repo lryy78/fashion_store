@@ -9,6 +9,38 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
+// Fetch user's saved address
+$stmt = $pdo->prepare("SELECT full_name, address FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user_data = $stmt->fetch();
+$saved_address = $user_data['address'] ?? '';
+$saved_full_name = $user_data['full_name'] ?? '';
+
+// Parse saved address into components
+// Supports both formats: "full_name, street, city, postcode, country" (old) and "street, city, postcode, country" (new)
+$address_parts = [];
+if ($saved_address) {
+    $address_parts = explode(', ', $saved_address);
+}
+
+// Use saved full_name from profile, not from address parsing
+$default_full_name = $saved_full_name;
+
+// Determine if address includes full_name (5 parts) or not (4 parts)
+if (count($address_parts) >= 5) {
+    // Old format: "full_name, street, city, postcode, country"
+    $default_address_line = $address_parts[1] ?? '';
+    $default_city = $address_parts[2] ?? '';
+    $default_postcode = $address_parts[3] ?? '';
+    $default_country = $address_parts[4] ?? '';
+} else {
+    // New format: "street, city, postcode, country"
+    $default_address_line = $address_parts[0] ?? '';
+    $default_city = $address_parts[1] ?? '';
+    $default_postcode = $address_parts[2] ?? '';
+    $default_country = $address_parts[3] ?? '';
+}
+
 // Fetch cart items with product + variation details
 $stmt = $pdo->prepare("
     SELECT c.id as cart_id, c.quantity, c.variation_id,
@@ -105,6 +137,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
             $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
             $stmt->execute([$user_id]);
+
+            // Save address as default if user doesn't have one yet
+            if (empty($saved_address)) {
+                // Save address WITHOUT full_name (it's stored separately in users.full_name)
+                $address_only = "$address_line, $city, $postcode, $country";
+                $update_addr = $pdo->prepare("UPDATE users SET full_name = ?, address = ? WHERE id = ?");
+                $update_addr->execute([$full_name, $address_only, $user_id]);
+            }
 
             if ($selected_voucher_id) {
                 $stmt = $pdo->prepare("UPDATE vouchers SET is_used = 1 WHERE id = ?");
@@ -468,14 +508,14 @@ include $include_path . 'header.php';
                     <label for="full_name">Full Name</label>
                     <input type="text" id="full_name" name="full_name"
                            placeholder="Full name"
-                           value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>" required>
+                           value="<?php echo htmlspecialchars($_POST['full_name'] ?? $default_full_name); ?>" required>
                 </div>
 
                 <div class="checkout-field">
                     <label for="address_line">Street Address</label>
                     <input type="text" id="address_line" name="address_line"
                            placeholder="Street address"
-                           value="<?php echo htmlspecialchars($_POST['address_line'] ?? ''); ?>" required>
+                           value="<?php echo htmlspecialchars($_POST['address_line'] ?? $default_address_line); ?>" required>
                 </div>
 
                 <div class="checkout-form-row">
@@ -483,13 +523,13 @@ include $include_path . 'header.php';
                         <label for="city">City</label>
                         <input type="text" id="city" name="city"
                                placeholder="City"
-                               value="<?php echo htmlspecialchars($_POST['city'] ?? ''); ?>" required>
+                               value="<?php echo htmlspecialchars($_POST['city'] ?? $default_city); ?>" required>
                     </div>
                     <div class="checkout-field" style="margin-bottom:0;">
                         <label for="postcode">Postcode</label>
                         <input type="text" id="postcode" name="postcode"
                                placeholder="Postcode"
-                               value="<?php echo htmlspecialchars($_POST['postcode'] ?? ''); ?>" required>
+                               value="<?php echo htmlspecialchars($_POST['postcode'] ?? $default_postcode); ?>" required>
                     </div>
                 </div>
 
@@ -499,7 +539,7 @@ include $include_path . 'header.php';
                         <option value="">Select country…</option>
                         <?php
                         $countries = ['Malaysia','Singapore','Indonesia','Thailand','Philippines','Vietnam','United States','United Kingdom','Australia'];
-                        $selectedCountry = $_POST['country'] ?? '';
+                        $selectedCountry = $_POST['country'] ?? $default_country;
                         foreach ($countries as $c) {
                             $sel = ($c === $selectedCountry) ? 'selected' : '';
                             echo "<option value=\"$c\" $sel>$c</option>";
@@ -507,6 +547,12 @@ include $include_path . 'header.php';
                         ?>
                     </select>
                 </div>
+
+                <?php if (empty($saved_address)) : ?>
+                <div style="margin-top: 12px; padding: 12px; background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; font-size: 12px; color: #92400e;">
+                    ℹ️ This address will be saved as your default for future checkouts.
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- PAYMENT METHOD -->
