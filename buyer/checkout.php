@@ -467,14 +467,14 @@ include $include_path . 'header.php';
                 <div class="checkout-field">
                     <label for="full_name">Full Name</label>
                     <input type="text" id="full_name" name="full_name"
-                           placeholder="e.g. Jane Doe"
+                           placeholder="Full name"
                            value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>" required>
                 </div>
 
                 <div class="checkout-field">
                     <label for="address_line">Street Address</label>
                     <input type="text" id="address_line" name="address_line"
-                           placeholder="e.g. 123 Fashion Ave, Apt 4B"
+                           placeholder="Street address"
                            value="<?php echo htmlspecialchars($_POST['address_line'] ?? ''); ?>" required>
                 </div>
 
@@ -482,13 +482,13 @@ include $include_path . 'header.php';
                     <div class="checkout-field" style="margin-bottom:0;">
                         <label for="city">City</label>
                         <input type="text" id="city" name="city"
-                               placeholder="e.g. Kuala Lumpur"
+                               placeholder="City"
                                value="<?php echo htmlspecialchars($_POST['city'] ?? ''); ?>" required>
                     </div>
                     <div class="checkout-field" style="margin-bottom:0;">
                         <label for="postcode">Postcode</label>
                         <input type="text" id="postcode" name="postcode"
-                               placeholder="e.g. 50000"
+                               placeholder="Postcode"
                                value="<?php echo htmlspecialchars($_POST['postcode'] ?? ''); ?>" required>
                     </div>
                 </div>
@@ -549,6 +549,8 @@ include $include_path . 'header.php';
         <div class="order-summary-title">Order Summary</div>
 
         <!-- Items -->
+        <form method="POST" action="../actions/update_cart.php" id="checkout-quantity-form">
+        <input type="hidden" name="redirect_to" value="checkout">
         <?php foreach ($cart_items as $item): ?>
             <div class="order-item-row">
                 <?php if (!empty($item['image_id'])): ?>
@@ -568,7 +570,11 @@ include $include_path . 'header.php';
                         <?php echo htmlspecialchars($item['color']); ?>
                     </div>
                     <div class="order-item-meta" style="margin-top:2px;">
-                        Qty: <?php echo $item['quantity']; ?>
+                        <div style="display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--colors-border, #e8e4dc); border-radius: 4px; overflow: hidden;">
+                            <button type="button" onclick="adjustCheckoutQty(this, -1, <?php echo $item['stock_quantity']; ?>)" style="width: 24px; height: 24px; border: none; background: var(--colors-surface-soft); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1;">−</button>
+                            <input type="number" name="quantity[<?php echo $item['cart_id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="<?php echo $item['stock_quantity']; ?>" style="width: 44px; padding: 4px; border: none; border-left: 1px solid var(--colors-border, #e8e4dc); border-right: 1px solid var(--colors-border, #e8e4dc); text-align: center; font-size: 12px;" onchange="validateCheckoutQty(this, <?php echo $item['stock_quantity']; ?>)" required>
+                            <button type="button" onclick="adjustCheckoutQty(this, 1, <?php echo $item['stock_quantity']; ?>)" style="width: 24px; height: 24px; border: none; background: var(--colors-surface-soft); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; line-height: 1;">+</button>
+                        </div>
                     </div>
                 </div>
 
@@ -577,6 +583,7 @@ include $include_path . 'header.php';
                 </div>
             </div>
         <?php endforeach; ?>
+        </form>
         <!-- Vouchers -->
         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--colors-border, #e8e4dc);">
             <div style="font-size: 12px; font-weight: 600; color: var(--colors-muted, #888); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">Apply Voucher</div>
@@ -644,5 +651,30 @@ include $include_path . 'header.php';
         </div>
     </div>
 </div>
+
+<script>
+function adjustCheckoutQty(btn, delta, maxStock) {
+    const input = btn.parentElement.querySelector('input[type="number"]');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal > maxStock) {
+        newVal = maxStock;
+        alert('Maximum available stock is ' + maxStock);
+    }
+    if (newVal < 1) newVal = 1;
+    input.value = newVal;
+    document.getElementById('checkout-quantity-form').submit();
+}
+
+function validateCheckoutQty(input, maxStock) {
+    if (input.value > maxStock) {
+        input.value = maxStock;
+        alert('Maximum available stock is ' + maxStock);
+    }
+    if (input.value < 1) {
+        input.value = 1;
+    }
+    document.getElementById('checkout-quantity-form').submit();
+}
+</script>
 
 <?php include $include_path . 'footer.php'; ?>

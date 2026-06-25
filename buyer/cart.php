@@ -34,6 +34,7 @@ include $include_path . 'header.php';
     <h1 style="font-size: 36px; margin-bottom: var(--spacing-xl); font-family: var(--typography-display-font);">Your Shopping Bag</h1>
 
     <?php if ($cart_items): ?>
+        <form method="POST" action="../actions/update_cart.php" id="cart-form">
         <div class="surface-card" style="padding: var(--spacing-xl); border-radius: var(--rounded-lg); margin-bottom: var(--spacing-xl);">
             <table class="data-table data-table-light">
                 <thead>
@@ -59,7 +60,13 @@ include $include_path . 'header.php';
                             </td>
                             <td><?php echo htmlspecialchars($item['size']); ?> / <?php echo htmlspecialchars($item['color']); ?></td>
                             <td>RM <?php echo number_format($item['price'], 2); ?></td>
-                            <td><?php echo $item['quantity']; ?></td>
+                            <td>
+                                <div style="display: inline-flex; align-items: center; gap: 0; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md); overflow: hidden;">
+                                    <button type="button" onclick="adjustQty(this, -1, <?php echo $item['stock_quantity']; ?>)" style="width: 32px; height: 32px; border: none; background: var(--colors-surface-soft); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">−</button>
+                                    <input type="number" name="quantity[<?php echo $item['id']; ?>]" value="<?php echo $item['quantity']; ?>" min="1" max="<?php echo $item['stock_quantity']; ?>" style="width: 50px; padding: 8px; border: none; border-left: 1px solid var(--colors-hairline); border-right: 1px solid var(--colors-hairline); text-align: center; font-size: 14px;" onchange="validateQuantity(this, <?php echo $item['stock_quantity']; ?>)" required>
+                                    <button type="button" onclick="adjustQty(this, 1, <?php echo $item['stock_quantity']; ?>)" style="width: 32px; height: 32px; border: none; background: var(--colors-surface-soft); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">+</button>
+                                </div>
+                            </td>
                             <td>RM <?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
                             <td>
                                 <a href="../actions/remove_from_cart.php?id=<?php echo $item['id']; ?>" style="color: var(--colors-error); font-size: 13px;">Remove</a>
@@ -70,21 +77,22 @@ include $include_path . 'header.php';
             </table>
         </div>
 
-        <div style="display: flex; justify-content: flex-end;">
+        <div style="display: flex; justify-content: flex-end; margin-top: var(--spacing-lg);">
             <div class="surface-card" style="padding: var(--spacing-xl); border-radius: var(--rounded-lg); min-width: 300px;">
                 <h3 style="margin-bottom: var(--spacing-md); display: flex; justify-content: space-between;">
                     <span>Total</span>
                     <span>RM <?php echo number_format($total, 2); ?></span>
                 </h3>
                 <?php if ($has_stock_issue): ?>
-                    <button class="button-primary" style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>Stock Issues in Bag</button>
+                    <button type="button" class="button-primary" style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>Stock Issues in Bag</button>
                     <p style="font-size: 12px; color: var(--colors-error); margin-top: 12px; text-align: center;">Please remove or adjust items that are out of stock.</p>
                 <?php else: ?>
                     <a href="checkout.php" class="button-primary" style="width: 100%; text-align: center; margin-bottom: 12px;">Proceed to Checkout</a>
                 <?php endif; ?>
-                <a href="../products.php" class="button-secondary" style="width: 100%; text-align: center;">Continue Shopping</a>
+                <a href="../products.php" class="button-secondary" style="width: 100%; text-align: center; margin-top: 12px;">Continue Shopping</a>
             </div>
         </div>
+        </form>
     <?php else: ?>
         <div class="surface-card" style="padding: var(--spacing-xxl); border-radius: var(--rounded-lg); text-align: center;">
             <p style="font-size: 18px; color: var(--colors-muted); margin-bottom: var(--spacing-lg);">Your bag is currently empty.</p>
@@ -92,5 +100,30 @@ include $include_path . 'header.php';
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+function adjustQty(btn, delta, maxStock) {
+    const input = btn.parentElement.querySelector('input[type="number"]');
+    let newVal = parseInt(input.value) + delta;
+    if (newVal > maxStock) {
+        newVal = maxStock;
+        alert('Maximum available stock is ' + maxStock);
+    }
+    if (newVal < 1) newVal = 1;
+    input.value = newVal;
+    document.getElementById('cart-form').submit();
+}
+
+function validateQuantity(input, maxStock) {
+    if (input.value > maxStock) {
+        input.value = maxStock;
+        alert('Maximum available stock is ' + maxStock);
+    }
+    if (input.value < 1) {
+        input.value = 1;
+    }
+    document.getElementById('cart-form').submit();
+}
+</script>
 
 <?php include $include_path . 'footer.php'; ?>
