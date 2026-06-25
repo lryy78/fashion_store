@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/db.php';
+require_once __DIR__ . '/../config/db.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -105,7 +105,7 @@ if (isset($_GET['close_id'])) {
     exit();
 }
 
-require_once 'includes/sidebar.php';
+require_once __DIR__ . '/../includes/sidebar.php';
 
 $enquiries = $pdo->prepare("SELECT * FROM enquiries WHERE user_id = ? ORDER BY created_at DESC");
 $enquiries->execute([$user_id]);
@@ -125,7 +125,7 @@ if ($selected_enquiry_id) {
     }
 }
 
-include 'includes/header.php';
+include __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="dashboard-layout" style="background: var(--colors-canvas); height: 100vh; overflow: hidden;">
@@ -274,4 +274,4 @@ include 'includes/header.php';
 </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

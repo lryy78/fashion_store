@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once 'config/db.php';
-include 'includes/header.php';
+require_once __DIR__ . '/../config/db.php';
+include __DIR__ . '/../includes/header.php';
 
 $selected_gender = $_GET['gender'] ?? '';
 
@@ -471,4 +471,4 @@ if (!$selected_gender) {
     </section>
 <?php endif; ?>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

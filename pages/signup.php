@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/db.php';
+require_once __DIR__ . '/../config/db.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-include 'includes/header.php';
+include __DIR__ . '/../includes/header.php';
 ?>
 
 <div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; background-color: var(--colors-canvas);">
@@ -67,4 +67,4 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

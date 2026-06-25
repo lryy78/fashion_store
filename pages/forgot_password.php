@@ -10,7 +10,7 @@
  */
 
 session_start();
-require_once 'config/db.php';
+require_once __DIR__ . '/../config/db.php';
 
 $step         = 'request';
 $error        = '';
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'reque
 
 // ── Default: show request form (step stays 'request') ────────────────────────
 
-include 'includes/header.php';
+include __DIR__ . '/../includes/header.php';
 ?>
 
 <style>
@@ -204,4 +204,4 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

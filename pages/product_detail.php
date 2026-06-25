@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once 'config/db.php';
-include 'includes/header.php';
+require_once __DIR__ . '/../config/db.php';
+include __DIR__ . '/../includes/header.php';
 
 $product_id = $_GET['id'] ?? 0;
 $stmt = $pdo->prepare("SELECT p.*, c.name as category_name 
@@ -13,7 +13,7 @@ $product = $stmt->fetch();
 
 if (!$product) {
     echo "<div style='text-align: center; padding: 15rem 0;'><h2 style='font-weight: 400; font-family: var(--typography-display-font);'>Piece not found</h2><a href='products.php' class='button-secondary' style='margin-top: 2rem; display: inline-block;'>Return to Collection</a></div>";
-    include 'includes/footer.php';
+    include __DIR__ . '/../includes/footer.php';
     exit();
 }
 
@@ -404,4 +404,4 @@ function toggleSizeChart(show) {
 </script>
 
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

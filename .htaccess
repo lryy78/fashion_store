@@ -1,0 +1,4 @@
+RewriteEngine On
+
+# Route public pages to pages/ folder
+RewriteRule ^(index|products|product_detail|login|signup|forgot_password|help|about_group)\.php$ pages/$1.php [L]

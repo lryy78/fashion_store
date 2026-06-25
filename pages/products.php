@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once 'config/db.php';
-include 'includes/header.php';
+require_once __DIR__ . '/../config/db.php';
+include __DIR__ . '/../includes/header.php';
 
 $search = $_GET['search'] ?? '';
 $category = $_GET['category'] ?? '';
@@ -329,4 +329,4 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
     </main>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>
