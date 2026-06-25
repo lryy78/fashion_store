@@ -15,7 +15,7 @@ $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/fashion_store/assets/css/theme.css">
+    <link rel="stylesheet" href="/fashion_store/assets/css/theme.css?v=3">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/fashion_store/assets/js/main.js" defer></script>
     <style>

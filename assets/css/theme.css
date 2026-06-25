@@ -70,7 +70,7 @@
     /* Legacy Mappings to prevent breaking existing code during transition */
     --primary: var(--colors-primary);
     --primary-light: var(--colors-primary-active);
-    --accent: var(--colors-primary);
+    --accent: var(--colors-primary-active);
     --bg-main: var(--colors-canvas);
     --bg-secondary: var(--colors-surface-card);
     --bg-sidebar: var(--colors-surface-dark);
@@ -178,7 +178,8 @@ textarea:focus {
 
 .button-primary:hover,
 .btn:hover {
-    background-color: var(--colors-primary-active);
+    background-color: var(--colors-primary-active) !important;
+    color: #fff !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(204, 120, 92, 0.2);
 }

@@ -201,6 +201,18 @@ include '../includes/header.php';
 }
 .action-dropdown:hover .dropdown-content { display: block; }
 
+/* Fix bulk actions bar button hover — keeps text white on dark bg */
+#bulk-actions-bar .button-secondary:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #fff !important;
+}
+#bulk-actions-bar .button-secondary[style*="colors-error"]:hover {
+    background: rgba(198, 69, 69, 0.8) !important;
+    border-color: var(--colors-error) !important;
+    color: #fff !important;
+}
+
 .expand-btn {
     cursor: pointer;
     width: 24px;
