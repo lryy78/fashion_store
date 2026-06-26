@@ -79,9 +79,6 @@ include $include_path . 'header.php';
                 <?php for($i=5; $i>=1; $i--): ?>
                     <a href="?rating=<?php echo $i; ?>" class="button-secondary" style="font-size: 12px; padding: 8px 16px; <?php echo $rating_filter == $i ? 'background: var(--colors-ink); color: #fff;' : ''; ?>"><?php echo $i; ?> ★</a>
                 <?php endfor; ?>
-                <?php if ($rating_filter != 'all'): ?>
-                    <a href="reviews.php" class="button-secondary" style="font-size: 12px; padding: 8px 16px; text-decoration: none; margin-left: 8px;">Reset Filter</a>
-                <?php endif; ?>
             </div>
         </header>
 

@@ -248,7 +248,7 @@ include '../includes/header.php';
 
         <!-- Search & Filters -->
         <div class="surface-card" style="padding: 24px; margin-bottom: 32px; border: 1px solid var(--colors-hairline);">
-            <form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 120px; gap: 16px; align-items: flex-end;">
+            <form method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto auto; gap: 16px; align-items: flex-end;">
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 11px;">Search by Name or ID</label>
                     <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="e.g. Jeans or 101" class="form-input" style="padding: 10px;">
@@ -281,9 +281,7 @@ include '../includes/header.php';
                     </select>
                 </div>
                 <button type="submit" class="button-secondary" style="padding: 12px;">Filter</button>
-                <?php if (!empty($search) || $filter_category != 'all' || $filter_stock != 'all' || $filter_status != 'all'): ?>
-                    <a href="products_list.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
-                <?php endif; ?>
+                <a href="products_list.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
             </form>
         </div>
 

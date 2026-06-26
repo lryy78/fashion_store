@@ -31,9 +31,6 @@ $users = $stmt->fetchAll();
             <option value="admin" <?php if($filter_role=='admin') echo 'selected'; ?>>Admin</option>
             <option value="owner" <?php if($filter_role=='owner') echo 'selected'; ?>>Owner</option>
         </select>
-        <?php if (!empty($filter_role)): ?>
-            <a href="accounts.php" class="button-secondary" style="padding: 8px 16px; text-decoration: none; font-size: 12px;">Reset Filter</a>
-        <?php endif; ?>
     </form>
     <table class="data-table">
         <thead>

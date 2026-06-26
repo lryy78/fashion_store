@@ -59,9 +59,6 @@ include $include_path . 'header.php';
                     <a href="orders_monitoring.php?status=refund_requested&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'refund_requested' ? 'badge-pill-dark' : 'badge-pending'; ?>" style="text-decoration: none;">Refund Requested</a>
                     <a href="orders_monitoring.php?status=cancelled&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'cancelled' ? 'badge-pill-dark' : 'badge-error'; ?>" style="text-decoration: none;">Cancelled</a>
                     <a href="orders_monitoring.php?status=refunded&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'refunded' ? 'badge-pill-dark' : 'badge-error'; ?>" style="text-decoration: none;">Refunded</a>
-                    <?php if ($filter_status != 'all' || !empty($search_query)): ?>
-                        <a href="orders_monitoring.php" class="button-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none; margin-left: 8px;">Reset Filters</a>
-                    <?php endif; ?>
                 </div>
             </div>
         </header>

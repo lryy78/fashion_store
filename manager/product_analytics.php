@@ -72,7 +72,7 @@ include '../includes/header.php';
 
         <!-- Filters Bar -->
         <div class="surface-card" style="padding: 24px; margin-bottom: 40px; border: 1px solid var(--colors-hairline);">
-            <form method="GET" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: flex-end;">
+            <form method="GET" style="display: grid; grid-template-columns: repeat(3, 1fr) auto auto; gap: 20px; align-items: flex-end;">
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 11px;">From Date</label>
                     <input type="date" name="start_date" value="<?php echo $start_date; ?>" class="form-input" style="padding: 10px;">
@@ -93,9 +93,7 @@ include '../includes/header.php';
                     </select>
                 </div>
                 <button type="submit" class="button-primary" style="padding: 12px;">Apply Analysis</button>
-                <?php if ($start_date != date('Y-m-d', strtotime('-30 days')) || $end_date != date('Y-m-d') || $filter_category != 'all'): ?>
-                    <a href="product_analytics.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
-                <?php endif; ?>
+                <a href="product_analytics.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
             </form>
         </div>
 
