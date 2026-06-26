@@ -1,5 +1,6 @@
 <?php
 function renderSidebar($role) {
+    // Build the sidebar menu for the requested user role.
     $current_page = basename($_SERVER['PHP_SELF']);
     $menu = [];
     
@@ -35,6 +36,7 @@ function renderSidebar($role) {
         $menu = [
             ['label' => 'My Orders', 'link' => '/fashion_store/buyer/dashboard.php', 'icon' => '📦'],
             ['label' => 'Reviews', 'link' => '/fashion_store/buyer/reviews.php', 'icon' => '⭐'],
+            ['label' => 'Wishlist', 'link' => '/fashion_store/buyer/wishlist.php', 'icon' => '♡'],
             ['label' => 'Vouchers', 'link' => '/fashion_store/buyer/vouchers.php', 'icon' => '🎫'],
             ['label' => 'Settings', 'link' => '/fashion_store/buyer/profile.php', 'icon' => '👤'],
             ['label' => 'Support', 'link' => '/fashion_store/help.php', 'icon' => '💬'],
@@ -45,6 +47,7 @@ function renderSidebar($role) {
     <div class="sidebar">
         <div class="sidebar-logo">HYPETHREAD</div>
         <ul class="sidebar-nav">
+            <?php // Mark the current page as active while rendering each menu item. ?>
             <?php foreach ($menu as $item): 
                 $isActive = ($current_page == basename($item['link']));
             ?>

@@ -1,7 +1,8 @@
-<?php 
+<?php
 require_once __DIR__ . '/sidebar.php'; 
 require_once __DIR__ . '/product_sync.php'; 
 
+// Detect manager visual mode when staff view customer-facing pages.
 $is_manager = (isset($_SESSION['role']) && $_SESSION['role'] == 'manager');
 $is_in_manager_dir = (strpos($_SERVER['PHP_SELF'], '/manager/') !== false);
 $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual_mode']) && $_SESSION['visual_mode'] === true);
@@ -96,6 +97,7 @@ $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual
         <div class="container">
             <div class="nav-left">
                 <?php 
+                // Route the brand logo to the correct dashboard for the current role.
                 $nav_role = $_SESSION['role'] ?? 'guest';
                 $brand_href = '/fashion_store/index.php';
                 if ($nav_role === 'manager') {
@@ -114,6 +116,7 @@ $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual
                     HypeThread
                 </a>
                 <?php
+                // Render role-specific navigation and highlight the active staff page.
                 $nav_role    = $_SESSION['role'] ?? 'guest';
                 $current_uri = $_SERVER['REQUEST_URI'];
                 function nav_active(string $path): string {
@@ -158,15 +161,25 @@ $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual
             <div class="nav-right">
                 <?php if (isset($_SESSION['user_id'])): 
                     $role = $_SESSION['role'];
-                    // Fetch cart count only for buyers
+                    // Load buyer cart and wishlist counters for the header.
                     $cart_count = 0;
+                    $wishlist_count = 0;
                     if ($role == 'buyer') {
                         $cart_stmt = $pdo->prepare("SELECT SUM(quantity) FROM cart WHERE user_id = ?");
                         $cart_stmt->execute([$_SESSION['user_id']]);
                         $cart_count = $cart_stmt->fetchColumn() ?: 0;
+
+                        try {
+                            $wishlist_stmt = $pdo->prepare("SELECT COUNT(*) FROM wishlists WHERE user_id = ?");
+                            $wishlist_stmt->execute([$_SESSION['user_id']]);
+                            $wishlist_count = (int)$wishlist_stmt->fetchColumn();
+                        } catch (PDOException $e) {
+                            $wishlist_count = 0;
+                        }
                     }
                 ?>
                     <?php if ($role == 'buyer'): ?>
+                        <a href="/fashion_store/buyer/wishlist.php" class="button-text-link">Wishlist (<?php echo $wishlist_count; ?>)</a>
                         <a href="/fashion_store/buyer/profile.php" class="button-text-link">Profile</a>
                         <a href="/fashion_store/actions/logout.php" class="button-text-link">Sign out</a>
                         <a href="/fashion_store/buyer/cart.php" class="button-primary">Cart (<?php echo $cart_count; ?>)</a>

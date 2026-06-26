@@ -1,6 +1,7 @@
 -- Upgrade older databases without deleting existing data.
 USE fashion_store;
 
+-- Add columns required by current authentication and product features.
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER phone,
     ADD COLUMN IF NOT EXISTS reset_token VARCHAR(64) DEFAULT NULL AFTER is_active,
@@ -14,6 +15,7 @@ ALTER TABLE products
     ADD COLUMN IF NOT EXISTS publish_at DATETIME DEFAULT NULL AFTER status,
     ADD COLUMN IF NOT EXISTS views INT UNSIGNED NOT NULL DEFAULT 0 AFTER is_featured;
 
+-- Add voucher targeting and usage controls.
 ALTER TABLE vouchers
     ADD COLUMN IF NOT EXISTS min_spend DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER discount_value,
     ADD COLUMN IF NOT EXISTS usage_limit INT UNSIGNED DEFAULT NULL AFTER expiry_date,
@@ -27,6 +29,7 @@ ALTER TABLE vouchers
 ALTER TABLE vouchers
     MODIFY COLUMN target_group ENUM('new','repeat','vip','inactive','reviewers') DEFAULT NULL;
 
+-- Upgrade order lifecycle fields without deleting existing orders.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS voucher_id INT UNSIGNED DEFAULT NULL AFTER user_id;
 UPDATE orders SET status = 'processing' WHERE status = 'cancel_requested';
 ALTER TABLE orders MODIFY COLUMN status ENUM('pending','processing','shipped','completed','refund_requested','cancelled','refunded') NOT NULL DEFAULT 'pending';
@@ -53,6 +56,7 @@ WHERE id IN (
     ) AS duplicate_products
 );
 
+-- Create newer support tables when upgrading an older database.
 CREATE TABLE IF NOT EXISTS system_settings (
     setting_key VARCHAR(50) PRIMARY KEY,
     setting_value TEXT DEFAULT NULL
@@ -69,6 +73,16 @@ CREATE TABLE IF NOT EXISTS system_alerts (
     INDEX idx_alerts_read_priority (is_read, priority),
     INDEX idx_alerts_type_reference (type, reference_id),
     INDEX idx_alerts_created_at (created_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS wishlists (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_wishlist_item (user_id, product_id),
+    INDEX idx_wishlists_user_date (user_id, created_at),
+    INDEX idx_wishlists_product (product_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS faqs (

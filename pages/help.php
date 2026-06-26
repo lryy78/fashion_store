@@ -2,11 +2,13 @@
 session_start();
 require_once __DIR__ . '/../config/db.php';
 
+// Require a signed-in user before opening the support centre.
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
+// Read the current buyer and selected support ticket.
 $user_id = $_SESSION['user_id'];
 $selected_enquiry_id = $_GET['id'] ?? null;
 
@@ -105,12 +107,15 @@ if (isset($_GET['close_id'])) {
     exit();
 }
 
+// Load the buyer dashboard layout and ticket history.
 require_once __DIR__ . '/../includes/sidebar.php';
 
+// Fetch all support tickets owned by the current buyer.
 $enquiries = $pdo->prepare("SELECT * FROM enquiries WHERE user_id = ? ORDER BY created_at DESC");
 $enquiries->execute([$user_id]);
 $enquiries = $enquiries->fetchAll();
 
+// Fetch the selected ticket and its conversation only when it belongs to this buyer.
 $messages = [];
 $current_enquiry = null;
 if ($selected_enquiry_id) {

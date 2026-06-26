@@ -3,14 +3,16 @@ session_start();
 require_once __DIR__ . '/../config/db.php';
 include __DIR__ . '/../includes/header.php';
 
+// Read the optional gender filter used to customise the homepage.
 $selected_gender = $_GET['gender'] ?? '';
 
 // Featured Products Query
 $featured_query = "SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path,
                   COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
-                  (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
-                  FROM products p 
-                  LEFT JOIN categories c ON p.category_id = c.id 
+                  (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count,
+                  COALESCE((SELECT SUM(stock_quantity) FROM product_variations WHERE product_id = p.id), 0) as total_stock
+                  FROM products p
+                  LEFT JOIN categories c ON p.category_id = c.id
                   WHERE is_featured = 1 AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))";
 if ($selected_gender) {
     $featured_query .= " AND p.gender = :gender";
@@ -23,6 +25,7 @@ if ($selected_gender) {
 $stmt->execute();
 $featured_products = $stmt->fetchAll();
 
+// Build a usable image URL from local or remote image paths.
 function productImageUrl(?string $path): string
 {
     if (empty($path)) {
@@ -46,15 +49,16 @@ function productImageUrl(?string $path): string
 // Helper to fetch products by category and gender
 function getProductsByCategory($category_name, $gender = '', $limit = 8) {
     global $pdo;
-    $query = "SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path 
-              FROM products p 
-              LEFT JOIN categories c ON p.category_id = c.id 
+    $query = "SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path,
+              COALESCE((SELECT SUM(stock_quantity) FROM product_variations WHERE product_id = p.id), 0) AS total_stock
+              FROM products p
+              LEFT JOIN categories c ON p.category_id = c.id
               WHERE c.name = :cat AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))";
     if ($gender) {
         $query .= " AND p.gender = :gender";
     }
     $query .= " LIMIT :limit";
-    
+
     $stmt = $pdo->prepare($query);
     $stmt->bindValue(':cat', $category_name);
     if ($gender) {
@@ -68,14 +72,16 @@ function getProductsByCategory($category_name, $gender = '', $limit = 8) {
 // Fetch products for gender sections if on main page
 function getProductsByGender($gender, $limit = 8) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path 
-                          FROM products p 
-                          LEFT JOIN categories c ON p.category_id = c.id 
+    $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path,
+                          COALESCE((SELECT SUM(stock_quantity) FROM product_variations WHERE product_id = p.id), 0) AS total_stock
+                          FROM products p
+                          LEFT JOIN categories c ON p.category_id = c.id
                           WHERE p.gender = ? AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW())) LIMIT ?");
     $stmt->execute([$gender, $limit]);
     return $stmt->fetchAll();
 }
 
+// Load either the main gender collections or category sections for the selected gender.
 if (!$selected_gender) {
     $women_products = getProductsByGender('Women');
     $men_products = getProductsByGender('Men');
@@ -84,6 +90,35 @@ if (!$selected_gender) {
     $tops_products = getProductsByCategory('Tops', $selected_gender);
     $bottoms_products = getProductsByCategory('Bottoms', $selected_gender);
     $acc_products = getProductsByCategory('Accessories', $selected_gender);
+}
+
+// Load the logged-in buyer's saved product IDs for the heart button states.
+$wishlistProductIds = [];
+if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer') {
+    try {
+        $wishlistStmt = $pdo->prepare('SELECT product_id FROM wishlists WHERE user_id = ?');
+        $wishlistStmt->execute([$_SESSION['user_id']]);
+        $wishlistProductIds = array_map('intval', $wishlistStmt->fetchAll(PDO::FETCH_COLUMN));
+    } catch (PDOException $e) {
+        $wishlistProductIds = [];
+    }
+}
+
+// Rebuild recently viewed products in the same order stored in the session.
+$recentHomeProducts = [];
+$recentIds = array_values(array_unique(array_filter(array_map('intval', $_SESSION['recently_viewed_products'] ?? []))));
+if ($recentIds) {
+    $recentIds = array_slice($recentIds, 0, 8);
+    $placeholders = implode(',', array_fill(0, count($recentIds), '?'));
+    $recentStmt = $pdo->prepare("SELECT p.*, c.name AS category_name,
+        (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path,
+        COALESCE((SELECT SUM(stock_quantity) FROM product_variations WHERE product_id = p.id), 0) AS total_stock
+        FROM products p LEFT JOIN categories c ON c.id = p.category_id
+        WHERE p.id IN ($placeholders)
+          AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+        ORDER BY FIELD(p.id, $placeholders)");
+    $recentStmt->execute(array_merge($recentIds, $recentIds));
+    $recentHomeProducts = $recentStmt->fetchAll();
 }
 ?>
 
@@ -276,6 +311,13 @@ if (!$selected_gender) {
     font-weight: 400;
 }
 
+
+.home-wishlist-toggle { position:absolute; top:12px; right:12px; z-index:5; width:38px; height:38px; border-radius:50%; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.92); color:var(--colors-ink); display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; transition:.2s ease; }
+.home-wishlist-toggle:hover,.home-wishlist-toggle.active { background:var(--colors-ink); color:#fff; transform:scale(1.05); }
+.home-stock-badge { position:absolute; left:12px; bottom:12px; z-index:4; padding:5px 9px; border-radius:99px; background:rgba(255,255,255,.92); font-size:10px; font-weight:700; }
+.home-stock-badge.out { color:var(--colors-error); }
+.home-stock-badge.low { color:#9a5b00; }
+
 @media (max-width: 992px) {
     .hero-studio-grid {
         grid-template-columns: 1fr;
@@ -292,11 +334,11 @@ if (!$selected_gender) {
 
 <section class="hero-section-studio" style="padding: 0; position: relative;">
     <div style="height: 80vh; width: 100%; position: relative; overflow: hidden; background: var(--colors-canvas);">
-        <img src="<?php 
+        <img src="<?php
             if ($selected_gender == 'Women') echo 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2000';
             elseif ($selected_gender == 'Men') echo 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=2000';
             elseif ($selected_gender == 'Kids') echo 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?q=80&w=2000';
-            else echo 'assets/img/hero.png'; 
+            else echo 'assets/img/hero.png';
         ?>" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(250, 249, 245, 0.9) 0%, rgba(250, 249, 245, 0) 60%);"></div>
         <div style="position: absolute; top: 50%; left: 10%; transform: translateY(-50%); color: var(--colors-ink);">
@@ -337,6 +379,20 @@ if (!$selected_gender) {
             <?php foreach ($featured_products as $product): ?>
                 <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                     <div class="image-wrapper">
+                        <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                            <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                            </form>
+                        <?php else: ?>
+                            <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                        <?php endif; ?>
+                        <?php if ((int)$product['total_stock'] <= 0): ?>
+                            <span class="home-stock-badge out">Out of stock</span>
+                        <?php elseif ((int)$product['total_stock'] <= 5): ?>
+                            <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                        <?php endif; ?>
                         <img
                             src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                             alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -348,7 +404,7 @@ if (!$selected_gender) {
                         <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
                             <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                                 <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
-                                    <?php 
+                                    <?php
                                     if ($product['review_count'] > 0) {
                                         $avg = round($product['avg_rating'] * 2) / 2;
                                         $full = floor($avg);
@@ -388,6 +444,20 @@ if (!$selected_gender) {
                 <?php foreach ($women_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php else: ?>
+                                <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if (isset($product['total_stock']) && (int)$product['total_stock'] <= 0): ?>
+                                <span class="home-stock-badge out">Out of stock</span>
+                            <?php elseif (isset($product['total_stock']) && (int)$product['total_stock'] <= 5): ?>
+                                <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
                             <img
                                 src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -415,6 +485,20 @@ if (!$selected_gender) {
                 <?php foreach ($men_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php else: ?>
+                                <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if (isset($product['total_stock']) && (int)$product['total_stock'] <= 0): ?>
+                                <span class="home-stock-badge out">Out of stock</span>
+                            <?php elseif (isset($product['total_stock']) && (int)$product['total_stock'] <= 5): ?>
+                                <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
                             <img
                                 src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -442,6 +526,20 @@ if (!$selected_gender) {
                 <?php foreach ($kids_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php else: ?>
+                                <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if (isset($product['total_stock']) && (int)$product['total_stock'] <= 0): ?>
+                                <span class="home-stock-badge out">Out of stock</span>
+                            <?php elseif (isset($product['total_stock']) && (int)$product['total_stock'] <= 5): ?>
+                                <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
                             <img
                                 src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -469,6 +567,20 @@ if (!$selected_gender) {
                 <?php foreach ($tops_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php else: ?>
+                                <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if (isset($product['total_stock']) && (int)$product['total_stock'] <= 0): ?>
+                                <span class="home-stock-badge out">Out of stock</span>
+                            <?php elseif (isset($product['total_stock']) && (int)$product['total_stock'] <= 5): ?>
+                                <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
                             <img
                                 src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -495,6 +607,20 @@ if (!$selected_gender) {
                 <?php foreach ($bottoms_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php else: ?>
+                                <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if (isset($product['total_stock']) && (int)$product['total_stock'] <= 0): ?>
+                                <span class="home-stock-badge out">Out of stock</span>
+                            <?php elseif (isset($product['total_stock']) && (int)$product['total_stock'] <= 5): ?>
+                                <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
                             <img
                                 src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -521,6 +647,20 @@ if (!$selected_gender) {
                 <?php foreach ($acc_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php<?php echo $selected_gender ? '?gender=' . urlencode($selected_gender) : ''; ?>">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php else: ?>
+                                <a class="home-wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if (isset($product['total_stock']) && (int)$product['total_stock'] <= 0): ?>
+                                <span class="home-stock-badge out">Out of stock</span>
+                            <?php elseif (isset($product['total_stock']) && (int)$product['total_stock'] <= 5): ?>
+                                <span class="home-stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
                             <img
                                 src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
                                 alt="<?php echo htmlspecialchars($product['name']); ?>"
@@ -530,6 +670,38 @@ if (!$selected_gender) {
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
                             <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+<?php endif; ?>
+
+<?php if ($recentHomeProducts): ?>
+    <section style="padding:80px 0;background:#fff;">
+        <div class="container">
+            <div class="section-header-studio">
+                <h2>Recently Viewed</h2>
+                <a href="products.php" style="font-size:14px;font-weight:600;text-decoration:underline;">Browse Collection</a>
+            </div>
+            <div class="product-grid-horizontal">
+                <?php foreach ($recentHomeProducts as $product): ?>
+                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo (int)$product['id']; ?>'">
+                        <div class="image-wrapper">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../index.php">
+                                    <button type="submit" class="home-wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" aria-label="Toggle wishlist"><?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?></button>
+                                </form>
+                            <?php endif; ?>
+                            <img src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        </div>
+                        <div class="meta">
+                            <div class="cat"><?php echo htmlspecialchars($product['category_name'] ?? 'Collection'); ?></div>
+                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                            <div class="price">RM <?php echo number_format((float)($product['discount_price'] ?: $product['price']), 2); ?></div>
                         </div>
                     </div>
                 <?php endforeach; ?>

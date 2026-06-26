@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/db.php';
 
+// Validate the requested image record ID.
 $imageId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
+// Return a local fallback image whenever the requested image cannot be served.
 function showFallback(): never
 {
     $fallback = __DIR__ . '/assets/img/dress.png';
@@ -24,6 +26,7 @@ if (!$imageId || $imageId < 1) {
     showFallback();
 }
 
+// Load the requested image record from the database.
 try {
     $stmt = $pdo->prepare(
         'SELECT image_path, image_data, mime_type
@@ -57,6 +60,7 @@ try {
         exit;
     }
 
+    // Normalize and validate local image paths before reading the file.
     $path = str_replace('\\', '/', $path);
     $path = preg_replace('#^/?fashion_store/#i', '', $path);
     $path = ltrim($path, '/');
@@ -73,6 +77,7 @@ try {
         showFallback();
     }
 
+    // Send the correct content type and cache headers to the browser.
     $mimeType = mime_content_type($fullPath);
     if ($mimeType === false || strpos($mimeType, 'image/') !== 0) {
         showFallback();

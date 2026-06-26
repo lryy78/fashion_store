@@ -2,6 +2,7 @@
 CREATE DATABASE IF NOT EXISTS fashion_store CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE fashion_store;
 
+-- Core account and product catalogue tables.
 CREATE TABLE IF NOT EXISTS users (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS product_images (
     INDEX idx_images_product (product_id)
 ) ENGINE=InnoDB;
 
+-- Promotion, order, cart, wishlist, support, review, and system tables.
 CREATE TABLE IF NOT EXISTS vouchers (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(20) NOT NULL UNIQUE,
@@ -123,6 +125,16 @@ CREATE TABLE IF NOT EXISTS cart (
     CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_cart_variation FOREIGN KEY (variation_id) REFERENCES product_variations(id) ON DELETE CASCADE,
     UNIQUE KEY uq_cart_item (user_id, variation_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS wishlists (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_wishlist_item (user_id, product_id),
+    INDEX idx_wishlists_user_date (user_id, created_at),
+    INDEX idx_wishlists_product (product_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS enquiries (

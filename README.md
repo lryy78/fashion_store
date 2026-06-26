@@ -9,6 +9,10 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
 - **Media Library**: Integrated image management with database-stored BLOBs for high portability.
 - **Dynamic Dashboards**: Real-time business insights and revenue reporting.
 - **Voucher System**: Marketing tools for creating and distributing targeted vouchers.
+- **Buyer Wishlist**: Save products, remove saved items, and move available items to the cart.
+- **Professional Catalogue Sorting**: Sort by newest, popularity, rating, price, or product name.
+- **Personalized Discovery**: Related products and session-based recently viewed products.
+- **Improved Product Decisions**: Dynamic stock indicators, detailed size guides, and review summaries.
 
 ## 🛠️ Tech Stack
 
@@ -28,9 +32,9 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
    - Open the **XAMPP Control Panel**.
    - Start **Apache** and **MySQL**.
 3. **Setup Database**:
-   - Go to `http://localhost/phpmyadmin`.
-   - Create a new database named **`fashion_store`**.
-   - Import **`database/schema.sql`**, then **`database/migrations/001_compatibility.sql`**, and finally **`database/seed.sql`**.
+   - Open `http://localhost/fashion_store/setup_db.php` in your browser.
+   - The installer creates/updates the **`fashion_store`** database and loads the demo data automatically.
+   - Existing databases are upgraded safely through `database/migrations/001_compatibility.sql`.
 4. **Run the Application**:
    - Open your browser and navigate to: **`http://localhost/fashion_store/`**.
 

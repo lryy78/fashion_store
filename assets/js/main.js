@@ -1,3 +1,4 @@
+// Wait until the page markup is ready before attaching shared interactions.
 document.addEventListener('DOMContentLoaded', function() {
     // 1. Notification System
     function showNotification(message, type = 'success') {

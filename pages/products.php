@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../config/db.php';
 include __DIR__ . '/../includes/header.php';
 
+// Read catalogue filters and sorting options from the URL.
 $search = $_GET['search'] ?? '';
 $category = $_GET['category'] ?? '';
 $min_price = $_GET['min_price'] ?? 0;
@@ -13,17 +14,26 @@ $selected_gender = $_GET['gender'] ?? '';
 $in_stock = isset($_GET['in_stock']);
 $on_sale = isset($_GET['on_sale']);
 
-$sort_rating = $_GET['sort_rating'] ?? '';
+$sort = $_GET['sort'] ?? ($_GET['sort_rating'] ?? 'newest');
 
-$query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+// Build the base catalogue query with image, rating, stock, and sales data.
+$query = "SELECT p.*, c.name as category_name,
+          (SELECT id FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) as image_id,
           COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
-          (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
+          (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count,
+          COALESCE((SELECT SUM(stock_quantity) FROM product_variations WHERE product_id = p.id), 0) as total_stock,
+          COALESCE((SELECT SUM(oi.quantity)
+                    FROM order_items oi
+                    JOIN product_variations opv ON opv.id = oi.variation_id
+                    JOIN orders o ON o.id = oi.order_id
+                    WHERE opv.product_id = p.id AND o.status NOT IN ('cancelled','refunded')), 0) as sales_count
           FROM products p 
           LEFT JOIN categories c ON p.category_id = c.id 
           LEFT JOIN product_variations pv ON p.id = pv.product_id
           WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))";
 $params = [];
 
+// Add only the filters selected by the buyer using prepared statement parameters.
 if ($search) {
     $query .= " AND p.name LIKE ?";
     $params[] = "%$search%";
@@ -51,23 +61,62 @@ if ($on_sale) {
     $query .= " AND p.discount_price IS NOT NULL";
 }
 
+// Always apply the selected price range.
 $query .= " AND p.price BETWEEN ? AND ?";
 $params[] = $min_price;
 $params[] = $max_price;
 
 $query .= " GROUP BY p.id";
 
-// Apply rating sort
-if ($sort_rating === 'high') {
-    $query .= " ORDER BY avg_rating DESC, review_count DESC";
-} elseif ($sort_rating === 'low') {
-    $query .= " ORDER BY avg_rating ASC, review_count DESC";
+// Professional catalogue sorting.
+switch ($sort) {
+    case 'price_asc':
+        $query .= " ORDER BY COALESCE(p.discount_price, p.price) ASC, p.name ASC";
+        break;
+    case 'price_desc':
+        $query .= " ORDER BY COALESCE(p.discount_price, p.price) DESC, p.name ASC";
+        break;
+    case 'name_asc':
+        $query .= " ORDER BY p.name ASC";
+        break;
+    case 'rating':
+    case 'high':
+        $query .= " ORDER BY avg_rating DESC, review_count DESC, p.created_at DESC";
+        break;
+    case 'popular':
+        $query .= " ORDER BY sales_count DESC, p.views DESC, p.created_at DESC";
+        break;
+    case 'oldest':
+        $query .= " ORDER BY p.created_at ASC";
+        break;
+    case 'newest':
+    default:
+        $query .= " ORDER BY p.created_at DESC, p.id DESC";
+        break;
 }
 
+// Execute the final query and load matching products.
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
 
+// Load saved product IDs so the catalogue can show active wishlist hearts.
+$wishlistProductIds = [];
+if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer') {
+    try {
+        $wishlistStmt = $pdo->prepare('SELECT product_id FROM wishlists WHERE user_id = ?');
+        $wishlistStmt->execute([$_SESSION['user_id']]);
+        $wishlistProductIds = array_map('intval', $wishlistStmt->fetchAll(PDO::FETCH_COLUMN));
+    } catch (PDOException $e) {
+        $wishlistProductIds = [];
+    }
+}
+
+// Display a one-time wishlist status message after redirects.
+$wishlistMessage = $_SESSION['wishlist_message'] ?? '';
+unset($_SESSION['wishlist_message']);
+
+// Load database values used by the filter dropdowns.
 $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
 $all_colors = $pdo->query("SELECT DISTINCT color FROM product_variations WHERE color IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN);
 $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE size IS NOT NULL")->fetchAll(PDO::FETCH_COLUMN);
@@ -194,6 +243,18 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
     text-decoration: line-through;
 }
 
+
+.wishlist-toggle {
+    position:absolute; top:12px; right:12px; z-index:12;
+    width:38px; height:38px; border-radius:50%; border:1px solid rgba(0,0,0,.12);
+    background:rgba(255,255,255,.92); display:flex; align-items:center; justify-content:center;
+    font-size:21px; cursor:pointer; transition:all .2s ease; color:var(--colors-ink);
+}
+.wishlist-toggle:hover,.wishlist-toggle.active { background:var(--colors-ink); color:#fff; transform:scale(1.06); }
+.stock-badge { position:absolute; left:12px; bottom:12px; z-index:11; padding:5px 9px; border-radius:100px; font-size:10px; font-weight:700; letter-spacing:.04em; background:rgba(255,255,255,.92); }
+.stock-badge.low { color:#9a5b00; }
+.stock-badge.out { color:var(--colors-error); }
+
 @media (max-width: 768px) {
     .shop-layout {
         flex-direction: column;
@@ -215,6 +276,14 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
         <p style="font-size: 18px; color: var(--colors-muted); max-width: 600px;">Discover our meticulously curated selection of ready-to-wear pieces, accessories, and timeless essentials.</p>
     </div>
 </div>
+
+<?php if ($wishlistMessage): ?>
+    <div class="container" style="padding-top:24px;">
+        <div style="padding:12px 16px;background:var(--colors-surface-soft);border:1px solid var(--colors-hairline);border-radius:var(--rounded-md);font-size:13px;">
+            <?php echo htmlspecialchars($wishlistMessage); ?>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="container shop-layout">
     <aside class="filter-sidebar">
@@ -294,16 +363,20 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
             </div>
 
             <div class="filter-group" style="margin-bottom: 32px;">
-                <h4>Sort by Rating</h4>
-                <select name="sort_rating" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
-                    <option value="" <?php echo $sort_rating == '' ? 'selected' : ''; ?>>Default</option>
-                    <option value="high" <?php echo $sort_rating == 'high' ? 'selected' : ''; ?>>Highest Rated</option>
-                    <option value="low" <?php echo $sort_rating == 'low' ? 'selected' : ''; ?>>Lowest Rated</option>
+                <h4>Sort By</h4>
+                <select name="sort" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
+                    <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>Newest Arrivals</option>
+                    <option value="popular" <?php echo $sort === 'popular' ? 'selected' : ''; ?>>Most Popular</option>
+                    <option value="rating" <?php echo in_array($sort, ['rating','high'], true) ? 'selected' : ''; ?>>Highest Rated</option>
+                    <option value="price_asc" <?php echo $sort === 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
+                    <option value="price_desc" <?php echo $sort === 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
+                    <option value="name_asc" <?php echo $sort === 'name_asc' ? 'selected' : ''; ?>>Name: A–Z</option>
+                    <option value="oldest" <?php echo $sort === 'oldest' ? 'selected' : ''; ?>>Oldest First</option>
                 </select>
             </div>
 
             <button type="submit" class="button-primary" style="width: 100%; padding: 16px;">Apply Filters</button>
-            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $on_sale || $sort_rating): ?>
+            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $on_sale || $sort !== 'newest'): ?>
                 <a href="products.php" style="display: block; text-align: center; margin-top: 16px; font-size: 13px; text-decoration: underline; color: var(--colors-muted);">Reset Filters</a>
             <?php endif; ?>
         </form>
@@ -323,7 +396,23 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                             <?php if ($product['discount_price']): ?>
                                 <div class="sale-badge">Sale</div>
                             <?php endif; ?>
-                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <?php if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'buyer'): ?>
+                                <form method="post" action="actions/toggle_wishlist.php" onclick="event.stopPropagation();">
+                                    <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>">
+                                    <input type="hidden" name="return_to" value="../products.php?<?php echo htmlspecialchars(http_build_query($_GET)); ?>">
+                                    <button class="wishlist-toggle <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'active' : ''; ?>" type="submit" aria-label="Toggle wishlist" title="<?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? 'Remove from wishlist' : 'Save to wishlist'; ?>">
+                                        <?php echo in_array((int)$product['id'], $wishlistProductIds, true) ? '♥' : '♡'; ?>
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <a class="wishlist-toggle" href="login.php?msg=<?php echo urlencode('Please sign in to save products.'); ?>" onclick="event.stopPropagation();" aria-label="Sign in to use wishlist">♡</a>
+                            <?php endif; ?>
+                            <?php if ((int)$product['total_stock'] <= 0): ?>
+                                <span class="stock-badge out">Out of stock</span>
+                            <?php elseif ((int)$product['total_stock'] <= 5): ?>
+                                <span class="stock-badge low">Only <?php echo (int)$product['total_stock']; ?> left</span>
+                            <?php endif; ?>
+                            <img src="get_image.php?id=<?php echo (int)$product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>

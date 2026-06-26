@@ -2,6 +2,7 @@
 -- Demo password: password123
 USE fashion_store;
 
+-- Insert reusable catalogue categories.
 INSERT INTO categories (name, description) VALUES
  ('Tops','T-shirts, blouses, shirts, and knitwear'),
  ('Bottoms','Jeans, trousers, skirts, and shorts'),
@@ -11,6 +12,7 @@ INSERT INTO categories (name, description) VALUES
  ('Loungewear','Comfortable clothing for home and travel')
 ON DUPLICATE KEY UPDATE description=VALUES(description);
 
+-- Insert demo accounts only when they do not already exist.
 INSERT INTO users (username, email, password, role, full_name, is_active)
 SELECT 'buyer_demo','buyer@example.com','$2y$10$W1tv6uVIGgGjGSqsCUi0n.IF1W3Q2Ep/qikAOT2td0YQZL/.apDR2','buyer','Demo Buyer',1
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username='buyer_demo' OR email='buyer@example.com');
@@ -29,6 +31,7 @@ UPDATE users SET password='$2y$10$W1tv6uVIGgGjGSqsCUi0n.IF1W3Q2Ep/qikAOT2td0YQZL
 UPDATE users SET password='$2y$10$W1tv6uVIGgGjGSqsCUi0n.IF1W3Q2Ep/qikAOT2td0YQZL/.apDR2', role='admin', full_name='Demo Administrator', is_active=1 WHERE username='admin_demo';
 UPDATE users SET password='$2y$10$W1tv6uVIGgGjGSqsCUi0n.IF1W3Q2Ep/qikAOT2td0YQZL/.apDR2', role='owner', full_name='Demo Owner', is_active=1 WHERE username='owner_demo';
 
+-- Use temporary tables to keep product, variation, and image seeding repeatable.
 DROP TEMPORARY TABLE IF EXISTS seed_products;
 CREATE TEMPORARY TABLE seed_products (
  category_name VARCHAR(50), name VARCHAR(100), description TEXT,
@@ -45,8 +48,8 @@ INSERT INTO seed_products VALUES
  ('Accessories','Leather Briefcase','A structured leather briefcase for work and travel.',195.00,96.00,'Men',1),
  ('Outerwear','Harrington Jacket','A lightweight cotton Harrington jacket.',110.00,54.00,'Men',1),
  ('Tops','Animal Print Tee','A soft jersey tee with a playful animal print.',20.00,8.00,'Kids',1),
- ('Bottoms','Stretch Denim Overalls','Adjustable denim overalls for active kids.',40.00,18.00,'Kids',1),
- ('Accessories','Colourful Backpack','A lightweight school and travel backpack.',30.00,13.00,'Kids',1);
+ ('Bottoms','Stretchy Denim Overalls','Adjustable denim overalls for active kids.',40.00,18.00,'Kids',1),
+ ('Accessories','Colorful Backpack','A lightweight school and travel backpack.',30.00,13.00,'Kids',1);
 
 INSERT INTO products (category_id, name, description, price, cost_price, gender, status, is_featured)
 SELECT c.id, s.name, s.description, s.price, s.cost_price, s.gender, 'published', s.featured
@@ -74,8 +77,8 @@ INSERT INTO seed_variations VALUES
  ('Leather Briefcase','Men','One Size','Black',6),
  ('Harrington Jacket','Men','M','Navy',6),('Harrington Jacket','Men','L','Navy',5),('Harrington Jacket','Men','XL','Black',2),
  ('Animal Print Tee','Kids','S','White',14),('Animal Print Tee','Kids','M','Green',12),('Animal Print Tee','Kids','L','Blue',10),
- ('Stretch Denim Overalls','Kids','S','Blue',8),('Stretch Denim Overalls','Kids','M','Blue',9),('Stretch Denim Overalls','Kids','L','Blue',6),
- ('Colourful Backpack','Kids','One Size','Red',11),('Colourful Backpack','Kids','One Size','Blue',8);
+ ('Stretchy Denim Overalls','Kids','S','Blue',8),('Stretchy Denim Overalls','Kids','M','Blue',9),('Stretchy Denim Overalls','Kids','L','Blue',6),
+ ('Colorful Backpack','Kids','One Size','Red',11),('Colorful Backpack','Kids','One Size','Blue',8);
 
 INSERT INTO product_variations (product_id, size, color, stock_quantity)
 SELECT p.id, s.size, s.color, s.stock
@@ -118,10 +121,10 @@ INSERT INTO seed_images VALUES
  ('Harrington Jacket','Men','assets/img/harrington_2.jpg'),
  ('Animal Print Tee','Kids','assets/img/animal_tee_1.jpg'),
  ('Animal Print Tee','Kids','assets/img/animal_tee_2.jpg'),
- ('Stretch Denim Overalls','Kids','assets/img/denim_overalls_1.jpg'),
- ('Stretch Denim Overalls','Kids','assets/img/denim_overalls_2.jpg'),
- ('Colourful Backpack','Kids','assets/img/backpack_1.png'),
- ('Colourful Backpack','Kids','assets/img/backpack_2.jpg');
+ ('Stretchy Denim Overalls','Kids','assets/img/denim_overalls_1.jpg'),
+ ('Stretchy Denim Overalls','Kids','assets/img/denim_overalls_2.jpg'),
+ ('Colorful Backpack','Kids','assets/img/backpack_1.png'),
+ ('Colorful Backpack','Kids','assets/img/backpack_2.jpg');
 
 -- Keep the preloaded image mapping deterministic when setup_db.php is rerun.
 DELETE pi
@@ -135,6 +138,7 @@ FROM seed_images s
 JOIN products p ON p.name = s.product_name AND p.gender = s.gender
 ORDER BY p.id, s.image_path;
 
+-- Insert reusable vouchers, settings, and FAQ content.
 INSERT INTO vouchers (code, discount_type, discount_value, min_spend, expiry_date, is_one_time, is_active, target_type) VALUES
  ('WELCOME10','percentage',10.00,50.00,'2027-12-31',1,1,'all'),
  ('SAVE20','fixed',20.00,120.00,'2027-12-31',1,1,'all')
