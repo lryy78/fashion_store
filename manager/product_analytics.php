@@ -101,90 +101,196 @@ include '../includes/header.php';
             </form>
         </div>
 
-        <div style="margin-bottom: 32px;">
-            <!-- Top Selling Chart -->
-            <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Top Selling Products (Volume) — <?php echo date('M Y', strtotime($start_date)); ?> to <?php echo date('M Y', strtotime($end_date)); ?></h3>
-                <canvas id="topSellingChart" height="250"></canvas>
+        <!-- Row 1: Top Selling (Doughnut) + Most Viewed (Bar) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <!-- Top Selling Doughnut -->
+            <div class="surface-card" style="padding: 24px; display: flex; flex-direction: column;">
+                <h3 style="font-size: 16px; margin-bottom: 16px;">Top Selling Products</h3>
+                <div style="position: relative; flex-grow: 1; min-height: 0; height: 280px;">
+                    <canvas id="topSellingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Most Viewed Bar Chart -->
+            <div class="surface-card" style="padding: 24px; display: flex; flex-direction: column;">
+                <h3 style="font-size: 16px; margin-bottom: 16px;">Most Viewed Products</h3>
+                <div style="position: relative; flex-grow: 1; min-height: 0; height: 280px;">
+                    <canvas id="mostViewedChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-            <!-- Most Viewed List -->
-            <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Product Interest (Most Viewed) — <?php echo date('M Y', strtotime($start_date)); ?> to <?php echo date('M Y', strtotime($end_date)); ?></h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th style="text-align: right;">Views</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($most_viewed as $p): ?>
-                            <tr>
-                                <td style="font-weight: 500;"><?php echo htmlspecialchars($p['name']); ?></td>
-                                <td style="text-align: right; font-family: var(--typography-code-font);"><?php echo number_format($p['views']); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Conversion Rate (Low Conversion) -->
-            <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Low Conversion Items (Action Needed) — <?php echo date('M Y', strtotime($start_date)); ?> to <?php echo date('M Y', strtotime($end_date)); ?></h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Conv. Rate</th>
-                            <th style="text-align: right;">Sales/Views</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($low_conversion as $p): ?>
-                            <tr>
-                                <td style="font-weight: 500;"><?php echo htmlspecialchars($p['name']); ?></td>
-                                <td>
-                                    <div style="width: 100px; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
-                                        <div style="width: <?php echo min(100, $p['conversion_rate'] * 5); ?>%; height: 100%; background: var(--colors-error);"></div>
-                                    </div>
-                                </td>
-                                <td style="text-align: right; font-size: 12px; color: var(--colors-muted);">
-                                    <?php echo $p['total_sold']; ?> / <?php echo $p['views']; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <p style="font-size: 11px; color: var(--colors-muted); margin-top: 20px;">* Showing products with >10 views and lowest checkout rates.</p>
+        <!-- Row 2: Low Conversion (Horizontal Bar) -->
+        <div style="margin-bottom: 24px;">
+            <div class="surface-card" style="padding: 24px; display: flex; flex-direction: column;">
+                <h3 style="font-size: 16px; margin-bottom: 16px;">Low Conversion Items (Action Needed)</h3>
+                <p style="font-size: 11px; color: var(--colors-muted); margin-bottom: 12px;">Products with >10 views and lowest checkout rates. Conversion = (Sales ÷ Views) × 100</p>
+                <div style="position: relative; height: 250px;">
+                    <canvas id="lowConversionChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Top Selling Chart
+// === Top Selling Doughnut ===
 const topSellingCtx = document.getElementById('topSellingChart').getContext('2d');
 new Chart(topSellingCtx, {
-    type: 'bar',
+    type: 'doughnut',
     data: {
         labels: <?php echo json_encode(array_column($top_selling, 'name')); ?>,
         datasets: [{
-            label: 'Units Sold',
-            data: <?php echo json_encode(array_column($top_selling, 'total_sold')); ?>,
-            backgroundColor: '#ff6b6b',
-            borderRadius: 6
+            data: <?php echo json_encode(array_map('intval', array_column($top_selling, 'total_sold'))); ?>,
+            backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#ff9ff3'],
+            borderWidth: 2,
+            hoverOffset: 8
         }]
     },
     options: {
-        indexAxis: 'y',
-        plugins: { legend: { display: false } },
-        scales: { x: { grid: { display: false } }, y: { grid: { display: false } } }
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { padding: 14, font: { size: 11 }, usePointStyle: true, pointStyle: 'circle' }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.label + ': ' + ctx.parsed + ' units';
+                    }
+                }
+            }
+        }
     }
 });
 
+// Helper: wrap long labels into multi-line arrays for Chart.js
+function wrapLabel(str, maxWidth) {
+    if (str.length <= maxWidth) return str;
+    const words = str.split(' ');
+    const lines = [];
+    let current = '';
+    words.forEach(w => {
+        if ((current + ' ' + w).trim().length > maxWidth) {
+            lines.push(current.trim());
+            current = w;
+        } else {
+            current = (current + ' ' + w).trim();
+        }
+    });
+    if (current) lines.push(current.trim());
+    return lines;
+}
+
+// === Most Viewed Bar ===
+const mostViewedCtx = document.getElementById('mostViewedChart').getContext('2d');
+new Chart(mostViewedCtx, {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode(array_column($most_viewed, 'name')); ?>.map(l => wrapLabel(l, 16)),
+        datasets: [{
+            label: 'Page Views',
+            data: <?php echo json_encode(array_map('intval', array_column($most_viewed, 'views'))); ?>,
+            backgroundColor: ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'],
+            borderRadius: 6,
+            barPercentage: 0.6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.parsed.x.toLocaleString() + ' views';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { size: 11 } }
+            },
+            y: {
+                grid: { display: false },
+                ticks: {
+                    font: { size: 11 },
+                    autoSkip: false
+                }
+            }
+        }
+    }
+});
+
+// === Low Conversion Horizontal Bar ===
+const lowConvCtx = document.getElementById('lowConversionChart').getContext('2d');
+new Chart(lowConvCtx, {
+    type: 'bar',
+    data: {
+        labels: <?php echo json_encode(array_column($low_conversion, 'name')); ?>.map(l => wrapLabel(l, 14)),
+        datasets: [
+            {
+                label: 'Views',
+                data: <?php echo json_encode(array_map('intval', array_column($low_conversion, 'views'))); ?>,
+                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.5
+            },
+            {
+                label: 'Sales',
+                data: <?php echo json_encode(array_map('intval', array_column($low_conversion, 'total_sold'))); ?>,
+                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                borderColor: '#ef4444',
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.5
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                align: 'end',
+                labels: { padding: 16, font: { size: 11 }, usePointStyle: true, pointStyle: 'circle' }
+            },
+            tooltip: {
+                callbacks: {
+                    afterBody: function(ctx) {
+                        const idx = ctx[0].dataIndex;
+                        const rates = <?php echo json_encode(array_map(function($p) { return round($p['conversion_rate'], 2); }, $low_conversion)); ?>;
+                        return 'Conversion: ' + rates[idx] + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: {
+                    font: { size: 11 },
+                    autoSkip: false,
+                    maxRotation: 0
+                }
+            },
+            y: {
+                grid: { color: 'rgba(0,0,0,0.04)' },
+                ticks: { font: { size: 11 } }
+            }
+        }
+    }
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>

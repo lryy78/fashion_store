@@ -18,19 +18,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $size_chart = $_POST['size_chart'];
     $price = $_POST['price'];
     $status = $_POST['status'];
-    $publish_at = !empty($_POST['publish_at']) ? $_POST['publish_at'] : null;
     $is_featured = isset($_POST['is_featured']) ? 1 : 0;
 
-    if ($publish_at && strtotime($publish_at) < strtotime(date('Y-m-d H:i'))) {
-        $error_message = 'Release date and time cannot be before the current date and time.';
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO products (name, category_id, gender, description, size_chart, price, status, publish_at, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $category_id, $gender, $description, $size_chart, $price, $status, $publish_at, $is_featured]);
-        $product_id = $pdo->lastInsertId();
+    $stmt = $pdo->prepare("INSERT INTO products (name, category_id, gender, description, size_chart, price, status, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$name, $category_id, $gender, $description, $size_chart, $price, $status, $is_featured]);
+    $product_id = $pdo->lastInsertId();
 
-        header("Location: manage_variations.php?id=" . $product_id);
-        exit();
+    if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] == 0) {
+        $target_dir = "../assets/uploads/products/";
+        if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
+        $db_dir = "assets/uploads/products/";
+        $file_extension = pathinfo($_FILES["image_file"]["name"], PATHINFO_EXTENSION);
+        $new_filename = "prod_" . time() . "_" . uniqid() . "." . $file_extension;
+        $target_file = $target_dir . $new_filename;
+        
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (in_array(strtolower($file_extension), $allowed_types)) {
+            if (move_uploaded_file($_FILES["image_file"]["tmp_name"], $target_file)) {
+                $image_path = $db_dir . $new_filename;
+                $content = file_get_contents($target_file);
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->buffer($content);
+                
+                $stmt = $pdo->prepare("INSERT INTO product_images (product_id, image_path, image_data, mime_type) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$product_id, $image_path, $content, $mime]);
+            }
+        }
     }
+
+    header("Location: manage_variations.php?id=" . $product_id);
+    exit();
 }
 
 $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
@@ -48,175 +65,118 @@ include $include_path . 'header.php';
             <h1 style="margin: 0; font-size: 40px;">Add New Piece</h1>
         </header>
 
-        <div class="surface-card" style="max-width: 900px; padding: 40px; border: 1px solid var(--colors-hairline);">
-            <h3 style="font-size: 18px; margin-bottom: 32px; border-bottom: 1px solid var(--colors-hairline-soft); padding-bottom: 16px;">Product Specification</h3>
-            <?php if ($error_message): ?>
-                <div style="margin-bottom: 24px; padding: 14px 16px; border: 1px solid var(--colors-error); color: var(--colors-error); background: #fff;">
-                    <?php echo htmlspecialchars($error_message); ?>
-                </div>
-            <?php endif; ?>
-            <form method="POST">
-                <div class="form-group">
-                    <label class="form-label">Piece Name</label>
-                    <input type="text" name="name" placeholder="e.g. Silk Evening Blouse" required class="form-input">
-                </div>
+        <?php if ($error_message): ?>
+            <div style="margin-bottom: 24px; padding: 14px 16px; border: 1px solid var(--colors-error); color: var(--colors-error); background: #fff;">
+                <?php echo htmlspecialchars($error_message); ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start;">
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select name="category_id" required class="form-input">
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Price (RM)</label>
-                        <input type="number" name="price" step="0.01" placeholder="0.00" required class="form-input">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Gender Focus</label>
-                        <select name="gender" required class="form-input">
-                            <option value="Unisex">Unisex Focus</option>
-                            <option value="Men">Men's Collection</option>
-                            <option value="Women" selected>Women's Collection</option>
-                            <option value="Kids">Kids' Collection</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Description & Narrative</label>
-                    <textarea name="description" rows="6" placeholder="Describe the material, fit, and story of this piece..." class="form-input"></textarea>
-                </div>
-
-                <div style="background: var(--colors-surface-soft); padding: 24px; border-radius: 12px; margin: 32px 0; border: 1px solid var(--colors-hairline-soft);">
-                    <h4 style="margin-top: 0; color: var(--colors-ink); text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; margin-bottom: 20px;">Publishing & Lifecycle</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <!-- Main Content Column -->
+                <div style="display: flex; flex-direction: column; gap: 32px;">
+                    <!-- Basic Info Card -->
+                    <div class="surface-card" style="padding: 32px; border: 1px solid var(--colors-hairline); margin: 0;">
+                        <h3 style="font-size: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--colors-hairline-soft); padding-bottom: 12px;">Basic Information</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Piece Name</label>
+                            <input type="text" name="name" placeholder="e.g. Silk Evening Blouse" required class="form-input">
+                        </div>
+                        
                         <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Description & Narrative</label>
+                            <textarea name="description" rows="8" placeholder="Describe the material, fit, and story of this piece..." class="form-input"></textarea>
+                        </div>
+
+                        <div class="form-group" style="margin: 0; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--colors-hairline-soft);">
+                            <label class="form-label">Main Product Image (Optional)</label>
+                            <input type="file" name="image_file" accept="image/*" class="form-input" style="padding: 8px;">
+                            <p style="font-size: 12px; color: var(--colors-muted); margin-top: 8px;">You can upload additional images later in the Media Gallery.</p>
+                        </div>
+                    </div>
+
+                    <!-- Size Architecture Card -->
+                    <div class="surface-card" style="padding: 32px; border: 1px solid var(--colors-hairline); margin: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--colors-hairline-soft); padding-bottom: 12px;">
+                            <h3 style="font-size: 16px; margin: 0;">Size Details & Fit</h3>
+                            <button type="button" onclick="applyDefaultGuide()" class="button-secondary" style="font-size: 11px; padding: 4px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Use Template</button>
+                        </div>
+                        <textarea id="size_guide_area" name="size_chart" rows="6" class="form-input" style="font-family: var(--typography-code-font); font-size: 12px; line-height: 1.6; margin: 0;" placeholder="Add size measurements or apply a template..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Sidebar Column -->
+                <div style="display: flex; flex-direction: column; gap: 32px;">
+                    <!-- Publishing & Status Card -->
+                    <div class="surface-card" style="padding: 24px; border: 1px solid var(--colors-hairline); margin: 0;">
+                        <h3 style="font-size: 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--colors-muted);">Publishing & Status</h3>
+                        
+                        <div class="form-group">
                             <label class="form-label">Lifecycle Status</label>
                             <select name="status" class="form-input">
-                                <option value="published">Published Immediately</option>
-                                <option value="draft" selected>Save as Draft</option>
-                                <option value="scheduled">Scheduled Release</option>
+                                <option value="published">Published</option>
+                                <option value="draft" selected>Draft</option>
                             </select>
                         </div>
+                        
+                        <div class="form-group" style="display: flex; align-items: flex-start; gap: 12px; margin: 0; padding-top: 16px; border-top: 1px solid var(--colors-hairline-soft);">
+                            <input type="checkbox" name="is_featured" id="is_featured" style="width: 18px; height: 18px; accent-color: var(--colors-accent-coral); margin-top: 2px;">
+                            <label for="is_featured" class="form-label" style="margin: 0; font-weight: 500; line-height: 1.4;">Highlight as Featured Piece</label>
+                        </div>
+                    </div>
+
+                    <!-- Organization Card -->
+                    <div class="surface-card" style="padding: 24px; border: 1px solid var(--colors-hairline); margin: 0;">
+                        <h3 style="font-size: 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--colors-muted);">Organization</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select name="category_id" required class="form-input">
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
                         <div class="form-group" style="margin: 0;">
-                            <label class="form-label">Release Date & Time</label>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="date" id="publish_date" name="publish_date" value="<?php echo date('Y-m-d'); ?>" class="form-input" style="background: #f9f9f9; font-weight: 600; flex: 1; padding: 9px 10px;" min="<?php echo date('Y-m-d'); ?>">
-                                <select id="publish_hour" name="publish_hour" style="padding: 9px 10px; border: 1px solid var(--colors-hairline); border-radius: 6px; font-size: 13px; background: #f9f9f9; font-weight: 600; width: 80px;">
-                                    <option value="">HH</option>
-                                    <?php for ($h = 0; $h <= 23; $h++): ?>
-                                        <option value="<?php echo sprintf('%02d', $h); ?>"><?php echo sprintf('%02d', $h); ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                                <span style="font-size: 14px; font-weight: 600; color: var(--colors-muted);">:</span>
-                                <select id="publish_minute" name="publish_minute" style="padding: 9px 10px; border: 1px solid var(--colors-hairline); border-radius: 6px; font-size: 13px; background: #f9f9f9; font-weight: 600; width: 80px;">
-                                    <option value="">MM</option>
-                                    <?php for ($m = 0; $m <= 59; $m++): ?>
-                                        <option value="<?php echo sprintf('%02d', $m); ?>"><?php echo sprintf('%02d', $m); ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                                <span style="font-size: 11px; color: var(--colors-muted); white-space: nowrap;">(24h)</span>
-                            </div>
-                            <input type="hidden" name="publish_at" id="publish_at" value="<?php echo htmlspecialchars($_POST['publish_at'] ?? ''); ?>">
-                            <div style="font-size: 11px; color: var(--colors-muted); margin-top: 4px; background: #fffbeb; border: 1px solid #fde68a; padding: 6px 10px; border-radius: 6px;">⏳ Past times are greyed out & disabled. Current time: <strong id="now-display"><?php echo date('M d, Y H:i'); ?></strong></div>
+                            <label class="form-label">Gender Focus</label>
+                            <select name="gender" required class="form-input">
+                                <option value="Unisex">Unisex Focus</option>
+                                <option value="Men">Men's Collection</option>
+                                <option value="Women" selected>Women's Collection</option>
+                                <option value="Kids">Kids' Collection</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Card -->
+                    <div class="surface-card" style="padding: 24px; border: 1px solid var(--colors-hairline); margin: 0;">
+                        <h3 style="font-size: 14px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--colors-muted);">Pricing</h3>
+                        
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label">Price (RM)</label>
+                            <input type="number" name="price" step="0.01" placeholder="0.00" required class="form-input" style="font-size: 18px; font-weight: 600;">
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--colors-hairline); display: flex; gap: 16px; justify-content: flex-end;">
+                <a href="products_list.php" class="button-secondary" style="padding: 14px 32px;">Discard</a>
+                <button type="submit" class="button-primary" style="padding: 14px 32px;">Initialize Piece</button>
+            </div>
+
+            <script>
+            function applyDefaultGuide() {
+                const catSelect = document.querySelector('select[name="category_id"]');
+                const catName = catSelect.options[catSelect.selectedIndex].text.toLowerCase();
+                const area = document.getElementById('size_guide_area');
                 
-                <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <label class="form-label" style="margin: 0;">Size Architecture</label>
-                        <button type="button" onclick="applyDefaultGuide()" class="button-secondary" style="font-size: 11px; padding: 4px 12px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Apply Default Guide</button>
-                    </div>
-                    <p style="font-size: 12px; color: var(--colors-muted); margin-bottom: 12px;">The following guide will be displayed to customers. You can modify it to fit this specific piece.</p>
-                    <textarea id="size_guide_area" name="size_chart" rows="12" class="form-input" style="font-family: var(--typography-code-font); font-size: 12px; line-height: 1.6;"></textarea>
-                </div>
-
-                <script>
-                const now = new Date();
-                const nowY = now.getFullYear();
-                const nowM = String(now.getMonth() + 1).padStart(2, '0');
-                const nowD = String(now.getDate()).padStart(2, '0');
-                const nowH = now.getHours();
-                const nowI = now.getMinutes();
-
-                function disablePastTimeOptions() {
-                    const dateInput = document.getElementById('publish_date');
-                    const hourSelect = document.getElementById('publish_hour');
-                    const minSelect = document.getElementById('publish_minute');
-
-                    if (!dateInput.value) return;
-
-                    const selectedDate = dateInput.value;
-                    const todayStr = nowY + '-' + nowM + '-' + nowD;
-
-                    Array.from(hourSelect.options).forEach(opt => opt.disabled = false);
-                    Array.from(minSelect.options).forEach(opt => opt.disabled = false);
-
-                    if (selectedDate < todayStr) {
-                        Array.from(hourSelect.options).forEach(opt => { if (opt.value) opt.disabled = true; });
-                        Array.from(minSelect.options).forEach(opt => { if (opt.value) opt.disabled = true; });
-                        hourSelect.style.opacity = '0.5';
-                        minSelect.style.opacity = '0.5';
-                        return;
-                    }
-
-                    hourSelect.style.opacity = '1';
-                    minSelect.style.opacity = '1';
-
-                    if (selectedDate === todayStr) {
-                        Array.from(hourSelect.options).forEach(function(opt) {
-                            if (opt.value && parseInt(opt.value) < nowH) {
-                                opt.disabled = true;
-                            }
-                        });
-
-                        const selHour = parseInt(hourSelect.value);
-                        Array.from(minSelect.options).forEach(function(opt) {
-                            if (opt.value && selHour === nowH && parseInt(opt.value) < nowI) {
-                                opt.disabled = true;
-                            }
-                        });
-                    }
-                }
-
-                function buildPublishAt() {
-                    const date = document.getElementById('publish_date').value;
-                    const hour = document.getElementById('publish_hour').value;
-                    const minute = document.getElementById('publish_minute').value;
-                    const hidden = document.getElementById('publish_at');
-
-                    if (date && hour && minute) {
-                        hidden.value = date + 'T' + hour + ':' + minute;
-                    } else {
-                        hidden.value = '';
-                    }
-                }
-
-                document.getElementById('publish_date').addEventListener('change', function() {
-                    disablePastTimeOptions();
-                    buildPublishAt();
-                });
-                document.getElementById('publish_hour').addEventListener('change', function() {
-                    disablePastTimeOptions();
-                    buildPublishAt();
-                });
-                document.getElementById('publish_minute').addEventListener('change', buildPublishAt);
-
-                disablePastTimeOptions();
-
-                setInterval(disablePastTimeOptions, 30000);
-
-                function applyDefaultGuide() {
-                    const catSelect = document.querySelector('select[name="category_id"]');
-                    const catName = catSelect.options[catSelect.selectedIndex].text.toLowerCase();
-                    const area = document.getElementById('size_guide_area');
-                    
-                    if (catName.includes('footwear') || catName.includes('shoes')) {
-                        area.value = `Footwear Size Conversion
+                if (catName.includes('footwear') || catName.includes('shoes')) {
+                    area.value = `Footwear Size Conversion
 Use the table below to find your perfect fit across international standards.
 
 EU Size | US Men | US Women | UK | Length (cm)
@@ -233,8 +193,8 @@ EU Size | US Men | US Women | UK | Length (cm)
 
 How to Measure
 Place your foot on a piece of paper and mark the longest point. Measure the distance in centimeters for the most accurate fit.`;
-                    } else {
-                        area.value = `Detailed Size Guide
+                } else {
+                    area.value = `Detailed Size Guide
 All measurements are in inches. For the best fit, we recommend measuring a similar garment you already own.
 
 Size | Chest / Bust | Waist | Hips | Length
@@ -248,21 +208,10 @@ How to Measure
 Bust/Chest: Measure around the fullest part of your chest.
 Waist: Measure around your natural waistline (narrowest part).
 Hips: Measure around the fullest part of your hips.`;
-                    }
                 }
-                </script>
-
-                <div class="form-group" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #fff; border: 1px solid var(--colors-hairline-soft); border-radius: 8px;">
-                    <input type="checkbox" name="is_featured" id="is_featured" style="width: 18px; height: 18px; accent-color: var(--colors-accent-coral);">
-                    <label for="is_featured" class="form-label" style="margin: 0;">Highlight as Featured Piece</label>
-                </div>
-
-                <div style="margin-top: 40px; display: flex; gap: 16px;">
-                    <button type="submit" class="button-primary" style="padding: 14px 32px;">Initialize Piece</button>
-                    <a href="products_list.php" class="button-secondary" style="padding: 14px 32px;">Discard</a>
-                </div>
-            </form>
-        </div>
+            }
+            </script>
+        </form>
     </div>
 </div>
 
