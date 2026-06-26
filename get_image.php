@@ -1,34 +1,88 @@
 <?php
-require_once 'config/db.php';
+declare(strict_types=1);
 
-if (isset($_GET['id'])) {
-    $id = (int)$_GET['id'];
-    $stmt = $pdo->prepare("SELECT image_path, image_data, mime_type FROM product_images WHERE id = ?");
-    $stmt->execute([$id]);
-    $image = $stmt->fetch();
+require_once __DIR__ . '/config/db.php';
 
-    if ($image && $image['image_data']) {
-        header("Content-Type: " . ($image['mime_type'] ?: "image/png"));
+$imageId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+function showFallback(): never
+{
+    $fallback = __DIR__ . '/assets/img/dress.png';
+
+    if (is_file($fallback)) {
+        header('Content-Type: image/png');
+        header('Content-Length: ' . filesize($fallback));
+        readfile($fallback);
+    } else {
+        http_response_code(404);
+    }
+
+    exit;
+}
+
+if (!$imageId || $imageId < 1) {
+    showFallback();
+}
+
+try {
+    $stmt = $pdo->prepare(
+        'SELECT image_path, image_data, mime_type
+         FROM product_images
+         WHERE id = ?
+         LIMIT 1'
+    );
+    $stmt->execute([$imageId]);
+    $image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$image) {
+        showFallback();
+    }
+
+    // Support images stored directly in the database.
+    if (!empty($image['image_data'])) {
+        $mimeType = !empty($image['mime_type']) ? $image['mime_type'] : 'image/jpeg';
+        header('Content-Type: ' . $mimeType);
         echo $image['image_data'];
         exit;
     }
 
-    if ($image && !empty($image['image_path'])) {
-        if (preg_match('/^https?:\/\//i', $image['image_path'])) {
-            header("Location: " . $image['image_path']);
-            exit;
-        }
-
-        $path = __DIR__ . '/' . ltrim(str_replace('\\', '/', $image['image_path']), '/');
-        if (is_file($path)) {
-            header("Content-Type: " . (mime_content_type($path) ?: "image/png"));
-            readfile($path);
-            exit;
-        }
+    $path = trim((string)($image['image_path'] ?? ''));
+    if ($path === '') {
+        showFallback();
     }
-}
 
-// Fallback image if not found
-header("Content-Type: image/png");
-readfile("assets/img/hero.png"); // or any default placeholder
-?>
+    // Support remote image URLs used by older database records.
+    if (preg_match('#^https?://#i', $path)) {
+        header('Location: ' . $path);
+        exit;
+    }
+
+    $path = str_replace('\\', '/', $path);
+    $path = preg_replace('#^/?fashion_store/#i', '', $path);
+    $path = ltrim($path, '/');
+
+    $fullPath = realpath(__DIR__ . '/' . $path);
+    $projectRoot = realpath(__DIR__);
+
+    if (
+        $fullPath === false ||
+        $projectRoot === false ||
+        strpos($fullPath, $projectRoot) !== 0 ||
+        !is_file($fullPath)
+    ) {
+        showFallback();
+    }
+
+    $mimeType = mime_content_type($fullPath);
+    if ($mimeType === false || strpos($mimeType, 'image/') !== 0) {
+        showFallback();
+    }
+
+    header('Content-Type: ' . $mimeType);
+    header('Content-Length: ' . filesize($fullPath));
+    header('Cache-Control: public, max-age=3600');
+    readfile($fullPath);
+    exit;
+} catch (Throwable $exception) {
+    showFallback();
+}

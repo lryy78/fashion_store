@@ -6,7 +6,7 @@ include __DIR__ . '/../includes/header.php';
 $selected_gender = $_GET['gender'] ?? '';
 
 // Featured Products Query
-$featured_query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+$featured_query = "SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path,
                   COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
                   (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
                   FROM products p 
@@ -23,10 +23,30 @@ if ($selected_gender) {
 $stmt->execute();
 $featured_products = $stmt->fetchAll();
 
+function productImageUrl(?string $path): string
+{
+    if (empty($path)) {
+        return '/fashion_store/assets/img/dress.png';
+    }
+
+    $path = trim(str_replace('\\', '/', $path));
+
+    // Keep remote image URLs unchanged.
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    // Normalize paths saved as either assets/img/... or /fashion_store/assets/img/...
+    $path = preg_replace('#^/?fashion_store/#i', '', $path);
+    $path = ltrim($path, '/');
+
+    return '/fashion_store/' . $path;
+}
+
 // Helper to fetch products by category and gender
 function getProductsByCategory($category_name, $gender = '', $limit = 8) {
     global $pdo;
-    $query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id 
+    $query = "SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path 
               FROM products p 
               LEFT JOIN categories c ON p.category_id = c.id 
               WHERE c.name = :cat AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))";
@@ -48,7 +68,7 @@ function getProductsByCategory($category_name, $gender = '', $limit = 8) {
 // Fetch products for gender sections if on main page
 function getProductsByGender($gender, $limit = 8) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id 
+    $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT image_path FROM product_images WHERE product_id = p.id ORDER BY id ASC LIMIT 1) AS image_path 
                           FROM products p 
                           LEFT JOIN categories c ON p.category_id = c.id 
                           WHERE p.gender = ? AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW())) LIMIT ?");
@@ -317,7 +337,10 @@ if (!$selected_gender) {
             <?php foreach ($featured_products as $product): ?>
                 <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                     <div class="image-wrapper">
-                        <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        <img
+                            src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                            alt="<?php echo htmlspecialchars($product['name']); ?>"
+                        >
                     </div>
                     <div class="meta">
                         <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
@@ -364,7 +387,12 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($women_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
+                        <div class="image-wrapper">
+                            <img
+                                src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                            >
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -386,7 +414,12 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($men_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div>
+                        <div class="image-wrapper">
+                            <img
+                                src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                            >
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -408,7 +441,12 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($kids_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
+                        <div class="image-wrapper">
+                            <img
+                                src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                            >
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -430,7 +468,12 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($tops_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
+                        <div class="image-wrapper">
+                            <img
+                                src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                            >
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -451,7 +494,12 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($bottoms_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
+                        <div class="image-wrapper">
+                            <img
+                                src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                            >
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -472,7 +520,12 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($acc_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div>
+                        <div class="image-wrapper">
+                            <img
+                                src="<?php echo htmlspecialchars(productImageUrl($product['image_path'] ?? null)); ?>"
+                                alt="<?php echo htmlspecialchars($product['name']); ?>"
+                            >
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
