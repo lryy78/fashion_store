@@ -170,9 +170,9 @@ include $include_path . 'header.php';
                     <!-- Filters -->
                     <div style="padding: 16px 24px; background: var(--colors-surface-soft); border-bottom: 1px solid var(--colors-hairline-soft);">
                         <form method="GET" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
-                            <div class="form-group" style="margin: 0; flex: 1; min-width: 180px;">
+                            <div class="form-group" style="margin: 0; flex: 1.5; min-width: 200px;">
                                 <label class="form-label" style="font-size: 11px;">Campaign</label>
-                                <select name="filter_campaign" class="form-input" style="padding: 6px 10px; font-size: 12px;">
+                                <select name="filter_campaign" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 100%;">
                                     <option value="">All Campaigns</option>
                                     <?php
                                     $campaigns = $pdo->query("SELECT DISTINCT campaign FROM vouchers WHERE campaign IS NOT NULL ORDER BY campaign")->fetchAll();
@@ -185,9 +185,9 @@ include $include_path . 'header.php';
                                 </select>
                             </div>
                             
-                            <div class="form-group" style="margin: 0; flex: 1; min-width: 180px;">
+                            <div class="form-group" style="margin: 0; flex: 1; min-width: 160px;">
                                 <label class="form-label" style="font-size: 11px;">Targeting</label>
-                                <select name="filter_target" class="form-input" style="padding: 6px 10px; font-size: 12px;">
+                                <select name="filter_target" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 100%;">
                                     <option value="">All Types</option>
                                     <option value="all" <?php echo ($_GET['filter_target'] ?? '') === 'all' ? 'selected' : ''; ?>>All Customers</option>
                                     <option value="specific" <?php echo ($_GET['filter_target'] ?? '') === 'specific' ? 'selected' : ''; ?>>Specific User</option>
@@ -195,9 +195,9 @@ include $include_path . 'header.php';
                                 </select>
                             </div>
                             
-                            <div class="form-group" style="margin: 0; flex: 1; min-width: 180px;">
+                            <div class="form-group" style="margin: 0; flex: 1; min-width: 160px;">
                                 <label class="form-label" style="font-size: 11px;">Sort By</label>
-                                <select name="sort_by" class="form-input" style="padding: 6px 10px; font-size: 12px;">
+                                <select name="sort_by" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 100%;">
                                     <option value="created_desc" <?php echo ($_GET['sort_by'] ?? 'created_desc') === 'created_desc' ? 'selected' : ''; ?>>Newest First</option>
                                     <option value="created_asc" <?php echo ($_GET['sort_by'] ?? '') === 'created_asc' ? 'selected' : ''; ?>>Oldest First</option>
                                     <option value="revenue_desc" <?php echo ($_GET['sort_by'] ?? '') === 'revenue_desc' ? 'selected' : ''; ?>>Revenue (High-Low)</option>
@@ -206,9 +206,9 @@ include $include_path . 'header.php';
                                 </select>
                             </div>
                             
-                            <div style="display: flex; gap: 6px;">
-                                <button type="submit" class="button-primary" style="padding: 6px 16px; font-size: 12px;">Apply</button>
-                                <a href="vouchers.php" class="button-secondary" style="padding: 6px 16px; font-size: 12px; text-decoration: none;">Reset</a>
+                            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                                <button type="submit" class="button-primary" style="padding: 6px 16px; font-size: 12px; white-space: nowrap;">Apply</button>
+                                <a href="vouchers.php" class="button-secondary" style="padding: 6px 16px; font-size: 12px; text-decoration: none; white-space: nowrap;">Reset</a>
                             </div>
                         </form>
                     </div>
