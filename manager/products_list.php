@@ -37,6 +37,13 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
     exit();
 }
 
+// Quick Publish Action
+if (isset($_GET['action']) && $_GET['action'] == 'publish' && isset($_GET['id'])) {
+    $pdo->prepare("UPDATE products SET status = 'published' WHERE id = ?")->execute([$_GET['id']]);
+    header("Location: products_list.php?msg=Product published");
+    exit();
+}
+
 function deleteProductCompletely($pid) {
     global $pdo;
     try {
@@ -371,6 +378,9 @@ include '../includes/header.php';
                                         <a href="edit_product.php?id=<?php echo $p['id']; ?>">✎ Edit Details</a>
                                         <a href="manage_variations.php?id=<?php echo $p['id']; ?>">📦 Manage Stock</a>
                                         <a href="manage_images.php?id=<?php echo $p['id']; ?>">🖼 Photos</a>
+                                        <?php if ($p['status'] === 'draft'): ?>
+                                            <a href="products_list.php?action=publish&id=<?php echo $p['id']; ?>" style="color: var(--colors-accent-teal);">🚀 Publish Piece</a>
+                                        <?php endif; ?>
                                         <a href="products_list.php?action=delete&id=<?php echo $p['id']; ?>" style="color: var(--colors-error);" onclick="return confirm('Delete this product?')">🗑 Remove</a>
                                     </div>
                                 </div>
