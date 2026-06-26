@@ -9,9 +9,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'manager') {
 }
 
 // Filters
-$start_date = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
-$end_date = $_GET['end_date'] ?? date('Y-m-d');
+$filter_month_from = $_GET['month_from'] ?? date('Y-m', strtotime('-3 months'));
+$filter_month_to = $_GET['month_to'] ?? date('Y-m');
 $filter_category = $_GET['category'] ?? 'all';
+
+// Calculate start and end of the selected month range
+$start_date = $filter_month_from . '-01';
+$end_date = date('Y-m-t', strtotime($filter_month_to . '-01'));
 
 // Shared time-range constraint
 $time_range = " AND o.created_at BETWEEN " . $pdo->quote($start_date . ' 00:00:00') . " AND " . $pdo->quote($end_date . ' 23:59:59');
@@ -72,14 +76,14 @@ include '../includes/header.php';
 
         <!-- Filters Bar -->
         <div class="surface-card" style="padding: 24px; margin-bottom: 40px; border: 1px solid var(--colors-hairline);">
-            <form method="GET" style="display: grid; grid-template-columns: repeat(3, 1fr) auto auto; gap: 20px; align-items: flex-end;">
+            <form method="GET" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 20px; align-items: flex-end;">
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 11px;">From Date</label>
-                    <input type="date" name="start_date" value="<?php echo $start_date; ?>" class="form-input" style="padding: 10px;">
+                    <label class="form-label" style="font-size: 11px;">From Month</label>
+                    <input type="month" name="month_from" value="<?php echo $filter_month_from; ?>" class="form-input" style="padding: 10px;">
                 </div>
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 11px;">To Date</label>
-                    <input type="date" name="end_date" value="<?php echo $end_date; ?>" class="form-input" style="padding: 10px;">
+                    <label class="form-label" style="font-size: 11px;">To Month</label>
+                    <input type="month" name="month_to" value="<?php echo $filter_month_to; ?>" class="form-input" style="padding: 10px;">
                 </div>
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 11px;">Category</label>
@@ -100,7 +104,7 @@ include '../includes/header.php';
         <div style="margin-bottom: 32px;">
             <!-- Top Selling Chart -->
             <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Top Selling Products (Volume)</h3>
+                <h3 style="font-size: 18px; margin-bottom: 24px;">Top Selling Products (Volume) — <?php echo date('M Y', strtotime($start_date)); ?> to <?php echo date('M Y', strtotime($end_date)); ?></h3>
                 <canvas id="topSellingChart" height="250"></canvas>
             </div>
         </div>
@@ -108,7 +112,7 @@ include '../includes/header.php';
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
             <!-- Most Viewed List -->
             <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Product Interest (Most Viewed)</h3>
+                <h3 style="font-size: 18px; margin-bottom: 24px;">Product Interest (Most Viewed) — <?php echo date('M Y', strtotime($start_date)); ?> to <?php echo date('M Y', strtotime($end_date)); ?></h3>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -129,7 +133,7 @@ include '../includes/header.php';
 
             <!-- Conversion Rate (Low Conversion) -->
             <div class="surface-card" style="padding: 32px;">
-                <h3 style="font-size: 18px; margin-bottom: 24px;">Low Conversion Items (Action Needed)</h3>
+                <h3 style="font-size: 18px; margin-bottom: 24px;">Low Conversion Items (Action Needed) — <?php echo date('M Y', strtotime($start_date)); ?> to <?php echo date('M Y', strtotime($end_date)); ?></h3>
                 <table class="data-table">
                     <thead>
                         <tr>
