@@ -78,6 +78,7 @@ $vouchers = $pdo->prepare("SELECT * FROM vouchers WHERE (user_id = ? OR user_id 
 $vouchers->execute([$user_id]);
 $available_vouchers = $vouchers->fetchAll();
 
+$errors = [];
 $selected_voucher_id = $_POST['voucher_id'] ?? null;
 $discount = 0;
 $voucher_code = '';
@@ -87,19 +88,24 @@ if ($selected_voucher_id) {
     $stmt->execute([$selected_voucher_id, $user_id]);
     $v = $stmt->fetch();
     if ($v) {
-        if ($v['discount_type'] === 'percentage') {
-            $discount = $subtotal * ($v['discount_value'] / 100);
+        // Check minimum spend requirement
+        if ($v['min_spend'] > 0 && $subtotal < $v['min_spend']) {
+            $discount = 0;
+            $voucher_code = '';
+            $errors[] = "Voucher '{$v['code']}' requires a minimum spend of RM " . number_format($v['min_spend'], 2) . ". Your current subtotal is RM " . number_format($subtotal, 2) . ".";
         } else {
-            $discount = min($v['discount_value'], $subtotal);
+            if ($v['discount_type'] === 'percentage') {
+                $discount = $subtotal * ($v['discount_value'] / 100);
+            } else {
+                $discount = min($v['discount_value'], $subtotal);
+            }
+            $voucher_code = $v['code'];
         }
-        $voucher_code = $v['code'];
     }
 }
 
 $shipping = $subtotal >= 100 ? 0 : 9.99;
 $total = max(0, $subtotal - $discount) + $shipping;
-
-$errors = [];
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
@@ -123,8 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, address, status) VALUES (?, ?, ?, 'pending')");
-            $stmt->execute([$user_id, $total, $full_address]);
+            $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, address, status, voucher_id) VALUES (?, ?, ?, 'pending', ?)");
+            $stmt->execute([$user_id, $total, $full_address, $selected_voucher_id]);
             $order_id = $pdo->lastInsertId();
 
             foreach ($cart_items as $item) {
@@ -149,6 +155,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             if ($selected_voucher_id) {
                 $stmt = $pdo->prepare("UPDATE vouchers SET is_used = 1 WHERE id = ?");
                 $stmt->execute([$selected_voucher_id]);
+                
+                // Record redemption
+                $stmt = $pdo->prepare("INSERT INTO voucher_redemptions (voucher_id, user_id, order_id) VALUES (?, ?, ?)");
+                $stmt->execute([$selected_voucher_id, $user_id, $order_id]);
             }
 
             $pdo->commit();
