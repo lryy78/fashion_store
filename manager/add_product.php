@@ -103,7 +103,25 @@ include $include_path . 'header.php';
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label class="form-label">Release Date & Time</label>
-                            <input type="datetime-local" name="publish_at" min="<?php echo $min_publish_at; ?>" value="<?php echo htmlspecialchars($_POST['publish_at'] ?? ''); ?>" class="form-input">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="date" id="publish_date" name="publish_date" value="<?php echo date('Y-m-d'); ?>" class="form-input" style="background: #f9f9f9; font-weight: 600; flex: 1; padding: 9px 10px;" min="<?php echo date('Y-m-d'); ?>">
+                                <select id="publish_hour" name="publish_hour" style="padding: 9px 10px; border: 1px solid var(--colors-hairline); border-radius: 6px; font-size: 13px; background: #f9f9f9; font-weight: 600; width: 80px;">
+                                    <option value="">HH</option>
+                                    <?php for ($h = 0; $h <= 23; $h++): ?>
+                                        <option value="<?php echo sprintf('%02d', $h); ?>"><?php echo sprintf('%02d', $h); ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                                <span style="font-size: 14px; font-weight: 600; color: var(--colors-muted);">:</span>
+                                <select id="publish_minute" name="publish_minute" style="padding: 9px 10px; border: 1px solid var(--colors-hairline); border-radius: 6px; font-size: 13px; background: #f9f9f9; font-weight: 600; width: 80px;">
+                                    <option value="">MM</option>
+                                    <?php for ($m = 0; $m <= 59; $m++): ?>
+                                        <option value="<?php echo sprintf('%02d', $m); ?>"><?php echo sprintf('%02d', $m); ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                                <span style="font-size: 11px; color: var(--colors-muted); white-space: nowrap;">(24h)</span>
+                            </div>
+                            <input type="hidden" name="publish_at" id="publish_at" value="<?php echo htmlspecialchars($_POST['publish_at'] ?? ''); ?>">
+                            <div style="font-size: 11px; color: var(--colors-muted); margin-top: 4px; background: #fffbeb; border: 1px solid #fde68a; padding: 6px 10px; border-radius: 6px;">⏳ Past times are greyed out & disabled. Current time: <strong id="now-display"><?php echo date('M d, Y H:i'); ?></strong></div>
                         </div>
                     </div>
                 </div>
@@ -118,6 +136,80 @@ include $include_path . 'header.php';
                 </div>
 
                 <script>
+                const now = new Date();
+                const nowY = now.getFullYear();
+                const nowM = String(now.getMonth() + 1).padStart(2, '0');
+                const nowD = String(now.getDate()).padStart(2, '0');
+                const nowH = now.getHours();
+                const nowI = now.getMinutes();
+
+                function disablePastTimeOptions() {
+                    const dateInput = document.getElementById('publish_date');
+                    const hourSelect = document.getElementById('publish_hour');
+                    const minSelect = document.getElementById('publish_minute');
+
+                    if (!dateInput.value) return;
+
+                    const selectedDate = dateInput.value;
+                    const todayStr = nowY + '-' + nowM + '-' + nowD;
+
+                    Array.from(hourSelect.options).forEach(opt => opt.disabled = false);
+                    Array.from(minSelect.options).forEach(opt => opt.disabled = false);
+
+                    if (selectedDate < todayStr) {
+                        Array.from(hourSelect.options).forEach(opt => { if (opt.value) opt.disabled = true; });
+                        Array.from(minSelect.options).forEach(opt => { if (opt.value) opt.disabled = true; });
+                        hourSelect.style.opacity = '0.5';
+                        minSelect.style.opacity = '0.5';
+                        return;
+                    }
+
+                    hourSelect.style.opacity = '1';
+                    minSelect.style.opacity = '1';
+
+                    if (selectedDate === todayStr) {
+                        Array.from(hourSelect.options).forEach(function(opt) {
+                            if (opt.value && parseInt(opt.value) < nowH) {
+                                opt.disabled = true;
+                            }
+                        });
+
+                        const selHour = parseInt(hourSelect.value);
+                        Array.from(minSelect.options).forEach(function(opt) {
+                            if (opt.value && selHour === nowH && parseInt(opt.value) < nowI) {
+                                opt.disabled = true;
+                            }
+                        });
+                    }
+                }
+
+                function buildPublishAt() {
+                    const date = document.getElementById('publish_date').value;
+                    const hour = document.getElementById('publish_hour').value;
+                    const minute = document.getElementById('publish_minute').value;
+                    const hidden = document.getElementById('publish_at');
+
+                    if (date && hour && minute) {
+                        hidden.value = date + 'T' + hour + ':' + minute;
+                    } else {
+                        hidden.value = '';
+                    }
+                }
+
+                document.getElementById('publish_date').addEventListener('change', function() {
+                    disablePastTimeOptions();
+                    buildPublishAt();
+                });
+                document.getElementById('publish_hour').addEventListener('change', function() {
+                    disablePastTimeOptions();
+                    buildPublishAt();
+                });
+                document.getElementById('publish_minute').addEventListener('change', buildPublishAt);
+
+                disablePastTimeOptions();
+
+                setInterval(disablePastTimeOptions, 30000);
+
                 function applyDefaultGuide() {
                     const catSelect = document.querySelector('select[name="category_id"]');
                     const catName = catSelect.options[catSelect.selectedIndex].text.toLowerCase();
