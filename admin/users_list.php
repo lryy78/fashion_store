@@ -86,9 +86,6 @@ include $include_path . 'header.php';
                     <a href="users_list.php?role=manager&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'manager' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Managers</a>
                     <a href="users_list.php?role=admin&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'admin' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Admins</a>
                     <a href="users_list.php?role=owner&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'owner' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">Owners</a>
-                    <?php if ($filter_role != 'all' || !empty($search_query)): ?>
-                        <a href="users_list.php" class="button-secondary" style="padding: 6px 12px; font-size: 11px; text-decoration: none; margin-left: 8px;">Reset Filters</a>
-                    <?php endif; ?>
                 </div>
             </div>
         </header>

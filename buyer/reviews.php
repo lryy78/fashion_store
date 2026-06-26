@@ -62,9 +62,6 @@ include $include_path . 'header.php';
                 <a href="?filter=all" class="button-secondary <?php echo $filter == 'all' ? 'active' : ''; ?>" style="font-size: 12px; padding: 8px 16px; <?php echo $filter == 'all' ? 'background: var(--colors-ink); color: #fff;' : ''; ?>">All</a>
                 <a href="?filter=pending" class="button-secondary <?php echo $filter == 'pending' ? 'active' : ''; ?>" style="font-size: 12px; padding: 8px 16px; <?php echo $filter == 'pending' ? 'background: var(--colors-ink); color: #fff;' : ''; ?>">Pending</a>
                 <a href="?filter=reviewed" class="button-secondary <?php echo $filter == 'reviewed' ? 'active' : ''; ?>" style="font-size: 12px; padding: 8px 16px; <?php echo $filter == 'reviewed' ? 'background: var(--colors-ink); color: #fff;' : ''; ?>">Reviewed</a>
-                <?php if ($filter != 'all'): ?>
-                    <a href="reviews.php" class="button-secondary" style="font-size: 12px; padding: 8px 16px; text-decoration: none; margin-left: 8px;">Reset Filter</a>
-                <?php endif; ?>
             </div>
         </header>
 
