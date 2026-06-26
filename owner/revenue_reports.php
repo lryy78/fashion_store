@@ -24,6 +24,25 @@ $total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('c
 // 2. Month-over-Month Growth
 $this_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())")->fetchColumn() ?: 0;
 $last_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchColumn() ?: 0;
+
+$this_month_profit = $pdo->query("
+    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
+    FROM order_items oi 
+    JOIN product_variations pv ON oi.variation_id = pv.id 
+    JOIN products p ON pv.product_id = p.id 
+    JOIN orders o ON oi.order_id = o.id 
+    WHERE o.status NOT IN ('cancelled','refunded') AND MONTH(o.created_at) = MONTH(NOW()) AND YEAR(o.created_at) = YEAR(NOW())
+")->fetchColumn() ?: 0;
+
+$last_month_profit = $pdo->query("
+    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
+    FROM order_items oi 
+    JOIN product_variations pv ON oi.variation_id = pv.id 
+    JOIN products p ON pv.product_id = p.id 
+    JOIN orders o ON oi.order_id = o.id 
+    WHERE o.status NOT IN ('cancelled','refunded') AND MONTH(o.created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(o.created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))
+")->fetchColumn() ?: 0;
+
 $mom_growth = $last_month_rev > 0 ? (($this_month_rev - $last_month_rev) / $last_month_rev) * 100 : ($this_month_rev > 0 ? 100 : 0);
 
 // 3. Monthly Revenue & Profit Data for Chart (Last 12 months)
@@ -111,6 +130,7 @@ include $include_path . 'header.php';
             <div class="stat-card">
                 <div class="stat-label">This Month</div>
                 <div class="stat-value">RM <?php echo number_format($this_month_rev, 2); ?></div>
+                <div style="margin-top: 4px; font-size: 11px; color: var(--colors-success);">Profit: RM <?php echo number_format($this_month_profit, 2); ?></div>
                 <?php if ($mom_growth >= 0): ?>
                     <div class="stat-trend trend-up">↑ <?php echo number_format($mom_growth, 1); ?>% vs last month</div>
                 <?php else: ?>
@@ -120,6 +140,7 @@ include $include_path . 'header.php';
             <div class="stat-card">
                 <div class="stat-label">Last Month</div>
                 <div class="stat-value">RM <?php echo number_format($last_month_rev, 2); ?></div>
+                <div style="margin-top: 4px; font-size: 11px; color: var(--colors-success);">Profit: RM <?php echo number_format($last_month_profit, 2); ?></div>
                 <div style="margin-top: 12px; font-size: 12px; color: var(--colors-muted);">Previous month revenue</div>
             </div>
         </div>

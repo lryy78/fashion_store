@@ -129,20 +129,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         try {
             $pdo->beginTransaction();
 
+            // Validate stock again before order
+            foreach ($cart_items as $item) {
+                $stock_check = $pdo->prepare("SELECT stock_quantity FROM product_variations WHERE id = ?");
+                $stock_check->execute([$item['variation_id']]);
+                $current_stock = $stock_check->fetchColumn();
+                if ($current_stock < $item['quantity']) {
+                    throw new Exception("Insufficient stock for product variation ID " . $item['variation_id'] . ". Available: $current_stock, Requested: " . $item['quantity']);
+                }
+            }
+
+            // Validate voucher exists before inserting
+            $final_voucher_id = null;
+            if ($selected_voucher_id) {
+                $voucher_check = $pdo->prepare("SELECT id FROM vouchers WHERE id = ? AND (user_id = ? OR user_id IS NULL) AND is_used = 0 AND is_active = 1");
+                $voucher_check->execute([$selected_voucher_id, $user_id]);
+                $valid_voucher = $voucher_check->fetch();
+                if ($valid_voucher) {
+                    $final_voucher_id = $selected_voucher_id;
+                } else {
+                    error_log("Invalid voucher ID $selected_voucher_id for user $user_id - voucher not found or already used");
+                }
+            }
+
             $stmt = $pdo->prepare("INSERT INTO orders (user_id, total_amount, address, status, voucher_id) VALUES (?, ?, ?, 'pending', ?)");
-            $stmt->execute([$user_id, $total, $full_address, $selected_voucher_id]);
+            $stmt->execute([$user_id, $total, $full_address, $final_voucher_id]);
             $order_id = $pdo->lastInsertId();
+            error_log("Order created: ID $order_id for user $user_id");
 
             foreach ($cart_items as $item) {
                 $stmt = $pdo->prepare("INSERT INTO order_items (order_id, variation_id, quantity, price) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$order_id, $item['variation_id'], $item['quantity'], $item['price']]);
+                error_log("Order item added: order_id=$order_id, variation_id=" . $item['variation_id'] . ", qty=" . $item['quantity']);
 
                 $stmt = $pdo->prepare("UPDATE product_variations SET stock_quantity = stock_quantity - ? WHERE id = ?");
                 $stmt->execute([$item['quantity'], $item['variation_id']]);
+                error_log("Stock updated: variation_id=" . $item['variation_id'] . ", reduced by " . $item['quantity']);
             }
 
             $stmt = $pdo->prepare("DELETE FROM cart WHERE user_id = ?");
             $stmt->execute([$user_id]);
+            error_log("Cart cleared for user $user_id");
 
             // Save address as default if user doesn't have one yet
             if (empty($saved_address)) {
@@ -150,23 +177,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 $address_only = "$address_line, $city, $postcode, $country";
                 $update_addr = $pdo->prepare("UPDATE users SET full_name = ?, address = ? WHERE id = ?");
                 $update_addr->execute([$full_name, $address_only, $user_id]);
+                error_log("Address saved for user $user_id");
             }
 
             if ($selected_voucher_id) {
                 $stmt = $pdo->prepare("UPDATE vouchers SET is_used = 1 WHERE id = ?");
-                $stmt->execute([$selected_voucher_id]);
+                $result = $stmt->execute([$selected_voucher_id]);
+                error_log("Voucher updated: ID $selected_voucher_id, success: " . ($result ? 'yes' : 'no'));
                 
                 // Record redemption
                 $stmt = $pdo->prepare("INSERT INTO voucher_redemptions (voucher_id, user_id, order_id) VALUES (?, ?, ?)");
                 $stmt->execute([$selected_voucher_id, $user_id, $order_id]);
+                error_log("Voucher redemption recorded: voucher_id=$selected_voucher_id, user_id=$user_id, order_id=$order_id");
             }
 
             $pdo->commit();
+            error_log("Transaction committed successfully");
             header("Location: order_success.php?id=" . $order_id);
             exit();
         } catch (Exception $e) {
             $pdo->rollBack();
-            $errors[] = "Checkout failed. Please try again.";
+            $error_msg = "Checkout failed: " . $e->getMessage();
+            $errors[] = $error_msg;
+            error_log("Checkout error: " . $error_msg . "\nFile: " . $e->getFile() . "\nLine: " . $e->getLine() . "\nTrace: " . $e->getTraceAsString());
         }
     }
 }

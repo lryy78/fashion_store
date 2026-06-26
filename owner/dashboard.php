@@ -28,6 +28,25 @@ $total_customers = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer'"
 // 2. Growth Calculation (Last 30 Days vs Previous 30 Days)
 $revenue_last_30 = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
 $revenue_prev_30 = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn() ?: 0;
+
+$profit_last_30 = $pdo->query("
+    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
+    FROM order_items oi 
+    JOIN product_variations pv ON oi.variation_id = pv.id 
+    JOIN products p ON pv.product_id = p.id 
+    JOIN orders o ON oi.order_id = o.id 
+    WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+")->fetchColumn() ?: 0;
+
+$profit_prev_30 = $pdo->query("
+    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
+    FROM order_items oi 
+    JOIN product_variations pv ON oi.variation_id = pv.id 
+    JOIN products p ON pv.product_id = p.id 
+    JOIN orders o ON oi.order_id = o.id 
+    WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) AND o.created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)
+")->fetchColumn() ?: 0;
+
 $growth_percent = $revenue_prev_30 > 0 ? (($revenue_last_30 - $revenue_prev_30) / $revenue_prev_30) * 100 : ($revenue_last_30 > 0 ? 100 : 0);
 
 // 3. Daily Analytics for Chart.js
@@ -168,6 +187,7 @@ include $include_path . 'header.php';
                 <div class="stat-label">Net Profit</div>
                 <div class="stat-value" style="color: var(--colors-success);">RM <?php echo number_format($net_profit, 2); ?></div>
                 <div style="margin-top: 12px; font-size: 12px; color: var(--colors-muted);">True cost-basis margin</div>
+                <div style="margin-top: 4px; font-size: 11px; color: var(--colors-success);">Last 30d: RM <?php echo number_format($profit_last_30, 2); ?></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total Orders</div>
