@@ -7,116 +7,182 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'owner') {
     exit();
 }
 
-// 1. Total Revenue & True Profit
-$total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
+// The default report covers the complete current calendar year. An owner may
+// optionally choose an inclusive start month and end month.
+$requested_start_month = trim($_GET['start_month'] ?? '');
+$requested_end_month = trim($_GET['end_month'] ?? '');
+$filter_error = '';
+$filter_applied = false;
+$current_year = (int)date('Y');
+$period_start_date = new DateTimeImmutable($current_year . '-01-01');
+$period_end_date = new DateTimeImmutable(($current_year + 1) . '-01-01');
+$month_pattern = '/^\d{4}-(0[1-9]|1[0-2])$/';
 
-$net_profit = $pdo->query("
-    SELECT (SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded'))
-           - COALESCE(SUM(pc.total_cost), 0)
-    FROM (
-        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) AS total_cost
-        FROM order_items oi
-        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-        LEFT JOIN products p ON pv.product_id = p.id
-        WHERE oi.order_id IN (SELECT id FROM orders WHERE status NOT IN ('cancelled','refunded'))
-        GROUP BY oi.order_id
-    ) pc
-")->fetchColumn() ?: 0;
+if ($requested_start_month !== '' || $requested_end_month !== '') {
+    if ($requested_start_month === '' || $requested_end_month === '') {
+        $filter_error = 'Select both a start month and an end month.';
+    } elseif (!preg_match($month_pattern, $requested_start_month) || !preg_match($month_pattern, $requested_end_month)) {
+        $filter_error = 'Select a valid month range.';
+    } else {
+        $selected_start = new DateTimeImmutable($requested_start_month . '-01');
+        $selected_end = new DateTimeImmutable($requested_end_month . '-01');
+        $month_span = (((int)$selected_end->format('Y') - (int)$selected_start->format('Y')) * 12)
+            + ((int)$selected_end->format('n') - (int)$selected_start->format('n')) + 1;
 
-$total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
+        if ($selected_start > $selected_end) {
+            $filter_error = 'The start month cannot be after the end month.';
+        } elseif ($month_span > 60) {
+            $filter_error = 'Select a range of five years or less.';
+        } else {
+            $period_start_date = $selected_start;
+            $period_end_date = $selected_end->modify('first day of next month');
+            $filter_applied = true;
+        }
+    }
+}
 
-// 2. Month-over-Month Growth
-$this_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())")->fetchColumn() ?: 0;
-$last_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchColumn() ?: 0;
+$period_start = $period_start_date->format('Y-m-d');
+$period_end = $period_end_date->format('Y-m-d');
+$period_last_month = $period_end_date->modify('-1 month');
+$period_label = $period_start_date->format('M Y') . ' - ' . $period_last_month->format('M Y');
 
-$this_month_profit = $pdo->query("
-    SELECT (SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW()))
-           - COALESCE(SUM(pc.total_cost), 0)
-    FROM (
-        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) AS total_cost
-        FROM order_items oi
-        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-        LEFT JOIN products p ON pv.product_id = p.id
-        WHERE oi.order_id IN (SELECT id FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW()))
-        GROUP BY oi.order_id
-    ) pc
-")->fetchColumn() ?: 0;
+// 1. Period revenue, orders, cost, and profit.
+$summary_stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(o.total_amount), 0) AS total_revenue, COUNT(*) AS total_orders
+    FROM orders o
+    WHERE o.status NOT IN ('cancelled','refunded')
+      AND o.created_at >= ? AND o.created_at < ?
+");
+$summary_stmt->execute([$period_start, $period_end]);
+$summary = $summary_stmt->fetch();
+$total_revenue = (float)$summary['total_revenue'];
+$total_orders = (int)$summary['total_orders'];
 
-$last_month_profit = $pdo->query("
-    SELECT (SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH)))
-           - COALESCE(SUM(pc.total_cost), 0)
-    FROM (
-        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) AS total_cost
-        FROM order_items oi
-        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-        LEFT JOIN products p ON pv.product_id = p.id
-        WHERE oi.order_id IN (SELECT id FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH)))
-        GROUP BY oi.order_id
-    ) pc
-")->fetchColumn() ?: 0;
+$cost_stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(oi.quantity * COALESCE(p.cost_price, 0)), 0)
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    LEFT JOIN product_variations pv ON pv.id = oi.variation_id
+    LEFT JOIN products p ON p.id = pv.product_id
+    WHERE o.status NOT IN ('cancelled','refunded')
+      AND o.created_at >= ? AND o.created_at < ?
+");
+$cost_stmt->execute([$period_start, $period_end]);
+$total_cost = (float)$cost_stmt->fetchColumn();
+$net_profit = $total_revenue - $total_cost;
 
-$mom_growth = $last_month_rev > 0 ? (($this_month_rev - $last_month_rev) / $last_month_rev) * 100 : ($this_month_rev > 0 ? 100 : 0);
-
-// 3. Monthly Revenue & Profit Data for Chart (Last 12 months)
-$monthly_raw = $pdo->query("
-    SELECT 
-        DATE_FORMAT(o.created_at, '%Y-%m') as month, 
-        SUM(o.total_amount) as total,
-        SUM(o.total_amount) - SUM(COALESCE(pc.total_cost, 0)) as profit
+// 2. Monthly revenue and profit for the selected period.
+$monthly_stmt = $pdo->prepare("
+    SELECT
+        DATE_FORMAT(o.created_at, '%Y-%m') AS month,
+        SUM(o.total_amount) AS total,
+        SUM(o.total_amount) - SUM(COALESCE(pc.total_cost, 0)) AS profit
     FROM orders o
     LEFT JOIN (
-        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) as total_cost
+        SELECT oi.order_id, SUM(oi.quantity * COALESCE(p.cost_price, 0)) AS total_cost
         FROM order_items oi
         LEFT JOIN product_variations pv ON oi.variation_id = pv.id
         LEFT JOIN products p ON pv.product_id = p.id
         GROUP BY oi.order_id
     ) pc ON o.id = pc.order_id
     WHERE o.status NOT IN ('cancelled','refunded')
-    GROUP BY month
+      AND o.created_at >= ? AND o.created_at < ?
+    GROUP BY DATE_FORMAT(o.created_at, '%Y-%m')
     ORDER BY month ASC
-    LIMIT 12
-")->fetchAll();
+");
+$monthly_stmt->execute([$period_start, $period_end]);
+$monthly_results = $monthly_stmt->fetchAll();
+$monthly_lookup = [];
+foreach ($monthly_results as $month_result) {
+    $monthly_lookup[$month_result['month']] = $month_result;
+}
 
 $month_labels = [];
 $month_revenue = [];
 $month_profit = [];
-foreach ($monthly_raw as $m) {
-    $month_labels[] = date('M Y', strtotime($m['month'] . '-01'));
-    $month_revenue[] = (float)$m['total'];
-    $month_profit[] = (float)$m['profit'];
+for ($month_cursor = $period_start_date; $month_cursor < $period_end_date; $month_cursor = $month_cursor->modify('+1 month')) {
+    $month_key = $month_cursor->format('Y-m');
+    $month_labels[] = $month_cursor->format('M Y');
+    $month_revenue[] = isset($monthly_lookup[$month_key]) ? (float)$monthly_lookup[$month_key]['total'] : 0;
+    $month_profit[] = isset($monthly_lookup[$month_key]) ? (float)$monthly_lookup[$month_key]['profit'] : 0;
 }
 
-// 4. Daily breakdown (last 5 days) with profit
-$daily_raw = $pdo->query("
-    SELECT 
-        DATE(o.created_at) as date, 
-        SUM(o.total_amount) as total, 
-        COUNT(DISTINCT o.id) as volume,
-        SUM(o.total_amount) - SUM(COALESCE(pc.total_cost, 0)) as profit
+// 3. Latest ten active sales days within the selected period.
+$daily_stmt = $pdo->prepare("
+    SELECT
+        DATE(o.created_at) AS date,
+        SUM(o.total_amount) AS total,
+        COUNT(DISTINCT o.id) AS volume,
+        SUM(o.total_amount) - SUM(COALESCE(pc.total_cost, 0)) AS profit
     FROM orders o
     LEFT JOIN (
-        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) as total_cost
+        SELECT oi.order_id, SUM(oi.quantity * COALESCE(p.cost_price, 0)) AS total_cost
         FROM order_items oi
         LEFT JOIN product_variations pv ON oi.variation_id = pv.id
         LEFT JOIN products p ON pv.product_id = p.id
         GROUP BY oi.order_id
     ) pc ON o.id = pc.order_id
-    WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
-    GROUP BY date
-    ORDER BY date ASC
-")->fetchAll();
+    WHERE o.status NOT IN ('cancelled','refunded')
+      AND o.created_at >= ? AND o.created_at < ?
+    GROUP BY DATE(o.created_at)
+    ORDER BY date DESC
+    LIMIT 10
+");
+$daily_stmt->execute([$period_start, $period_end]);
+$daily_raw = $daily_stmt->fetchAll();
 
-// 5. Category Revenue for breakdown
-$cat_raw = $pdo->query("
-    SELECT c.name, SUM(oi.quantity * oi.price) as revenue
+// 4. Category revenue within the selected period.
+$category_stmt = $pdo->prepare("
+    SELECT c.name, SUM(oi.quantity * oi.price) AS revenue
     FROM order_items oi
     JOIN product_variations pv ON oi.variation_id = pv.id
     JOIN products p ON pv.product_id = p.id
     JOIN categories c ON p.category_id = c.id
     JOIN orders o ON oi.order_id = o.id
     WHERE o.status NOT IN ('cancelled','refunded')
-    GROUP BY c.id ORDER BY revenue DESC
-")->fetchAll();
+      AND o.created_at >= ? AND o.created_at < ?
+    GROUP BY c.id, c.name
+    ORDER BY revenue DESC
+");
+$category_stmt->execute([$period_start, $period_end]);
+$cat_raw = $category_stmt->fetchAll();
+
+// Compare the selected period with the immediately preceding period of the
+// same length. Existing KPI variable names are retained for the template.
+$period_interval = $period_start_date->diff($period_end_date);
+$previous_end_date = $period_start_date;
+$previous_start_date = $previous_end_date->sub($period_interval);
+$previous_start = $previous_start_date->format('Y-m-d');
+$previous_end = $previous_end_date->format('Y-m-d');
+
+$previous_summary_stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(o.total_amount), 0)
+    FROM orders o
+    WHERE o.status NOT IN ('cancelled','refunded')
+      AND o.created_at >= ? AND o.created_at < ?
+");
+$previous_summary_stmt->execute([$previous_start, $previous_end]);
+$previous_revenue = (float)$previous_summary_stmt->fetchColumn();
+
+$previous_cost_stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(oi.quantity * COALESCE(p.cost_price, 0)), 0)
+    FROM orders o
+    JOIN order_items oi ON oi.order_id = o.id
+    LEFT JOIN product_variations pv ON pv.id = oi.variation_id
+    LEFT JOIN products p ON p.id = pv.product_id
+    WHERE o.status NOT IN ('cancelled','refunded')
+      AND o.created_at >= ? AND o.created_at < ?
+");
+$previous_cost_stmt->execute([$previous_start, $previous_end]);
+$previous_cost = (float)$previous_cost_stmt->fetchColumn();
+
+$this_month_rev = $total_revenue;
+$this_month_profit = $net_profit;
+$last_month_rev = $previous_revenue;
+$last_month_profit = $previous_revenue - $previous_cost;
+$mom_growth = $previous_revenue > 0
+    ? (($total_revenue - $previous_revenue) / $previous_revenue) * 100
+    : ($total_revenue > 0 ? 100 : 0);
 
 // Derived KPIs
 $profit_margin = $total_revenue > 0 ? ($net_profit / $total_revenue) * 100 : 0;
@@ -143,6 +209,37 @@ include $include_path . 'header.php';
             </div>
         </header>
 
+        <section class="rev-filter-card" aria-labelledby="report-period-title">
+            <div class="rev-filter-heading">
+                <div>
+                    <h2 id="report-period-title">Report Period</h2>
+                    <p><?php echo $filter_applied ? 'Custom month range' : 'Current year overview'; ?>: <strong><?php echo htmlspecialchars($period_label); ?></strong></p>
+                </div>
+                <?php if ($filter_applied): ?>
+                    <span class="badge badge-info">Filtered</span>
+                <?php else: ?>
+                    <span class="badge">Full Year</span>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($filter_error): ?>
+                <div class="rev-filter-error"><?php echo htmlspecialchars($filter_error); ?> Showing the current year instead.</div>
+            <?php endif; ?>
+
+            <form method="GET" class="rev-filter-form">
+                <div class="rev-filter-field">
+                    <label for="start-month">Start month</label>
+                    <input type="month" id="start-month" name="start_month" value="<?php echo htmlspecialchars($requested_start_month); ?>" required>
+                </div>
+                <div class="rev-filter-field">
+                    <label for="end-month">End month</label>
+                    <input type="month" id="end-month" name="end_month" value="<?php echo htmlspecialchars($requested_end_month); ?>" required>
+                </div>
+                <button type="submit" class="button-primary rev-filter-submit">Apply range</button>
+                <a href="revenue_reports.php" class="button-secondary rev-filter-reset">Full year</a>
+            </form>
+        </section>
+
         <!-- ═══════════════════════════════════════════ -->
         <!-- Section 1 · Key Performance Indicators      -->
         <!-- ═══════════════════════════════════════════ -->
@@ -157,7 +254,7 @@ include $include_path . 'header.php';
                     </div>
                     <div class="rev-kpi-label">Total Revenue</div>
                     <div class="rev-kpi-value rev-kpi-value--primary">RM <?php echo number_format($total_revenue, 2); ?></div>
-                    <div class="rev-kpi-hint"><?php echo number_format($total_orders); ?> orders all-time</div>
+                    <div class="rev-kpi-hint"><?php echo htmlspecialchars($period_label); ?></div>
                 </div>
 
                 <!-- Net Profit -->
@@ -175,13 +272,13 @@ include $include_path . 'header.php';
                     <div class="rev-kpi-icon rev-kpi-icon--month">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     </div>
-                    <div class="rev-kpi-label">This Month</div>
+                    <div class="rev-kpi-label">Selected Period</div>
                     <div class="rev-kpi-value">RM <?php echo number_format($this_month_rev, 2); ?></div>
                     <div class="rev-kpi-sub">Profit: RM <?php echo number_format($this_month_profit, 2); ?></div>
                     <?php if ($mom_growth >= 0): ?>
-                        <div class="stat-trend trend-up">↑ <?php echo number_format($mom_growth, 1); ?>% vs last month</div>
+                        <div class="stat-trend trend-up">↑ <?php echo number_format($mom_growth, 1); ?>% vs previous period</div>
                     <?php else: ?>
-                        <div class="stat-trend trend-down">↓ <?php echo number_format(abs($mom_growth), 1); ?>% vs last month</div>
+                        <div class="stat-trend trend-down">↓ <?php echo number_format(abs($mom_growth), 1); ?>% vs previous period</div>
                     <?php endif; ?>
                 </div>
 
@@ -190,7 +287,7 @@ include $include_path . 'header.php';
                     <div class="rev-kpi-icon rev-kpi-icon--last">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <div class="rev-kpi-label">Last Month</div>
+                    <div class="rev-kpi-label">Previous Period</div>
                     <div class="rev-kpi-value">RM <?php echo number_format($last_month_rev, 2); ?></div>
                     <div class="rev-kpi-sub">Profit: RM <?php echo number_format($last_month_profit, 2); ?></div>
                     <div class="rev-kpi-hint">Previous period baseline</div>
@@ -223,7 +320,7 @@ include $include_path . 'header.php';
         <!-- ═══════════════════════════════════════════ -->
         <section class="rev-section">
             <h2 class="rev-section-title">Revenue vs Profit Trend</h2>
-            <p class="rev-section-desc">Monthly comparison of gross revenue and net profit over the last 12 months. The gap between lines represents total cost of goods sold.</p>
+            <p class="rev-section-desc">Monthly comparison for <?php echo htmlspecialchars($period_label); ?>. Months without payments remain visible at zero.</p>
             <div class="rev-chart-card">
                 <div class="rev-chart-wrap">
                     <canvas id="monthlyChart"></canvas>
@@ -241,9 +338,9 @@ include $include_path . 'header.php';
                 <div class="rev-panel">
                     <div class="rev-panel-header">
                         <h2 class="rev-section-title" style="margin-bottom:0;">Daily Analytics</h2>
-                        <span class="badge">Last 5 Days</span>
+                        <span class="badge">Latest 10 Active Days</span>
                     </div>
-                    <p class="rev-section-desc" style="padding: 0 24px;">Rolling window of recent orders, revenue, and profit per day.</p>
+                    <p class="rev-section-desc" style="padding: 0 24px;">Most recent sales days within the selected report period.</p>
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -255,7 +352,7 @@ include $include_path . 'header.php';
                         </thead>
                         <tbody>
                             <?php if (empty($daily_raw)): ?>
-                                <tr><td colspan="4" style="text-align:center; color: var(--colors-muted); padding: 32px;">No orders in the last 5 days</td></tr>
+                                <tr><td colspan="4" style="text-align:center; color: var(--colors-muted); padding: 32px;">No orders in the selected period</td></tr>
                             <?php else: ?>
                                 <?php foreach (array_reverse($daily_raw) as $d): ?>
                                     <tr>
@@ -322,6 +419,19 @@ include $include_path . 'header.php';
 <!-- ═══════════════════════════════════════════ -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const startMonthInput = document.getElementById('start-month');
+    const endMonthInput = document.getElementById('end-month');
+    const syncMonthRange = function() {
+        if (!startMonthInput || !endMonthInput) return;
+        endMonthInput.min = startMonthInput.value;
+        if (startMonthInput.value && endMonthInput.value && endMonthInput.value < startMonthInput.value) {
+            endMonthInput.value = startMonthInput.value;
+        }
+    };
+    if (startMonthInput) {
+        startMonthInput.addEventListener('change', syncMonthRange);
+        syncMonthRange();
+    }
 
     /* ── Revenue vs Profit Line Chart ── */
     const lineCtx = document.getElementById('monthlyChart').getContext('2d');

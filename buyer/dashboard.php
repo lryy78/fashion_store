@@ -41,13 +41,166 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_action'])) {
     exit();
 }
 
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC");
+$stmt = $pdo->prepare("
+    SELECT
+        o.*,
+        (
+            SELECT COUNT(DISTINCT pv.product_id)
+            FROM order_items oi
+            JOIN product_variations pv ON pv.id = oi.variation_id
+            LEFT JOIN reviews r
+                ON r.order_id = o.id
+                AND r.product_id = pv.product_id
+                AND r.user_id = o.user_id
+            WHERE oi.order_id = o.id AND r.id IS NULL
+        ) AS pending_review_count
+    FROM orders o
+    WHERE o.user_id = ?
+    ORDER BY o.created_at DESC
+");
 $stmt->execute([$user_id]);
 $orders = $stmt->fetchAll();
 
 $include_path = '../includes/';
 include $include_path . 'header.php';
 ?>
+
+<style>
+    .order-actions {
+        display: flex;
+        min-width: 250px;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .order-action-button {
+        display: inline-flex;
+        min-height: 36px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 14px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-family: var(--typography-body-font);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .order-action-button--primary {
+        background: var(--colors-ink);
+        color: #fff;
+    }
+
+    .order-action-button--primary:hover {
+        background: var(--colors-primary);
+        color: #fff;
+    }
+
+    .order-action-button--refund {
+        border-color: #e4aaa4;
+        background: #fff;
+        color: var(--colors-error);
+    }
+
+    .order-action-button--refund:hover {
+        border-color: var(--colors-error);
+        background: #fff5f4;
+    }
+
+    .order-action-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--colors-muted);
+        font-size: 12px;
+        line-height: 1.4;
+        text-align: right;
+    }
+
+    .order-action-state--reviewed {
+        color: var(--colors-success);
+        font-weight: 600;
+    }
+
+    .refund-dialog {
+        position: fixed;
+        inset: 0;
+        width: min(440px, calc(100% - 32px));
+        max-height: calc(100vh - 32px);
+        margin: auto;
+        padding: 0;
+        border: 1px solid var(--colors-hairline-soft);
+        border-radius: 8px;
+        background: var(--colors-surface);
+        color: var(--colors-ink);
+        box-shadow: 0 24px 70px rgba(20, 20, 19, 0.22);
+    }
+
+    .refund-dialog::backdrop {
+        background: rgba(20, 20, 19, 0.48);
+    }
+
+    .refund-dialog__body {
+        padding: 28px;
+    }
+
+    .refund-dialog__eyebrow {
+        margin-bottom: 8px;
+        color: var(--colors-error);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0;
+    }
+
+    .refund-dialog h2 {
+        margin: 0 0 10px;
+        font-family: var(--typography-display-font);
+        font-size: 30px;
+        font-weight: 500;
+        letter-spacing: 0;
+    }
+
+    .refund-dialog p {
+        margin: 0;
+        color: var(--colors-body);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .refund-dialog__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    @media (max-width: 760px) {
+        .order-actions {
+            min-width: 190px;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .order-action-state {
+            justify-content: flex-end;
+        }
+
+        .refund-dialog__actions {
+            flex-direction: column-reverse;
+        }
+
+        .refund-dialog__actions .order-action-button {
+            width: 100%;
+        }
+    }
+</style>
 
 <div class="dashboard-layout">
     <?php renderSidebar('buyer'); ?>
@@ -93,20 +246,31 @@ include $include_path . 'header.php';
                                             $completed_at = $order['completed_at'] ?? $order['created_at'];
                                             $refund_available = strtotime($completed_at) >= strtotime('-7 days');
                                         ?>
-                                        <a href="write_review.php?order_id=<?php echo $order['id']; ?>" class="button-text-link" style="font-size: 12px; text-decoration: underline;">Review</a>
-                                        <?php if ($refund_available): ?>
-                                            <form method="POST" style="display: inline; margin-left: 12px;" onsubmit="return confirm('Request a refund for this completed order?');">
-                                                <input type="hidden" name="order_id" value="<?php echo $order['id']; ?>">
-                                                <button type="submit" name="order_action" value="refund" class="button-text-link" style="font-size: 12px; text-decoration: underline; border: 0; background: transparent; cursor: pointer; color: var(--colors-error);">Request Refund</button>
-                                            </form>
-                                        <?php else: ?>
-                                            <span style="font-size: 12px; color: var(--colors-muted); margin-left: 12px;">Refund window expired</span>
-                                        <?php endif; ?>
+                                        <div class="order-actions">
+                                            <?php if ((int)$order['pending_review_count'] > 0): ?>
+                                                <a href="write_review.php?order_id=<?php echo $order['id']; ?>" class="order-action-button order-action-button--primary">
+                                                    Review <?php echo (int)$order['pending_review_count'] === 1 ? 'item' : 'items'; ?>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="order-action-state order-action-state--reviewed">&#10003; Reviewed</span>
+                                            <?php endif; ?>
+
+                                            <?php if ($refund_available): ?>
+                                                <button
+                                                    type="button"
+                                                    class="order-action-button order-action-button--refund refund-trigger"
+                                                    data-order-id="<?php echo $order['id']; ?>"
+                                                    data-order-reference="#ORD-<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?>"
+                                                >Request refund</button>
+                                            <?php else: ?>
+                                                <span class="order-action-state">Refund window expired</span>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php else: ?>
                                         <?php if ($order['status'] == 'refund_requested'): ?>
-                                            <span style="font-size: 12px; color: var(--colors-muted);">Waiting for manager approval</span>
+                                            <span class="order-action-state">Refund pending manager approval</span>
                                         <?php else: ?>
-                                            <span style="font-size: 12px; color: var(--colors-muted);">N/A</span>
+                                            <span class="order-action-state">No action available</span>
                                         <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
@@ -124,5 +288,48 @@ include $include_path . 'header.php';
         </div>
     </div>
 </div>
+
+<dialog id="refund-dialog" class="refund-dialog" aria-labelledby="refund-dialog-title">
+    <form method="POST" id="refund-request-form" class="refund-dialog__body">
+        <input type="hidden" name="order_id" id="refund-order-id" value="">
+        <input type="hidden" name="order_action" value="refund">
+        <div class="refund-dialog__eyebrow">Refund request</div>
+        <h2 id="refund-dialog-title">Request a refund?</h2>
+        <p>
+            Your request for <strong id="refund-order-reference"></strong> will be sent to a manager for approval. The order status will update after it is reviewed.
+        </p>
+        <div class="refund-dialog__actions">
+            <button type="button" id="refund-dialog-cancel" class="order-action-button order-action-button--refund">Keep order</button>
+            <button type="submit" class="order-action-button order-action-button--primary">Send request</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dialog = document.getElementById('refund-dialog');
+        const orderIdInput = document.getElementById('refund-order-id');
+        const orderReference = document.getElementById('refund-order-reference');
+        const cancelButton = document.getElementById('refund-dialog-cancel');
+
+        document.querySelectorAll('.refund-trigger').forEach(function (button) {
+            button.addEventListener('click', function () {
+                orderIdInput.value = button.dataset.orderId;
+                orderReference.textContent = button.dataset.orderReference;
+                dialog.showModal();
+            });
+        });
+
+        cancelButton.addEventListener('click', function () {
+            dialog.close();
+        });
+
+        dialog.addEventListener('click', function (event) {
+            if (event.target === dialog) {
+                dialog.close();
+            }
+        });
+    });
+</script>
 
 <?php include $include_path . 'footer.php'; ?>

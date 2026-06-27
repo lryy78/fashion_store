@@ -147,7 +147,7 @@ include __DIR__ . '/../includes/header.php';
                 <input type="hidden" name="action" value="request_reset">
                 <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--colors-muted);">Username or Email</label>
-                    <input type="text" name="identifier" required placeholder="Enter your username or email" autofocus>
+                    <input type="text" name="identifier" required placeholder="" autofocus>
                 </div>
                 <button type="submit" class="button-primary" style="width: 100%; padding: 14px; font-size: 15px;">Generate Reset Link</button>
             </form>
@@ -164,8 +164,7 @@ include __DIR__ . '/../includes/header.php';
 
             <a href="<?php echo htmlspecialchars($reset_link); ?>" class="button-primary" style="display: block; width: 100%; text-align: center; padding: 14px; font-size: 15px; box-sizing: border-box; margin-bottom: 16px;">Click Here to Reset Password</a>
 
-            <div class="fp-alert-success">
-                💡 <strong>Note:</strong> In production, this link would be emailed. Since this is a local environment, it is shown here directly.
+            <div>
             </div>
             <div style="text-align: center;">
                 <a href="login.php" style="font-size: 13px; color: var(--colors-muted); text-decoration: underline;">Back to Sign In</a>

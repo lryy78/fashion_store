@@ -89,7 +89,6 @@
                     <ul>
                         <li><a href="/fashion_store/products.php">Collections</a></li>
                         <li><a href="/fashion_store/about_group.php">About Us</a></li>
-                        <li><a href="#">Careers</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
