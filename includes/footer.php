@@ -91,14 +91,6 @@
                         <li><a href="/fashion_store/about_group.php">About Us</a></li>
                     </ul>
                 </div>
-                <div class="footer-col">
-                    <h4>Support & Legal</h4>
-                    <ul>
-                        <li><a href="/fashion_store/help.php">Support Center</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
-                    </ul>
-                </div>
             </div>
             <div class="footer-bottom-anthropic">
                 <div>&copy; 2026 HypeThread. All rights reserved.</div>

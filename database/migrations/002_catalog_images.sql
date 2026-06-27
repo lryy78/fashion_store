@@ -192,23 +192,23 @@ CREATE TEMPORARY TABLE catalog_images (
     product_name VARCHAR(100), gender VARCHAR(10), image_path VARCHAR(500)
 );
 INSERT INTO catalog_images VALUES
- ('Women''s Dress','Women','assets/img/products/women-dress.jpg'),
- ('Women''s Short Skirt','Women','assets/img/products/women-short-skirt.jpg'),
- ('Women''s Handbag','Women','assets/img/products/women-handbag.jpg'),
- ('Women''s Coats & Jackets','Women','assets/img/products/women-coats-jackets.jpg'),
- ('Women''s Knitted Vest','Women','assets/img/products/women-knitted-vest.jpg'),
- ('Women''s Necklaces','Women','assets/img/products/women-necklaces.jpg'),
- ('Women''s Rings','Women','assets/img/products/women-rings.jpg'),
- ('Women''s Sweater','Women','assets/img/products/women-sweater.jpg'),
- ('Men''s Essential T-Shirts','Men','assets/img/products/men-essential-t-shirts.jpg'),
- ('Men''s Cargo Shorts','Men','assets/img/products/men-cargo-shorts.jpg'),
- ('Men''s Essentials Sweater','Men','assets/img/products/men-essentials-sweater.jpg'),
- ('Men''s Denim Jeans','Men','assets/img/products/men-denim-jeans.jpg'),
- ('Men''s Duffle Bag','Men','assets/img/products/men-duffle-bag.jpg'),
- ('Kids Surf Graphic Sweatshirt','Kids','assets/img/products/kids-surf-sweatshirt.jpg'),
- ('Kids Oversized Gelato Graphic Tee','Kids','assets/img/products/kids-gelato-graphic-tee.jpg'),
- ('Kids Casual Pants','Kids','assets/img/products/kids-pants.jpg'),
- ('Kids Graphic T-Shirt & Flare Leggings Set','Kids','assets/img/products/kids-graphic-tee-flare-leggings-set.jpg');
+ ('Women''s Dress','Women','assets/img/products/women/dress.jpg'),
+ ('Women''s Short Skirt','Women','assets/img/products/women/short-skirt.jpg'),
+ ('Women''s Handbag','Women','assets/img/products/women/handbag.jpg'),
+ ('Women''s Coats & Jackets','Women','assets/img/products/women/coats-jackets.jpg'),
+ ('Women''s Knitted Vest','Women','assets/img/products/women/knitted-vest.jpg'),
+ ('Women''s Necklaces','Women','assets/img/products/women/necklaces.jpg'),
+ ('Women''s Rings','Women','assets/img/products/women/rings.jpg'),
+ ('Women''s Sweater','Women','assets/img/products/women/sweater.jpg'),
+ ('Men''s Essential T-Shirts','Men','assets/img/products/men/essential-t-shirts.jpg'),
+ ('Men''s Cargo Shorts','Men','assets/img/products/men/cargo-shorts.jpg'),
+ ('Men''s Essentials Sweater','Men','assets/img/products/men/essentials-sweater.jpg'),
+ ('Men''s Denim Jeans','Men','assets/img/products/men/denim-jeans.jpg'),
+ ('Men''s Duffle Bag','Men','assets/img/products/men/duffle-bag.jpg'),
+ ('Kids Surf Graphic Sweatshirt','Kids','assets/img/products/kids/surf-sweatshirt.jpg'),
+ ('Kids Oversized Gelato Graphic Tee','Kids','assets/img/products/kids/gelato-graphic-tee.jpg'),
+ ('Kids Casual Pants','Kids','assets/img/products/kids/pants.jpg'),
+ ('Kids Graphic T-Shirt & Flare Leggings Set','Kids','assets/img/products/kids/graphic-tee-flare-leggings-set.jpg');
 
 DELETE pi
 FROM product_images pi
