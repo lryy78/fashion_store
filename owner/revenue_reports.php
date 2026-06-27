@@ -98,97 +98,179 @@ $cat_raw = $pdo->query("
     GROUP BY c.id ORDER BY revenue DESC
 ")->fetchAll();
 
+// Derived KPIs
+$profit_margin = $total_revenue > 0 ? ($net_profit / $total_revenue) * 100 : 0;
+$avg_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
+
 $include_path = '../includes/';
 include $include_path . 'header.php';
 ?>
+<link rel="stylesheet" href="/fashion_store/assets/css/revenue_reports.css">
 
 <div class="dashboard-layout">
     <?php require_once '../includes/sidebar.php'; renderSidebar('owner'); ?>
 
     <div class="dashboard-main fade-in-up">
-        <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- Page Header                                 -->
+        <!-- ═══════════════════════════════════════════ -->
+        <header class="rev-page-header">
             <div>
-            <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Financial Intelligence</div>
-                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Revenue Reports</h1>
+                <div class="rev-page-eyebrow">Financial Overview</div>
+                <h1 class="rev-page-title">Revenue Reports</h1>
+                <p class="rev-page-subtitle">All figures exclude cancelled &amp; refunded orders · Profit = Revenue − Cost Price</p>
             </div>
-            <div style="font-size: 13px; color: var(--colors-muted);">True margin model (Cost-Basis)</div>
         </header>
 
-        <!-- KPI Row -->
-        <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
-            <div class="stat-card">
-                <div class="stat-label">Total Revenue</div>
-                <div class="stat-value" style="color: var(--colors-primary);">RM <?php echo number_format($total_revenue, 2); ?></div>
-                <div style="margin-top: 12px; font-size: 12px; color: var(--colors-muted);">Gross lifecycle revenue</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Net Profit</div>
-                <div class="stat-value" style="color: var(--colors-success);">RM <?php echo number_format($net_profit, 2); ?></div>
-                <div style="margin-top: 12px; font-size: 12px; color: var(--colors-muted);">Actual cost-basis margin</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">This Month</div>
-                <div class="stat-value">RM <?php echo number_format($this_month_rev, 2); ?></div>
-                <div style="margin-top: 4px; font-size: 11px; color: var(--colors-success);">Profit: RM <?php echo number_format($this_month_profit, 2); ?></div>
-                <?php if ($mom_growth >= 0): ?>
-                    <div class="stat-trend trend-up">↑ <?php echo number_format($mom_growth, 1); ?>% vs last month</div>
-                <?php else: ?>
-                    <div class="stat-trend trend-down">↓ <?php echo number_format(abs($mom_growth), 1); ?>% vs last month</div>
-                <?php endif; ?>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Last Month</div>
-                <div class="stat-value">RM <?php echo number_format($last_month_rev, 2); ?></div>
-                <div style="margin-top: 4px; font-size: 11px; color: var(--colors-success);">Profit: RM <?php echo number_format($last_month_profit, 2); ?></div>
-                <div style="margin-top: 12px; font-size: 12px; color: var(--colors-muted);">Previous month revenue</div>
-            </div>
-        </div>
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- Section 1 · Key Performance Indicators      -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="rev-section">
+            <h2 class="rev-section-title">Key Metrics</h2>
+            <div class="rev-kpi-grid">
 
-        <div style="display: flex; flex-direction: column; gap: 32px; margin-top: 40px;">
-            <!-- Monthly Revenue Trend Chart -->
-            <div class="surface-card" style="padding: 24px;">
-                <h3 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">Revenue vs True Profit Trend</h3>
-                <div style="height: 300px; width: 100%;">
+                <!-- Total Revenue -->
+                <div class="rev-kpi-card">
+                    <div class="rev-kpi-icon rev-kpi-icon--revenue">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <div class="rev-kpi-label">Total Revenue</div>
+                    <div class="rev-kpi-value rev-kpi-value--primary">RM <?php echo number_format($total_revenue, 2); ?></div>
+                    <div class="rev-kpi-hint"><?php echo number_format($total_orders); ?> orders all-time</div>
+                </div>
+
+                <!-- Net Profit -->
+                <div class="rev-kpi-card">
+                    <div class="rev-kpi-icon rev-kpi-icon--profit">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    </div>
+                    <div class="rev-kpi-label">Net Profit</div>
+                    <div class="rev-kpi-value rev-kpi-value--success">RM <?php echo number_format($net_profit, 2); ?></div>
+                    <div class="rev-kpi-hint">Margin: <?php echo number_format($profit_margin, 1); ?>%</div>
+                </div>
+
+                <!-- This Month -->
+                <div class="rev-kpi-card">
+                    <div class="rev-kpi-icon rev-kpi-icon--month">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div class="rev-kpi-label">This Month</div>
+                    <div class="rev-kpi-value">RM <?php echo number_format($this_month_rev, 2); ?></div>
+                    <div class="rev-kpi-sub">Profit: RM <?php echo number_format($this_month_profit, 2); ?></div>
+                    <?php if ($mom_growth >= 0): ?>
+                        <div class="stat-trend trend-up">↑ <?php echo number_format($mom_growth, 1); ?>% vs last month</div>
+                    <?php else: ?>
+                        <div class="stat-trend trend-down">↓ <?php echo number_format(abs($mom_growth), 1); ?>% vs last month</div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Last Month -->
+                <div class="rev-kpi-card">
+                    <div class="rev-kpi-icon rev-kpi-icon--last">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="rev-kpi-label">Last Month</div>
+                    <div class="rev-kpi-value">RM <?php echo number_format($last_month_rev, 2); ?></div>
+                    <div class="rev-kpi-sub">Profit: RM <?php echo number_format($last_month_profit, 2); ?></div>
+                    <div class="rev-kpi-hint">Previous period baseline</div>
+                </div>
+
+                <!-- Avg Order Value -->
+                <div class="rev-kpi-card">
+                    <div class="rev-kpi-icon rev-kpi-icon--aov">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    </div>
+                    <div class="rev-kpi-label">Avg Order Value</div>
+                    <div class="rev-kpi-value">RM <?php echo number_format($avg_order_value, 2); ?></div>
+                    <div class="rev-kpi-hint">Revenue ÷ <?php echo number_format($total_orders); ?> orders</div>
+                </div>
+
+                <!-- Profit Margin -->
+                <div class="rev-kpi-card">
+                    <div class="rev-kpi-icon rev-kpi-icon--margin">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    </div>
+                    <div class="rev-kpi-label">Profit Margin</div>
+                    <div class="rev-kpi-value rev-kpi-value--success"><?php echo number_format($profit_margin, 1); ?>%</div>
+                    <div class="rev-kpi-hint">Net profit ÷ revenue</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- Section 2 · Revenue vs Profit Trend         -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="rev-section">
+            <h2 class="rev-section-title">Revenue vs Profit Trend</h2>
+            <p class="rev-section-desc">Monthly comparison of gross revenue and net profit over the last 12 months. The gap between lines represents total cost of goods sold.</p>
+            <div class="rev-chart-card">
+                <div class="rev-chart-wrap">
                     <canvas id="monthlyChart"></canvas>
                 </div>
             </div>
+        </section>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start;">
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- Section 3 · Daily Analytics + Category Split -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="rev-section">
+            <div class="rev-two-col">
+
                 <!-- Daily Breakdown Table -->
-                <div class="surface-card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 20px 24px; border-bottom: 1px solid var(--colors-hairline-soft); display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Daily Analytics — Last 5 Days</h3>
-                        <span class="badge" style="font-size: 10px;">Rolling Window</span>
+                <div class="rev-panel">
+                    <div class="rev-panel-header">
+                        <h2 class="rev-section-title" style="margin-bottom:0;">Daily Analytics</h2>
+                        <span class="badge">Last 5 Days</span>
                     </div>
-                    <table class="data-table" style="margin: 0;">
+                    <p class="rev-section-desc" style="padding: 0 24px;">Rolling window of recent orders, revenue, and profit per day.</p>
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
                                 <th>Orders</th>
-                                <th>Revenue</th>
-                                <th style="text-align: right;">True Profit</th>
+                                <th>Revenue (RM)</th>
+                                <th style="text-align: right;">Profit (RM)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach (array_reverse($daily_raw) as $d): ?>
-                                <tr>
-                                    <td style="font-weight: 500;"><?php echo date('M d, Y', strtotime($d['date'])); ?></td>
-                                    <td><span class="badge badge-info"><?php echo $d['volume']; ?> orders</span></td>
-                                    <td style="font-family: var(--typography-code-font); font-weight: 600;">RM <?php echo number_format($d['total'], 2); ?></td>
-                                    <td style="text-align: right; font-family: var(--typography-code-font); color: var(--colors-success); font-weight: 700;">RM <?php echo number_format($d['profit'], 2); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
+                            <?php if (empty($daily_raw)): ?>
+                                <tr><td colspan="4" style="text-align:center; color: var(--colors-muted); padding: 32px;">No orders in the last 5 days</td></tr>
+                            <?php else: ?>
+                                <?php foreach (array_reverse($daily_raw) as $d): ?>
+                                    <tr>
+                                        <td style="font-weight: 500;"><?php echo date('D, M d', strtotime($d['date'])); ?></td>
+                                        <td><span class="badge badge-info"><?php echo $d['volume']; ?></span></td>
+                                        <td style="font-family: var(--typography-code-font); font-weight: 600;"><?php echo number_format($d['total'], 2); ?></td>
+                                        <td style="text-align: right; font-family: var(--typography-code-font); color: var(--colors-success); font-weight: 700;"><?php echo number_format($d['profit'], 2); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Category Revenue -->
-                <div class="surface-card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 20px 24px; border-bottom: 1px solid var(--colors-hairline-soft);">
-                        <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Market Share by Category</h3>
+                <!-- Category Revenue Breakdown (Donut + Table) -->
+                <div class="rev-panel">
+                    <div class="rev-panel-header">
+                        <h2 class="rev-section-title" style="margin-bottom:0;">Revenue by Category</h2>
                     </div>
-                    <table class="data-table" style="margin: 0;">
+                    <p class="rev-section-desc" style="padding: 0 24px;">How each product category contributes to total revenue.</p>
+
+                    <!-- Donut Chart -->
+                    <div class="rev-donut-wrap">
+                        <canvas id="categoryDonut"></canvas>
+                    </div>
+
+                    <!-- Category Breakdown Table -->
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th style="text-align: right;">Revenue (RM)</th>
+                                <th style="text-align: right;">Share</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <?php 
                             $total_cat_rev = array_sum(array_column($cat_raw, 'revenue')) ?: 1;
@@ -198,28 +280,32 @@ include $include_path . 'header.php';
                                 <tr>
                                     <td>
                                         <div style="font-weight: 600; font-size: 13px;"><?php echo htmlspecialchars($cat['name']); ?></div>
-                                        <div style="height: 4px; background: var(--colors-hairline); border-radius: 2px; margin-top: 6px;">
-                                            <div style="height: 100%; width: <?php echo $pct; ?>%; background: var(--colors-primary); border-radius: 2px;"></div>
+                                        <div class="rev-bar-track">
+                                            <div class="rev-bar-fill" style="width: <?php echo $pct; ?>%;"></div>
                                         </div>
                                     </td>
-                                    <td style="text-align: right; white-space: nowrap;">
-                                        <div style="font-family: var(--typography-code-font); font-weight: 600; font-size: 13px;">RM <?php echo number_format($cat['revenue'], 2); ?></div>
-                                        <div style="font-size: 11px; color: var(--colors-muted);"><?php echo $pct; ?>%</div>
-                                    </td>
+                                    <td style="text-align: right; font-family: var(--typography-code-font); font-weight: 600; font-size: 13px; white-space: nowrap;"><?php echo number_format($cat['revenue'], 2); ?></td>
+                                    <td style="text-align: right; font-size: 13px; color: var(--colors-muted); font-weight: 600;"><?php echo $pct; ?>%</td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </section>
+
     </div>
 </div>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- Charts JS                                   -->
+<!-- ═══════════════════════════════════════════ -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(ctx, {
+
+    /* ── Revenue vs Profit Line Chart ── */
+    const lineCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(lineCtx, {
         type: 'line',
         data: {
             labels: <?php echo json_encode($month_labels); ?>,
@@ -228,45 +314,108 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Gross Revenue',
                     data: <?php echo json_encode($month_revenue); ?>,
                     borderColor: '#cc785c',
-                    backgroundColor: 'rgba(204,120,92,0.05)',
+                    backgroundColor: 'rgba(204,120,92,0.08)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    pointBackgroundColor: '#cc785c',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 },
                 {
                     label: 'Net Profit',
                     data: <?php echo json_encode($month_profit); ?>,
-                    borderColor: '#181715',
-                    backgroundColor: 'transparent',
+                    borderColor: '#5db872',
+                    backgroundColor: 'rgba(93,184,114,0.06)',
                     borderWidth: 2,
-                    borderDash: [5, 5],
-                    fill: false,
-                    tension: 0.4
+                    borderDash: [6, 4],
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#5db872',
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 800, easing: 'easeOutQuart' },
+            interaction: { mode: 'index', intersect: false },
             plugins: {
-                legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 20, font: { family: "'Inter', sans-serif", size: 12 } } },
                 tooltip: {
-                    padding: 12,
+                    backgroundColor: '#181715',
+                    titleFont: { family: "'Inter', sans-serif" },
+                    bodyFont: { family: "'Inter', sans-serif" },
+                    padding: 14,
+                    cornerRadius: 8,
                     callbacks: {
-                        label: ctx => ctx.dataset.label + ': RM ' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2})
+                        label: function(ctx) {
+                            return ctx.dataset.label + ': RM ' + ctx.parsed.y.toLocaleString(undefined, {minimumFractionDigits: 2});
+                        }
                     }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { color: '#f0f0f0' },
-                    ticks: { callback: v => 'RM ' + v, padding: 10 }
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: { callback: v => 'RM ' + v.toLocaleString(), padding: 10, font: { size: 11 } }
                 },
-                x: { grid: { display: false }, ticks: { padding: 10 } }
+                x: {
+                    grid: { display: false },
+                    ticks: { padding: 10, font: { size: 11 } }
+                }
             }
         }
     });
+
+    /* ── Category Donut Chart ── */
+    const donutCtx = document.getElementById('categoryDonut');
+    if (donutCtx) {
+        const catLabels = <?php echo json_encode(array_column($cat_raw, 'name')); ?>;
+        const catData   = <?php echo json_encode(array_map('floatval', array_column($cat_raw, 'revenue'))); ?>;
+        const palette   = ['#cc785c','#5db8a6','#e8a55a','#5d8fb8','#b85d9e','#8bc34a','#e91e63','#9c27b0','#ff9800','#607d8b'];
+
+        new Chart(donutCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catData,
+                    backgroundColor: palette.slice(0, catLabels.length),
+                    borderWidth: 2,
+                    borderColor: '#faf9f5',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '62%',
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { family: "'Inter', sans-serif", size: 12 } }
+                    },
+                    tooltip: {
+                        backgroundColor: '#181715',
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a,b) => a + b, 0);
+                                const pct = ((ctx.parsed / total) * 100).toFixed(1);
+                                return ctx.label + ': RM ' + ctx.parsed.toLocaleString(undefined, {minimumFractionDigits:2}) + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 });
 </script>
 

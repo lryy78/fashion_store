@@ -1,0 +1,268 @@
+/* ═══════════════════════════════════════════════════
+   Revenue Reports – Page-Specific Styles
+   ═══════════════════════════════════════════════════ */
+
+/* ── Page Header ── */
+.rev-page-header {
+    margin-bottom: var(--spacing-xxl);
+}
+.rev-page-eyebrow {
+    font-size: 13px;
+    color: var(--colors-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-family: var(--typography-body-font);
+}
+.rev-page-title {
+    margin: 0;
+    font-family: var(--typography-display-font);
+    font-size: 42px;
+    letter-spacing: -0.02em;
+    color: var(--colors-ink);
+    line-height: 1.15;
+}
+.rev-page-subtitle {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--colors-muted);
+    font-family: var(--typography-body-font);
+}
+
+/* ── Sections ── */
+.rev-section {
+    margin-bottom: 40px;
+}
+.rev-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--colors-ink);
+    margin-bottom: 8px;
+    font-family: var(--typography-body-font);
+}
+.rev-section-desc {
+    font-size: 13px;
+    color: var(--colors-muted);
+    margin: 0 0 20px;
+    line-height: 1.5;
+}
+
+/* ── KPI Grid (6 cards, 3×2 on desktop) ── */
+.rev-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+@media (max-width: 1024px) {
+    .rev-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .rev-kpi-grid { grid-template-columns: 1fr; }
+}
+
+/* ── KPI Card ── */
+.rev-kpi-card {
+    background: var(--colors-surface-soft);
+    border-radius: var(--rounded-lg);
+    padding: 22px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.rev-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--colors-primary), var(--colors-accent-teal));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.rev-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+}
+.rev-kpi-card:hover::before {
+    opacity: 1;
+}
+
+/* KPI Icon */
+.rev-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--rounded-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    color: #fff;
+}
+.rev-kpi-icon--revenue  { background: var(--colors-primary); }
+.rev-kpi-icon--profit   { background: var(--colors-success); }
+.rev-kpi-icon--month    { background: var(--colors-accent-teal); }
+.rev-kpi-icon--last     { background: var(--colors-muted-soft); }
+.rev-kpi-icon--aov      { background: var(--colors-accent-amber); }
+.rev-kpi-icon--margin   { background: #5d8fb8; }
+
+/* KPI Typography */
+.rev-kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--colors-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--typography-body-font);
+}
+.rev-kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--colors-ink);
+    font-family: var(--typography-body-font);
+    line-height: 1.2;
+}
+.rev-kpi-value--primary { color: var(--colors-primary); }
+.rev-kpi-value--success { color: var(--colors-success); }
+
+.rev-kpi-sub {
+    font-size: 12px;
+    color: var(--colors-success);
+    font-weight: 500;
+}
+.rev-kpi-hint {
+    font-size: 11px;
+    color: var(--colors-muted-soft);
+    margin-top: 4px;
+}
+
+/* ── Chart Card ── */
+.rev-chart-card {
+    background: var(--colors-surface-soft);
+    border-radius: var(--rounded-lg);
+    padding: 24px;
+    overflow: hidden;
+}
+.rev-chart-wrap {
+    height: 340px;
+    width: 100%;
+    position: relative;
+}
+
+/* ── Two-Column Layout ── */
+.rev-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .rev-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Panel (card wrapper for tables) ── */
+.rev-panel {
+    background: var(--colors-surface-soft);
+    border-radius: var(--rounded-lg);
+    overflow: hidden;
+}
+.rev-panel-header {
+    padding: 20px 24px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── Donut Chart ── */
+.rev-donut-wrap {
+    height: 220px;
+    padding: 12px 24px;
+    position: relative;
+}
+
+/* ── Bar Track (category progress bar) ── */
+.rev-bar-track {
+    height: 4px;
+    background: var(--colors-hairline);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+.rev-bar-fill {
+    height: 100%;
+    background: var(--colors-primary);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+
+/* ── Data Tables (override) ── */
+.rev-panel .data-table {
+    margin: 0;
+}
+.rev-panel .data-table th,
+.rev-panel .data-table td {
+    padding: 10px 24px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--colors-hairline-soft);
+}
+.rev-panel .data-table thead th {
+    background: transparent;
+    color: var(--colors-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+    border-bottom: 1px solid var(--colors-hairline);
+}
+.rev-panel .data-table tbody tr {
+    transition: background 0.15s ease;
+}
+.rev-panel .data-table tbody tr:hover {
+    background: rgba(0,0,0,0.02);
+}
+.rev-panel .data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ── Badge (override/enhance) ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: var(--rounded-pill);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--typography-body-font);
+    background: var(--colors-surface-card);
+    color: var(--colors-body);
+}
+.badge-info {
+    background: rgba(93,184,166,0.12);
+    color: var(--colors-accent-teal);
+}
+
+/* ── Trend Arrows ── */
+.stat-trend {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--typography-body-font);
+}
+.trend-up  { color: var(--colors-success); }
+.trend-down { color: var(--colors-error); }
+
+/* ── Fade-in Animation ── */
+.fade-in-up {
+    animation: revFadeInUp 0.5s ease both;
+}
+@keyframes revFadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
