@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS products (
     size_chart TEXT,
     price DECIMAL(10, 2) NOT NULL,
     cost_price DECIMAL(10, 2) DEFAULT 0.00,
-    discount_price DECIMAL(10, 2) DEFAULT NULL,
     gender ENUM('Men', 'Women', 'Kids', 'Unisex') DEFAULT 'Unisex',
     status ENUM('published', 'draft', 'scheduled') DEFAULT 'published',
     publish_at TIMESTAMP NULL DEFAULT NULL,

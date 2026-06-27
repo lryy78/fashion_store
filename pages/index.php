@@ -154,7 +154,7 @@ if ($recentIds) {
 
 .category-grid-studio {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 2px;
     background-color: var(--colors-hairline);
     border: 1px solid var(--colors-hairline);
@@ -359,12 +359,12 @@ if ($recentIds) {
         <a href="index.php?gender=Women" class="category-card-studio"><h3>Women</h3></a>
         <a href="index.php?gender=Men" class="category-card-studio"><h3>Men</h3></a>
         <a href="index.php?gender=Kids" class="category-card-studio"><h3>Kids</h3></a>
-        <a href="products.php?category=Sale" class="category-card-studio" style="color: var(--colors-error);"><h3 style="color: var(--colors-error);">Sale %</h3></a>
+
     <?php else: ?>
         <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Tops" class="category-card-studio"><h3>Tops</h3></a>
         <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Bottoms" class="category-card-studio"><h3>Bottoms</h3></a>
         <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Accessories" class="category-card-studio"><h3>Accessories</h3></a>
-        <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Sale" class="category-card-studio" style="color: var(--colors-error);"><h3 style="color: var(--colors-error);">Sale %</h3></a>
+
     <?php endif; ?>
 </div>
 

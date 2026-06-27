@@ -1,13 +1,3 @@
-# Assets and Uploads
-assets/uploads/products/*
-!assets/uploads/products/.gitkeep
-
-# Config
-# config/db.php (Removed exclusion as per user request)
-
-# System
-.DS_Store
-Thumbs.db
-*.log
-scratch/
-temp/
+/Images/
+/Images.zip
+/docs/

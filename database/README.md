@@ -4,6 +4,7 @@ This folder is the source of truth for the HypeThread database.
 
 - `schema.sql`: complete schema for a fresh database.
 - `migrations/001_compatibility.sql`: upgrades older copies without deleting data.
+- `migrations/002_catalog_images.sql`: installs the local 17-item image catalogue.
 - `seed.sql`: repeatable demo accounts, products, images, vouchers, settings, and FAQs.
 - The schema and migration also create the buyer `wishlists` table used by the enhanced shopping experience.
 - `legacy/`: older SQL scripts retained for reference; the installer does not use them.

@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'owner') {
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_campaign'])) {
     $code = strtoupper($_POST['code']);
+    $campaign = !empty($_POST['campaign']) ? $_POST['campaign'] : null;
     $type = $_POST['discount_type'];
     $value = $_POST['discount_value'];
     $min_spend = $_POST['min_spend'] ?: 0;
@@ -20,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_campaign'])) {
     $target_user_id = ($target_type == 'specific') ? $_POST['target_user_id'] : null;
     $target_group = ($target_type == 'group') ? $_POST['target_group'] : null;
 
-    $stmt = $pdo->prepare("INSERT INTO vouchers (code, discount_type, discount_value, min_spend, expiry_date, usage_limit, is_one_time, target_type, target_user_id, target_group) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$code, $type, $value, $min_spend, $expiry, $usage_limit, $is_one_time, $target_type, $target_user_id, $target_group]);
+    $stmt = $pdo->prepare("INSERT INTO vouchers (code, campaign, discount_type, discount_value, min_spend, expiry_date, usage_limit, is_one_time, target_type, target_user_id, target_group) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$code, $campaign, $type, $value, $min_spend, $expiry, $usage_limit, $is_one_time, $target_type, $target_user_id, $target_group]);
     $success_msg = "Campaign '$code' deployed successfully!";
 }
 
@@ -38,32 +39,76 @@ $group_sizes = [
     'reviewers' => (int)$pdo->query("SELECT COUNT(DISTINCT user_id) FROM reviews")->fetchColumn(),
 ];
 
-// Fetch Campaigns with Analytics
-$vouchers = $pdo->query("
+// Get filter parameters
+$filter_campaign = $_GET['filter_campaign'] ?? '';
+$filter_target = $_GET['filter_target'] ?? '';
+$sort_by = $_GET['sort_by'] ?? 'created_desc';
+
+// Build dynamic query
+$query = "
     SELECT 
         v.*,
         (SELECT COUNT(*) FROM voucher_redemptions vr WHERE vr.voucher_id = v.id) as redemption_count,
         (SELECT SUM(total_amount) FROM orders o WHERE o.voucher_id = v.id AND o.status NOT IN ('cancelled','refunded')) as influenced_revenue
     FROM vouchers v
-    ORDER BY created_at DESC
-")->fetchAll();
+    WHERE 1=1
+";
 
-// Chart Data (Top 5 by Revenue)
+$params = [];
+
+if ($filter_campaign) {
+    $query .= " AND v.campaign = ?";
+    $params[] = $filter_campaign;
+}
+
+if ($filter_target) {
+    $query .= " AND v.target_type = ?";
+    $params[] = $filter_target;
+}
+
+// Add sorting
+switch ($sort_by) {
+    case 'created_asc':
+        $query .= " ORDER BY v.created_at ASC";
+        break;
+    case 'revenue_desc':
+        $query .= " ORDER BY (SELECT SUM(o.total_amount) FROM orders o WHERE o.voucher_id = v.id AND o.status NOT IN ('cancelled','refunded')) DESC";
+        break;
+    case 'revenue_asc':
+        $query .= " ORDER BY (SELECT SUM(o.total_amount) FROM orders o WHERE o.voucher_id = v.id AND o.status NOT IN ('cancelled','refunded')) ASC";
+        break;
+    case 'redemptions_desc':
+        $query .= " ORDER BY redemption_count DESC";
+        break;
+    case 'code_asc':
+        $query .= " ORDER BY v.code ASC";
+        break;
+    default:
+        $query .= " ORDER BY v.created_at DESC";
+}
+
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
+$vouchers = $stmt->fetchAll();
+
+// Chart Data (Revenue by Campaign)
 $chart_labels = [];
 $chart_revenue = [];
-$top_vouchers = $pdo->query("
-    SELECT v.code, SUM(o.total_amount) as rev 
+$campaign_revenue = $pdo->query("
+    SELECT 
+        COALESCE(v.campaign, 'Standalone Campaign') as campaign_name,
+        SUM(o.total_amount) as rev 
     FROM vouchers v 
     JOIN orders o ON v.id = o.voucher_id 
     WHERE o.status NOT IN ('cancelled','refunded') 
-    GROUP BY v.id 
+    GROUP BY v.campaign 
     ORDER BY rev DESC 
     LIMIT 5
 ")->fetchAll();
 
-foreach ($top_vouchers as $tv) {
-    $chart_labels[] = $tv['code'];
-    $chart_revenue[] = (float)$tv['rev'];
+foreach ($campaign_revenue as $cr) {
+    $chart_labels[] = $cr['campaign_name'];
+    $chart_revenue[] = (float)$cr['rev'];
 }
 
 $include_path = '../includes/';
@@ -76,7 +121,6 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-            <div>
                 <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Campaign Hub</div>
                 <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Vouchers & Rewards</h1>
             </div>
@@ -85,25 +129,97 @@ include $include_path . 'header.php';
             <?php endif; ?>
         </header>
 
-        <div class="dashboard-split" style="grid-template-columns: 1fr 450px; gap: 32px; align-items: start;">
-            <div style="display: flex; flex-direction: column; gap: 32px;">
+        <div style="display: grid; grid-template-columns: 1fr 400px; gap: 24px; align-items: start;">
+            <!-- LEFT COLUMN: Stats + Chart -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Campaign Summary Stats -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <?php
+                    $total_revenue = $pdo->query("SELECT SUM(o.total_amount) FROM vouchers v JOIN orders o ON v.id = o.voucher_id WHERE o.status NOT IN ('cancelled','refunded')")->fetchColumn();
+                    $total_redemptions = $pdo->query("SELECT COUNT(*) FROM voucher_redemptions")->fetchColumn();
+                    $active_campaigns = $pdo->query("SELECT COUNT(DISTINCT campaign) FROM vouchers WHERE campaign IS NOT NULL")->fetchColumn();
+                    ?>
+                    <div class="surface-card" style="padding: 20px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">All-Time Revenue</div>
+                        <div style="font-family: var(--typography-code-font); font-size: 22px; font-weight: 700; color: var(--colors-success);">RM <?php echo number_format($total_revenue ?: 0, 2); ?></div>
+                    </div>
+                    <div class="surface-card" style="padding: 20px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Total Redemptions</div>
+                        <div style="font-family: var(--typography-code-font); font-size: 22px; font-weight: 700; color: var(--colors-primary);"><?php echo $total_redemptions; ?></div>
+                    </div>
+                    <div class="surface-card" style="padding: 20px; text-align: center;">
+                        <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Active Campaigns</div>
+                        <div style="font-family: var(--typography-code-font); font-size: 22px; font-weight: 700; color: var(--colors-ink);"><?php echo $active_campaigns; ?></div>
+                    </div>
+                </div>
+
                 <!-- Performance Chart -->
                 <div class="surface-card" style="padding: 24px;">
-                    <h3 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px;">Revenue Contribution by Campaign</h3>
-                    <div style="height: 250px; width: 100%;">
+                    <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; color: var(--colors-muted);">Top 5 Campaigns by Revenue</h3>
+                    <div style="height: 280px; width: 100%;">
                         <canvas id="campaignChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Campaigns List -->
-                <div class="table-container" style="margin: 0;">
-                    <div style="padding: 24px; border-bottom: 1px solid var(--colors-hairline-soft);">
-                        <h3 style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Active Campaigns</h3>
+                <!-- Active Campaigns Section -->
+                <div class="surface-card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid var(--colors-hairline-soft);">
+                        <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Active Campaigns</h3>
                     </div>
-                    <table class="data-table" style="margin: 0;">
-                        <thead>
+                    
+                    <!-- Filters -->
+                    <div style="padding: 16px 24px; background: var(--colors-surface-soft); border-bottom: 1px solid var(--colors-hairline-soft);">
+                        <form method="GET" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                            <div class="form-group" style="margin: 0; flex: 1.5; min-width: 200px;">
+                                <label class="form-label" style="font-size: 11px;">Campaign</label>
+                                <select name="filter_campaign" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 100%;">
+                                    <option value="">All Campaigns</option>
+                                    <?php
+                                    $campaigns = $pdo->query("SELECT DISTINCT campaign FROM vouchers WHERE campaign IS NOT NULL ORDER BY campaign")->fetchAll();
+                                    foreach ($campaigns as $c):
+                                    ?>
+                                        <option value="<?php echo htmlspecialchars($c['campaign']); ?>" <?php echo ($_GET['filter_campaign'] ?? '') === $c['campaign'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($c['campaign']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="margin: 0; flex: 1; min-width: 160px;">
+                                <label class="form-label" style="font-size: 11px;">Targeting</label>
+                                <select name="filter_target" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 100%;">
+                                    <option value="">All Types</option>
+                                    <option value="all" <?php echo ($_GET['filter_target'] ?? '') === 'all' ? 'selected' : ''; ?>>All Customers</option>
+                                    <option value="specific" <?php echo ($_GET['filter_target'] ?? '') === 'specific' ? 'selected' : ''; ?>>Specific User</option>
+                                    <option value="group" <?php echo ($_GET['filter_target'] ?? '') === 'group' ? 'selected' : ''; ?>>Customer Segment</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="margin: 0; flex: 1; min-width: 160px;">
+                                <label class="form-label" style="font-size: 11px;">Sort By</label>
+                                <select name="sort_by" class="form-input" style="padding: 6px 10px; font-size: 12px; width: 100%;">
+                                    <option value="created_desc" <?php echo ($_GET['sort_by'] ?? 'created_desc') === 'created_desc' ? 'selected' : ''; ?>>Newest First</option>
+                                    <option value="created_asc" <?php echo ($_GET['sort_by'] ?? '') === 'created_asc' ? 'selected' : ''; ?>>Oldest First</option>
+                                    <option value="revenue_desc" <?php echo ($_GET['sort_by'] ?? '') === 'revenue_desc' ? 'selected' : ''; ?>>Revenue (High-Low)</option>
+                                    <option value="redemptions_desc" <?php echo ($_GET['sort_by'] ?? '') === 'redemptions_desc' ? 'selected' : ''; ?>>Redemptions (High-Low)</option>
+                                    <option value="code_asc" <?php echo ($_GET['sort_by'] ?? '') === 'code_asc' ? 'selected' : ''; ?>>Code (A-Z)</option>
+                                </select>
+                            </div>
+                            
+                            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                                <button type="submit" class="button-primary" style="padding: 6px 16px; font-size: 12px; white-space: nowrap;">Apply</button>
+                                <a href="vouchers.php" class="button-secondary" style="padding: 6px 16px; font-size: 12px; text-decoration: none; white-space: nowrap;">Reset</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Campaigns Table -->
+                    <div class="table-container" style="margin: 0; box-shadow: none; border: none; border-radius: 0; max-height: 400px; overflow-y: auto;">
+                        <table class="data-table" style="margin: 0;">
+                        <thead style="position: sticky; top: 0; z-index: 10; background: var(--colors-surface);">
                             <tr>
                                 <th>Campaign</th>
+                                <th>Voucher Code</th>
                                 <th>Targeting</th>
                                 <th>Performance</th>
                                 <th style="text-align: right;">ROI (Revenue)</th>
@@ -115,9 +231,18 @@ include $include_path . 'header.php';
                                 $target_size = 1;
                                 if ($v['target_type'] == 'all') $target_size = $group_sizes['all'];
                                 elseif ($v['target_type'] == 'group') $target_size = $group_sizes[$v['target_group']] ?: 1;
+                                elseif ($v['target_type'] == 'specific') $target_size = 1;
                                 $usage_rate = ($v['redemption_count'] / $target_size) * 100;
                             ?>
                                 <tr>
+                                    <td>
+                                        <div style="font-weight: 600; font-size: 14px; color: var(--colors-ink);">
+                                            <?php echo $v['campaign'] ? htmlspecialchars($v['campaign']) : 'Standalone Campaign'; ?>
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--colors-muted); margin-top: 4px;">
+                                            <?php echo date('M d, Y', strtotime($v['created_at'])); ?>
+                                        </div>
+                                    </td>
                                     <td>
                                         <div style="font-family: var(--typography-code-font); font-weight: 700; color: var(--colors-primary); font-size: 16px;"><?php echo htmlspecialchars($v['code']); ?></div>
                                         <div style="font-size: 12px; color: var(--colors-muted); margin-top: 4px;">
@@ -160,17 +285,25 @@ include $include_path . 'header.php';
                         </tbody>
                     </table>
                 </div>
-            </div>
+                </div> <!-- End Active Campaigns Section -->
+            </div> <!-- End Left Column -->
 
-            <!-- Creation Form -->
-            <div class="surface-card" style="padding: 32px; border: 1px solid var(--colors-primary);">
-                <h3 style="font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 32px; color: var(--colors-primary);">Create New Campaign</h3>
+            <!-- RIGHT COLUMN: Create Voucher -->
+            <div class="surface-card" style="padding: 24px; position: sticky; top: 24px; height: fit-content;">
+                <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 24px;">Create New Campaign</h3>
                 <form method="POST" style="display: flex; flex-direction: column; gap: 24px;">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="form-group">
                             <label class="form-label">Voucher Code</label>
                             <input type="text" name="code" placeholder="WELCOME10" class="form-input" style="text-transform: uppercase; font-family: var(--typography-code-font);" required>
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">Campaign Name</label>
+                            <input type="text" name="campaign" placeholder="e.g., Summer Sale" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="form-group">
                             <label class="form-label">Min. Spend (RM)</label>
                             <input type="number" name="min_spend" step="0.01" class="form-input" placeholder="0.00">

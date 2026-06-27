@@ -39,20 +39,20 @@ include __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <form method="POST" style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
+        <form method="POST" id="signup-form" autocomplete="off" style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
             <div class="form-group" style="margin: 0;">
                 <label class="form-label" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--colors-muted);">Username</label>
-                <input type="text" name="username" required placeholder="Choose a username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+                <input type="text" name="username" required placeholder="" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
 
             <div class="form-group" style="margin: 0;">
                 <label class="form-label" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--colors-muted);">Email Address</label>
-                <input type="email" name="email" required placeholder="you@example.com" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+                <input type="email" name="email" required placeholder="" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
 
             <div class="form-group" style="margin: 0;">
                 <label class="form-label" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--colors-muted);">Password</label>
-                <input type="password" name="password" required placeholder="Create a strong password">
+                <input type="password" name="password" required placeholder="" autocomplete="new-password" data-lpignore="true" data-1p-ignore>
             </div>
 
             <input type="hidden" name="role" value="buyer">
@@ -66,5 +66,19 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const signupForm = document.getElementById('signup-form');
+    const clearSignupFields = function () {
+        if (signupForm) {
+            signupForm.reset();
+        }
+    };
+
+    clearSignupFields();
+    window.setTimeout(clearSignupFields, 150);
+});
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

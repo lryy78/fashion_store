@@ -54,14 +54,14 @@ include __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <form method="POST" style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
+        <form method="POST" id="login-form" autocomplete="off" style="display: flex; flex-direction: column; gap: var(--spacing-lg);">
             <div class="form-group" style="margin: 0;">
                 <label class="form-label" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--colors-muted);">Username</label>
-                <input type="text" name="username" required placeholder="Enter your username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
+                <input type="text" name="username" required placeholder="" autocomplete="off" data-lpignore="true" data-1p-ignore>
             </div>
             <div class="form-group" style="margin: 0;">
                 <label class="form-label" style="font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--colors-muted);">Password</label>
-                <input type="password" name="password" required placeholder="••••••••">
+                <input type="password" name="password" required placeholder="">
                 <div style="text-align: right; margin-top: 6px;">
                     <a href="forgot_password.php" style="font-size: 12px; color: var(--colors-muted); text-decoration: underline;">Forgot password?</a>
                 </div>
@@ -76,5 +76,25 @@ include __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.getElementById('login-form');
+    const passwordField = loginForm ? loginForm.querySelector('input[name="password"]') : null;
+    if (passwordField) {
+        passwordField.setAttribute('autocomplete', 'new-password');
+        passwordField.setAttribute('data-lpignore', 'true');
+        passwordField.setAttribute('data-1p-ignore', 'true');
+    }
+    const clearLoginFields = function () {
+        if (loginForm) {
+            loginForm.reset();
+        }
+    };
+
+    clearLoginFields();
+    window.setTimeout(clearLoginFields, 150);
+});
+</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

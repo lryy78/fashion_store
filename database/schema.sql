@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS products (
     size_chart TEXT DEFAULT NULL,
     price DECIMAL(10,2) NOT NULL,
     cost_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    discount_price DECIMAL(10,2) DEFAULT NULL,
     gender ENUM('Men','Women','Kids','Unisex') NOT NULL DEFAULT 'Unisex',
     status ENUM('published','draft','scheduled') NOT NULL DEFAULT 'published',
     publish_at DATETIME DEFAULT NULL,
@@ -71,6 +70,7 @@ CREATE TABLE IF NOT EXISTS product_images (
 CREATE TABLE IF NOT EXISTS vouchers (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(20) NOT NULL UNIQUE,
+    campaign VARCHAR(100) DEFAULT NULL,
     discount_type ENUM('percentage','fixed') NOT NULL,
     discount_value DECIMAL(10,2) NOT NULL,
     min_spend DECIMAL(10,2) NOT NULL DEFAULT 0.00,

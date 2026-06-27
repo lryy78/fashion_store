@@ -8,24 +8,24 @@ $members = [
         'initials' => 'MA',
         'name' => 'Muhammad Aqil Bin Bachtiar Affendy',
         'student_id' => '1211104729',
-        'module' => 'Buyer Shopping Interface',
-        'pages' => ['Home Page', 'Product Listing', 'Product Details', 'Help Centre'],
+        'module' => 'Buyer Shopping Module',
+        'pages' => ['Buyer Home', 'Product Details', 'Cart', 'Checkout', 'Order History', 'Reviews', 'Vouchers'],
         'features' => [
-            'Promotional banners and featured-product presentation',
-            'Product browsing and filters for category, size, colour, price, and availability',
-            'Product-detail viewing and customer enquiry submission',
+            'Product browsing, search, and product-detail interaction',
+            'Shopping-cart management, checkout, and payment-method selection',
+            'Order history, tracking, reviews, and review-reward vouchers',
         ],
     ],
     [
         'initials' => 'RY',
         'name' => 'Lam Rong Yi',
         'student_id' => '1211107112',
-        'module' => 'Authentication, Cart and Order Module',
-        'pages' => ['Login', 'Sign Up', 'Shopping Cart', 'Checkout and Order History'],
+        'module' => 'Public and Admin Module',
+        'pages' => ['Public Landing', 'Login', 'Sign Up', 'Admin Dashboard', 'Users', 'FAQs', 'Support'],
         'features' => [
-            'User registration and secure authentication',
-            'Shopping-cart management and checkout processing',
-            'Order placement, history, tracking, and public category navigation',
+            'Public product presentation, registration, and authentication',
+            'User-account management and role assignment',
+            'FAQ, customer-support, enquiry, and review administration',
         ],
     ],
     [
@@ -44,12 +44,12 @@ $members = [
         'initials' => 'SJ',
         'name' => 'Sia Jing Liang',
         'student_id' => '1211106208',
-        'module' => 'Admin and Business Owner Module',
-        'pages' => ['Admin Dashboard', 'User Management', 'Order Monitoring', 'Analytics and Voucher Management'],
+        'module' => 'Business Owner Module',
+        'pages' => ['Owner Dashboard', 'Business Analytics', 'Customer Intelligence', 'Product Insights', 'Vouchers', 'Reports'],
         'features' => [
-            'User-account and role administration',
-            'Order monitoring, customer enquiries, and review management',
-            'Sales analytics, performance reporting, and voucher campaigns',
+            'Revenue, profit, and business-performance monitoring',
+            'Customer intelligence and product profitability analysis',
+            'Voucher campaigns, financial reports, and decision support',
         ],
     ],
 ];
@@ -208,11 +208,11 @@ $members = [
         <div class="container">
             <div class="group-eyebrow">CIT6224 Web Application Development</div>
             <h1>Meet the team behind HypeThread.</h1>
-            <p>HypeThread is a Group 9 fashion e-commerce project developed by four Faculty of Computing and Informatics students. Responsibilities are divided by operational module so each member owns a clear set of pages and system features.</p>
+            <p>HypeThread is a Group 11 fashion e-commerce project developed by four Faculty of Computing and Informatics students. Responsibilities are divided by operational module so each member owns a clear set of pages and system features.</p>
             <div class="group-meta">
                 <span>Lecture: TC1L</span>
                 <span>Tutorial: TT1L</span>
-                <span>Group: 9</span>
+                <span>Group: 11</span>
                 <span>Project: Online Fashion Store</span>
             </div>
         </div>

@@ -16,17 +16,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_cost'])) {
     $success_msg = "Cost updated successfully.";
 }
 
-// Search Logic
+// Search and Filter Logic
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$query = "SELECT id, name, price, cost_price FROM products";
+$sort = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
+$profit_filter = isset($_GET['profit_filter']) ? $_GET['profit_filter'] : 'all';
+
+// Build query with filters
+$query = "SELECT id, name, price, cost_price, created_at FROM products";
+$params = [];
+
 if ($search) {
     $query .= " WHERE name LIKE :search";
+    $params[':search'] = '%' . $search . '%';
 }
-$query .= " ORDER BY name ASC";
+
+// Add profit filter
+if ($profit_filter == 'profitable') {
+    $query .= ($search ? " AND" : " WHERE") . " price > cost_price";
+} elseif ($profit_filter == 'loss') {
+    $query .= ($search ? " AND" : " WHERE") . " price < cost_price";
+} elseif ($profit_filter == 'break_even') {
+    $query .= ($search ? " AND" : " WHERE") . " price = cost_price";
+}
+
+// Add sorting
+switch ($sort) {
+    case 'newest':
+        $query .= " ORDER BY created_at DESC";
+        break;
+    case 'oldest':
+        $query .= " ORDER BY created_at ASC";
+        break;
+    case 'name_asc':
+        $query .= " ORDER BY name ASC";
+        break;
+    case 'name_desc':
+        $query .= " ORDER BY name DESC";
+        break;
+    case 'price_low':
+        $query .= " ORDER BY price ASC";
+        break;
+    case 'price_high':
+        $query .= " ORDER BY price DESC";
+        break;
+    case 'profit_low':
+        $query .= " ORDER BY (price - cost_price) ASC";
+        break;
+    case 'profit_high':
+        $query .= " ORDER BY (price - cost_price) DESC";
+        break;
+    case 'margin_low':
+        $query .= " ORDER BY (cost_price / NULLIF(price, 0)) ASC";
+        break;
+    case 'margin_high':
+        $query .= " ORDER BY (cost_price / NULLIF(price, 0)) DESC";
+        break;
+    default:
+        $query .= " ORDER BY created_at DESC";
+}
 
 $stmt = $pdo->prepare($query);
-if ($search) {
-    $stmt->bindValue(':search', '%' . $search . '%');
+foreach ($params as $key => $value) {
+    $stmt->bindValue($key, $value);
 }
 $stmt->execute();
 $products = $stmt->fetchAll();
@@ -39,37 +90,119 @@ include $include_path . 'header.php';
     <?php require_once '../includes/sidebar.php'; renderSidebar('owner'); ?>
 
     <div class="dashboard-main fade-in-up">
-        <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
-            <div>
-            <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Inventory Economics</div>
-                <h1 style="margin: 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Product Profitability</h1>
-            </div>
-            <div style="width: 300px; display: flex; gap: 8px; align-items: center;">
-                <form method="GET" style="position: relative; flex: 1;">
-                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search product..." class="form-input" style="padding-left: 40px;">
-                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
-                </form>
-                <?php if (!empty($search)): ?>
-                    <a href="product_profitability.php" class="button-secondary" style="padding: 8px 16px; text-decoration: none; white-space: nowrap;">Reset</a>
-                <?php endif; ?>
-            </div>
+        <header style="margin-bottom: var(--spacing-xxl);">
+            <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; font-family: var(--typography-body-font);">Inventory Economics</div>
+            <h1 style="margin: 0 0 var(--spacing-lg) 0; font-family: var(--typography-display-font); font-size: 48px; letter-spacing: -0.02em;">Product Profitability</h1>
         </header>
 
         <?php if (isset($success_msg)): ?>
             <div class="badge badge-success" style="margin-bottom: 24px; padding: 12px 24px; width: 100%; text-align: center;"><?php echo $success_msg; ?></div>
         <?php endif; ?>
 
-        <div class="table-container" style="margin: 0;">
+        <!-- Stats Summary -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div style="background: var(--colors-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
+                <div style="font-size: 12px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Total Products</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--colors-ink); font-family: var(--typography-display-font);"><?php echo count($products); ?></div>
+            </div>
+            <div style="background: var(--colors-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
+                <div style="font-size: 12px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Profitable</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--colors-success); font-family: var(--typography-display-font);">
+                    <?php 
+                    $profitable = 0;
+                    foreach ($products as $p) {
+                        if ($p['price'] > $p['cost_price']) $profitable++;
+                    }
+                    echo $profitable;
+                    ?>
+                </div>
+            </div>
+            <div style="background: var(--colors-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
+                <div style="font-size: 12px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">At Loss</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--colors-error); font-family: var(--typography-display-font);">
+                    <?php 
+                    $loss = 0;
+                    foreach ($products as $p) {
+                        if ($p['price'] < $p['cost_price']) $loss++;
+                    }
+                    echo $loss;
+                    ?>
+                </div>
+            </div>
+            <div style="background: var(--colors-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
+                <div style="font-size: 12px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Avg. Margin</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--colors-primary); font-family: var(--typography-display-font);">
+                    <?php
+                    $total_margin = 0;
+                    $count = 0;
+                    foreach ($products as $p) {
+                        if ($p['price'] > 0) {
+                            $margin = (($p['price'] - $p['cost_price']) / $p['price']) * 100;
+                            $total_margin += $margin;
+                            $count++;
+                        }
+                    }
+                    echo $count > 0 ? number_format($total_margin / $count, 1) . '%' : '0%';
+                    ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div style="background: var(--colors-surface); padding: 16px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft); margin-bottom: 24px; overflow-x: auto;">
+            <form method="GET" id="filterForm" style="display: flex; gap: 10px; align-items: center; min-width: max-content;">
+                <!-- Search -->
+                <div style="position: relative; width: 280px;">
+                    <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search products..." class="form-input" style="padding-left: 36px; width: 100%; font-size: 13px;">
+                    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5; font-size: 14px;">🔍</span>
+                </div>
+
+                <!-- Profit Filter -->
+                <select name="profit_filter" class="form-input" style="width:auto; font-size: 13px;">
+                    <option value="all" <?php echo $profit_filter == 'all' ? 'selected' : ''; ?>>All Products</option>
+                    <option value="profitable" <?php echo $profit_filter == 'profitable' ? 'selected' : ''; ?>>Profitable</option>
+                    <option value="loss" <?php echo $profit_filter == 'loss' ? 'selected' : ''; ?>>At Loss</option>
+                    <option value="break_even" <?php echo $profit_filter == 'break_even' ? 'selected' : ''; ?>>Break Even</option>
+                </select>
+
+                <!-- Sort -->
+                <select name="sort" class="form-input" style="width:auto; font-size: 13px;">
+                    <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest First</option>
+                    <option value="oldest" <?php echo $sort == 'oldest' ? 'selected' : ''; ?>>Oldest First</option>
+                    <option value="name_asc" <?php echo $sort == 'name_asc' ? 'selected' : ''; ?>>Name (A-Z)</option>
+                    <option value="name_desc" <?php echo $sort == 'name_desc' ? 'selected' : ''; ?>>Name (Z-A)</option>
+                    <option value="price_low" <?php echo $sort == 'price_low' ? 'selected' : ''; ?>>Price (Low-High)</option>
+                    <option value="price_high" <?php echo $sort == 'price_high' ? 'selected' : ''; ?>>Price (High-Low)</option>
+                    <option value="profit_low" <?php echo $sort == 'profit_low' ? 'selected' : ''; ?>>Profit (Low-High)</option>
+                    <option value="profit_high" <?php echo $sort == 'profit_high' ? 'selected' : ''; ?>>Profit (High-Low)</option>
+                    <option value="margin_low" <?php echo $sort == 'margin_low' ? 'selected' : ''; ?>>Margin (Low-High)</option>
+                    <option value="margin_high" <?php echo $sort == 'margin_high' ? 'selected' : ''; ?>>Margin (High-Low)</option>
+                </select>
+
+                <!-- Filter Button -->
+                <button type="submit" class="button-primary" style="padding: 8px 20px; white-space: nowrap; font-size: 13px;">
+                    Apply Filters
+                </button>
+
+                <!-- Reset Button -->
+                <?php if ($search || $sort != 'newest' || $profit_filter != 'all'): ?>
+                    <a href="product_profitability.php" class="button-secondary" style="padding: 8px 16px; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-size: 13px;">
+                        <span>↻</span> Reset
+                    </a>
+                <?php endif; ?>
+            </form>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container" style="max-height: 400px; overflow-y: auto; margin: 0; background: var(--colors-surface); border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
             <table class="data-table">
-                <thead>
+                <thead style="position: sticky; top: 0; background: var(--colors-surface); z-index: 10;">
                     <tr>
-                        <th style="width: 40%;">Product</th>
+                        <th style="width: 35%;">Product</th>
                         <th style="text-align: right;">Selling Price</th>
                         <th style="text-align: right;">Cost Price</th>
                         <th style="text-align: right;">Profit</th>
                         <th style="text-align: right;">Margin</th>
-                        <th style="text-align: right; width: 100px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -102,13 +235,10 @@ include $include_path . 'header.php';
                                     </div>
                                 </div>
                             </td>
-                            <td style="text-align: right;">
-                                <a href="product_insights.php?id=<?php echo $p['id']; ?>" class="badge badge-info" style="text-decoration: none;">View Stats</a>
-                            </td>
                         </tr>
                     <?php endforeach; ?>
                     <?php if (empty($products)): ?>
-                        <tr><td colspan="6" style="text-align: center; padding: 48px; color: var(--colors-muted);">No products found matching your search.</td></tr>
+                        <tr><td colspan="5" style="text-align: center; padding: 48px; color: var(--colors-muted);">No products found matching your criteria.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

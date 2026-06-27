@@ -48,11 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_review'])) {
             $insert = $pdo->prepare("INSERT INTO reviews (user_id, product_id, order_id, rating, comment) VALUES (?, ?, ?, ?, ?)");
             $insert->execute([$user_id, $product_id, $order_id, $rating, $comment]);
 
-            // Generate voucher
+            // Generate voucher with campaign
             $voucher_code = 'REV-' . strtoupper(substr(md5(uniqid()), 0, 8));
             $expiry = date('Y-m-d', strtotime('+30 days'));
-            $vstmt = $pdo->prepare("INSERT INTO vouchers (code, discount_type, discount_value, expiry_date, is_active) VALUES (?, 'percentage', 10.00, ?, 1)");
-            $vstmt->execute([$voucher_code, $expiry]);
+            $campaign = 'Product Review Rewards';
+            $vstmt = $pdo->prepare("INSERT INTO vouchers (code, campaign, discount_type, discount_value, expiry_date, is_active, user_id, target_type, target_user_id, is_one_time) VALUES (?, ?, 'percentage', 10.00, ?, 1, ?, 'specific', ?, 1)");
+            $vstmt->execute([$voucher_code, $campaign, $expiry, $user_id, $user_id]);
             
             $success_voucher = $voucher_code;
             

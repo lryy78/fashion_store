@@ -89,15 +89,6 @@
                     <ul>
                         <li><a href="/fashion_store/products.php">Collections</a></li>
                         <li><a href="/fashion_store/about_group.php">About Us</a></li>
-                        <li><a href="#">Careers</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Support & Legal</h4>
-                    <ul>
-                        <li><a href="/fashion_store/help.php">Support Center</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Privacy Policy</a></li>
                     </ul>
                 </div>
             </div>

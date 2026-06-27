@@ -13,9 +13,6 @@ $range = $_GET['range'] ?? '7';
 $interval = "INTERVAL $range DAY";
 if ($range == 'month') $interval = "INTERVAL 1 MONTH";
 
-// KPI Trends (Dummy context for trend comparison, usually requires more complex window functions)
-$trend_rev = "+15.4%";
-$trend_orders = "+8%";
 
 // 1. Enhanced Alerts Logic (Compact summary)
 $urgent_alerts = $pdo->query("SELECT * FROM system_alerts WHERE is_read = 0 ORDER BY priority='critical' DESC, created_at DESC LIMIT 3")->fetchAll();
@@ -30,16 +27,16 @@ $health_out_pct = ($total_skus > 0) ? round(($health_out / $total_skus) * 100) :
 $health_low_pct = ($total_skus > 0) ? round(($health_low / $total_skus) * 100) : 0;
 $health_healthy_pct = 100 - $health_out_pct - $health_low_pct;
 
-// 3. Sales Trend (Last 7 Days)
-$sales_trend = $pdo->query("SELECT DATE(created_at) as date, SUM(total_amount) as daily_total FROM orders WHERE status NOT IN ('cancelled','refunded') AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) GROUP BY DATE(created_at) ORDER BY date ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
 
-// 4. Recent Activity (Enhanced)
+//
+
+// 3. Recent Activity (Enhanced)
 $recent_orders = $pdo->query("SELECT o.*, u.username, 
                              (SELECT SUM(quantity) FROM order_items WHERE order_id = o.id) as item_count 
                              FROM orders o JOIN users u ON o.user_id = u.id 
                              ORDER BY o.created_at DESC LIMIT 5")->fetchAll();
 
-// 5. Best Sellers (Enhanced with Category)
+// 4. Best Sellers (Enhanced with Category)
 $top_products = $pdo->query("SELECT p.name, c.name as category_name, SUM(oi.quantity) as total_sold, SUM(oi.price * oi.quantity) as total_revenue 
                              FROM order_items oi 
                              JOIN product_variations pv ON oi.variation_id = pv.id 
@@ -67,7 +64,7 @@ include '../includes/header.php';
             </div>
         </div>
 
-        <div class="dashboard-split" style="grid-template-columns: 1fr 350px; gap: 32px; align-items: start;">
+        <div class="dashboard-split" style="grid-template-columns: 1fr; gap: 32px; align-items: start;">
             <div style="display: flex; flex-direction: column; gap: 32px;">
                 
                 <!-- Compact Alerts Center -->
@@ -107,35 +104,9 @@ include '../includes/header.php';
                         <div style="font-size: 28px; font-weight: 600;">🟠 <?php echo $health_low; ?> <span style="font-size:12px; color:var(--colors-muted)">Products</span></div>
                         <div style="font-size: 11px; color: var(--colors-muted); margin-top: 8px;">3 require urgent restock</div>
                     </div>
-                    <div onclick="location.href='product_analytics.php'" class="surface-card" style="cursor:pointer; padding: 24px; border-left: 4px solid var(--colors-accent-teal);">
-                        <div style="font-size: 11px; font-weight: 700; color: var(--colors-accent-teal); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Revenue Stream</div>
-                        <div style="font-size: 28px; font-weight: 600;">💰 RM<?php echo number_format($pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn(), 0); ?></div>
-                        <div style="font-size: 11px; color: var(--colors-success); margin-top: 8px;">↑ 15.4% this month</div>
-                    </div>
-                </div>
-
-                <!-- Charts & Trends Section -->
-                <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px;">
-                    <div class="surface-card" style="padding: 24px;">
-                        <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.1em;">Revenue Trend (Last 7 Days)</h3>
-                        <div style="height: 150px; display: flex; align-items: flex-end; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--colors-hairline-soft);">
-                            <?php foreach ($sales_trend as $date => $total): 
-                                $h = ($total > 0) ? min(100, ($total / 5000) * 100) : 5;
-                            ?>
-                                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; group" class="chart-bar-container" onmouseover="this.querySelector('.tooltip').style.opacity='1'; this.querySelector('.bar').style.opacity='1'" onmouseout="this.querySelector('.tooltip').style.opacity='0'; this.querySelector('.bar').style.opacity='0.8'">
-                                    <div class="tooltip" style="position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 8px; background: var(--colors-ink); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-family: var(--typography-code-font); opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; z-index: 10;">
-                                        RM <?php echo number_format($total, 2); ?>
-                                    </div>
-                                    <div class="bar" style="width: 100%; height: <?php echo $h; ?>px; background: var(--colors-primary); border-radius: 4px 4px 0 0; opacity: 0.8; transition: opacity 0.2s;"></div>
-                                    <span style="font-size: 10px; color: var(--colors-muted);"><?php echo date('D', strtotime($date)); ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <div class="surface-card" style="padding: 24px;">
-                        <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 24px; text-transform: uppercase; letter-spacing: 0.1em;">Inventory Health</h3>
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="surface-card" style="padding: 24px; border-left: 4px solid #3b82f6;">
+                        <div style="font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Inventory Health</div>
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
                             <div>
                                 <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
                                     <span>Healthy</span>
@@ -167,8 +138,9 @@ include '../includes/header.php';
                     </div>
                 </div>
 
+                
                 <!-- Side-by-Side Activity and Sellers -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
                     <!-- Recent Activity -->
                     <div class="table-container" style="margin: 0;">
                         <div style="padding: 20px; border-bottom: 1px solid var(--colors-hairline-soft); display: flex; justify-content: space-between; align-items: center;">
@@ -230,8 +202,7 @@ include '../includes/header.php';
                 </div>
             </div>
         </div>
-    </div>iv>
     </div>
-</div></div>
+</div>
 
 <?php include '../includes/footer.php'; ?>

@@ -10,13 +10,13 @@ ALTER TABLE users
 ALTER TABLE products
     ADD COLUMN IF NOT EXISTS size_chart TEXT DEFAULT NULL AFTER description,
     ADD COLUMN IF NOT EXISTS cost_price DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER price,
-    ADD COLUMN IF NOT EXISTS discount_price DECIMAL(10,2) DEFAULT NULL AFTER cost_price,
     ADD COLUMN IF NOT EXISTS status ENUM('published','draft','scheduled') NOT NULL DEFAULT 'published' AFTER gender,
     ADD COLUMN IF NOT EXISTS publish_at DATETIME DEFAULT NULL AFTER status,
     ADD COLUMN IF NOT EXISTS views INT UNSIGNED NOT NULL DEFAULT 0 AFTER is_featured;
 
 -- Add voucher targeting and usage controls.
 ALTER TABLE vouchers
+    ADD COLUMN IF NOT EXISTS campaign VARCHAR(100) DEFAULT NULL AFTER code,
     ADD COLUMN IF NOT EXISTS min_spend DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER discount_value,
     ADD COLUMN IF NOT EXISTS usage_limit INT UNSIGNED DEFAULT NULL AFTER expiry_date,
     ADD COLUMN IF NOT EXISTS is_one_time TINYINT(1) NOT NULL DEFAULT 1 AFTER usage_limit,

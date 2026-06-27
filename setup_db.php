@@ -10,6 +10,7 @@ $databaseFiles = [
     'Schema' => __DIR__ . '/database/schema.sql',
     'Compatibility migration' => __DIR__ . '/database/migrations/001_compatibility.sql',
     'Demo data' => __DIR__ . '/database/seed.sql',
+    'Catalogue images' => __DIR__ . '/database/migrations/002_catalog_images.sql',
 ];
 
 // Connect to MySQL using the default local XAMPP credentials.
