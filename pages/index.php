@@ -69,205 +69,205 @@ if (!$selected_gender) {
 
 <!-- Index specific editorial styles -->
 <style>
-.hero-section-studio {
-    background-color: var(--colors-canvas);
-    padding: 80px 0;
-    border-bottom: 1px solid var(--colors-hairline-soft);
-}
+    .hero-section-studio {
+        background-color: var(--colors-canvas);
+        padding: 80px 0;
+        border-bottom: 1px solid var(--colors-hairline-soft);
+    }
 
-.hero-studio-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: center;
-}
-
-.hero-studio-content h1 {
-    font-size: clamp(48px, 6vw, 84px);
-    line-height: 0.95;
-    margin-bottom: 32px;
-    letter-spacing: -0.04em;
-}
-
-.hero-studio-content p {
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--colors-muted);
-    max-width: 480px;
-    margin-bottom: 40px;
-}
-
-.category-grid-studio {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    background-color: var(--colors-hairline);
-    border: 1px solid var(--colors-hairline);
-    margin-top: -1px;
-}
-
-.category-card-studio {
-    background: #fff;
-    padding: 64px 32px;
-    text-align: center;
-    text-decoration: none;
-    transition: background 0.3s ease;
-}
-
-.category-card-studio:hover {
-    background: var(--colors-surface-soft);
-}
-
-.category-card-studio .icon {
-    font-size: 32px;
-    margin-bottom: 24px;
-    display: block;
-}
-
-.category-card-studio h3 {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 600;
-    color: var(--colors-ink);
-}
-
-.promo-banner-studio {
-    background-color: var(--colors-surface-card);
-    color: var(--colors-ink);
-    padding: 120px 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    border-top: 1px solid var(--colors-hairline-soft);
-    border-bottom: 1px solid var(--colors-hairline-soft);
-}
-
-.promo-banner-studio::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(204, 120, 92, 0.05) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-.promo-banner-studio h2 {
-    font-size: 56px;
-    margin-bottom: 24px;
-    font-family: var(--typography-display-font);
-    letter-spacing: -0.04em;
-    color: var(--colors-ink);
-}
-
-.promo-banner-studio p {
-    font-size: 18px;
-    color: var(--colors-muted);
-    margin-bottom: 48px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.6;
-}
-
-.section-header-studio {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 32px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--colors-hairline-soft);
-}
-
-.section-header-studio h2 {
-    font-size: 32px;
-    margin: 0;
-}
-
-/* Horizontal Scroll Layout */
-.product-grid-horizontal {
-    display: flex;
-    overflow-x: auto;
-    gap: 32px;
-    padding-bottom: 32px;
-    scroll-snap-type: x mandatory;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.product-grid-horizontal::-webkit-scrollbar {
-    display: none;
-}
-
-.product-grid-horizontal .product-card-studio {
-    flex: 0 0 280px;
-    scroll-snap-align: start;
-}
-
-/* Product Card Studio Styles */
-.product-card-studio {
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.product-card-studio:hover {
-    transform: translateY(-4px);
-}
-
-.product-card-studio .image-wrapper {
-    aspect-ratio: 4/5;
-    background: var(--colors-surface-soft);
-    margin-bottom: 16px;
-    overflow: hidden;
-    position: relative;
-    border-radius: var(--rounded-lg);
-}
-
-.product-card-studio img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.product-card-studio .meta {
-    padding: 0 4px;
-}
-
-.product-card-studio .cat {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--colors-muted);
-    margin-bottom: 4px;
-}
-
-.product-card-studio .name {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 4px;
-    color: var(--colors-ink);
-}
-
-.product-card-studio .price {
-    font-size: 14px;
-    color: var(--colors-ink);
-    font-weight: 400;
-}
-
-@media (max-width: 992px) {
     .hero-studio-grid {
-        grid-template-columns: 1fr;
-        gap: 48px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
     }
+
+    .hero-studio-content h1 {
+        font-size: clamp(48px, 6vw, 84px);
+        line-height: 0.95;
+        margin-bottom: 32px;
+        letter-spacing: -0.04em;
+    }
+
+    .hero-studio-content p {
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--colors-muted);
+        max-width: 480px;
+        margin-bottom: 40px;
+    }
+
     .category-grid-studio {
-        grid-template-columns: repeat(2, 1fr);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        background-color: var(--colors-hairline);
+        border: 1px solid var(--colors-hairline);
+        margin-top: -1px;
     }
+
+    .category-card-studio {
+        background: #fff;
+        padding: 64px 32px;
+        text-align: center;
+        text-decoration: none;
+        transition: background 0.3s ease;
+    }
+
+    .category-card-studio:hover {
+        background: var(--colors-surface-soft);
+    }
+
+    .category-card-studio .icon {
+        font-size: 32px;
+        margin-bottom: 24px;
+        display: block;
+    }
+
+    .category-card-studio h3 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+        color: var(--colors-ink);
+    }
+
+    .promo-banner-studio {
+        background-color: var(--colors-surface-card);
+        color: var(--colors-ink);
+        padding: 120px 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border-top: 1px solid var(--colors-hairline-soft);
+        border-bottom: 1px solid var(--colors-hairline-soft);
+    }
+
+    .promo-banner-studio::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(204, 120, 92, 0.05) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .promo-banner-studio h2 {
+        font-size: 56px;
+        margin-bottom: 24px;
+        font-family: var(--typography-display-font);
+        letter-spacing: -0.04em;
+        color: var(--colors-ink);
+    }
+
+    .promo-banner-studio p {
+        font-size: 18px;
+        color: var(--colors-muted);
+        margin-bottom: 48px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    .section-header-studio {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--colors-hairline-soft);
+    }
+
+    .section-header-studio h2 {
+        font-size: 32px;
+        margin: 0;
+    }
+
+    /* Horizontal Scroll Layout */
+    .product-grid-horizontal {
+        display: flex;
+        overflow-x: auto;
+        gap: 32px;
+        padding-bottom: 32px;
+        scroll-snap-type: x mandatory;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .product-grid-horizontal::-webkit-scrollbar {
+        display: none;
+    }
+
     .product-grid-horizontal .product-card-studio {
-        flex: 0 0 240px;
+        flex: 0 0 280px;
+        scroll-snap-align: start;
     }
-}
+
+    /* Product Card Studio Styles */
+    .product-card-studio {
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card-studio:hover {
+        transform: translateY(-4px);
+    }
+
+    .product-card-studio .image-wrapper {
+        aspect-ratio: 4/5;
+        background: var(--colors-surface-soft);
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        border-radius: var(--rounded-lg);
+    }
+
+    .product-card-studio img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-card-studio .meta {
+        padding: 0 4px;
+    }
+
+    .product-card-studio .cat {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--colors-muted);
+        margin-bottom: 4px;
+    }
+
+    .product-card-studio .name {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 4px;
+        color: var(--colors-ink);
+    }
+
+    .product-card-studio .price {
+        font-size: 14px;
+        color: var(--colors-ink);
+        font-weight: 400;
+    }
+
+    @media (max-width: 992px) {
+        .hero-studio-grid {
+            grid-template-columns: 1fr;
+            gap: 48px;
+        }
+        .category-grid-studio {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .product-grid-horizontal .product-card-studio {
+            flex: 0 0 240px;
+        }
+    }
 </style>
 
 <section class="hero-section-studio" style="padding: 0; position: relative;">
@@ -297,12 +297,10 @@ if (!$selected_gender) {
         <a href="index.php?gender=Women" class="category-card-studio"><h3>Women</h3></a>
         <a href="index.php?gender=Men" class="category-card-studio"><h3>Men</h3></a>
         <a href="index.php?gender=Kids" class="category-card-studio"><h3>Kids</h3></a>
-
     <?php else: ?>
         <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Tops" class="category-card-studio"><h3>Tops</h3></a>
         <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Bottoms" class="category-card-studio"><h3>Bottoms</h3></a>
         <a href="products.php?gender=<?php echo $selected_gender; ?>&category=Accessories" class="category-card-studio"><h3>Accessories</h3></a>
-
     <?php endif; ?>
 </div>
 

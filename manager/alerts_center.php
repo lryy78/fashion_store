@@ -27,24 +27,20 @@ if (isset($_GET['action'])) {
 // Sync alerts after actions
 syncAlerts($pdo);
 
-// Fetch Thresholds and Active Alerts for the form below
+// Fetch inventory thresholds for the form below.
 $settings = $pdo->query("SELECT setting_key, setting_value FROM system_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
 $low_stock_limit = $settings['low_stock_threshold'] ?? 10;
 $overstock_limit = $settings['overstock_threshold'] ?? 100;
-$active_alerts = explode(',', $settings['dashboard_active_alerts'] ?? 'out_of_stock,low_stock,overstock');
 
 // Handle settings update
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_thresholds'])) {
     $low = $_POST['low_stock'];
     $over = $_POST['overstock'];
-    $alerts = isset($_POST['active_alerts']) ? implode(',', $_POST['active_alerts']) : '';
     
     $stmt = $pdo->prepare("UPDATE system_settings SET setting_value = ? WHERE setting_key = 'low_stock_threshold'");
     $stmt->execute([$low]);
     $stmt = $pdo->prepare("UPDATE system_settings SET setting_value = ? WHERE setting_key = 'overstock_threshold'");
     $stmt->execute([$over]);
-    $stmt = $pdo->prepare("UPDATE system_settings SET setting_value = ? WHERE setting_key = 'dashboard_active_alerts'");
-    $stmt->execute([$alerts]);
     
     header("Location: alerts_center.php?updated=1");
     exit();
@@ -65,10 +61,10 @@ include '../includes/header.php';
 <style>
 .alert-item-studio {
     background: #fff;
-    padding: 20px;
-    border-radius: 12px;
+    padding: 14px 16px;
+    border-radius: 8px;
     border: 1px solid var(--colors-hairline-soft);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -94,10 +90,19 @@ include '../includes/header.php';
 
 .config-section {
     background: var(--colors-surface-soft);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 48px;
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 22px;
     border: 1px solid var(--colors-hairline);
+}
+.alerts-threshold-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+}
+@media (max-width: 680px) {
+    .alerts-threshold-grid { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -105,10 +110,10 @@ include '../includes/header.php';
     <?php renderSidebar('manager'); ?>
 
     <div class="dashboard-main fade-in-up">
-        <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+        <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; gap: 16px;">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">System Intelligence</div>
-                <h1 style="margin: 0; font-size: 40px;">Alerts Center</h1>
+                <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0; margin-bottom: 4px; font-weight: 700;">System Intelligence</div>
+                <h1 style="margin: 0; font-size: 34px; letter-spacing: 0;">Alerts Center</h1>
             </div>
             <div style="display: flex; gap: 12px;">
                 <a href="alerts_center.php?action=read_all" class="button-secondary">Mark All as Read</a>
@@ -117,34 +122,20 @@ include '../includes/header.php';
 
         <!-- Configuration Panel -->
         <div class="config-section">
-            <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 24px; font-family: var(--typography-body-font);">Threshold & Dashboard Configuration</h3>
+            <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 14px; font-family: var(--typography-body-font);">Inventory Thresholds</h3>
             <form method="POST">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px;">
+                <div class="alerts-threshold-grid">
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" style="font-size: 11px;">Low Stock Limit</label>
-                        <input type="number" name="low_stock" value="<?php echo $low_stock_limit; ?>" class="form-input" style="padding: 12px; background: #fff;">
+                        <input type="number" name="low_stock" value="<?php echo $low_stock_limit; ?>" min="0" class="form-input" style="height: 40px; padding: 0 10px; background: #fff;">
                     </div>
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" style="font-size: 11px;">Overstock Limit</label>
-                        <input type="number" name="overstock" value="<?php echo $overstock_limit; ?>" class="form-input" style="padding: 12px; background: #fff;">
-                    </div>
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" style="font-size: 11px; margin-bottom: 12px; display: block;">Dashboard Display</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                                <input type="checkbox" name="active_alerts[]" value="out_of_stock" <?php echo in_array('out_of_stock', $active_alerts) ? 'checked' : ''; ?>> Stockouts
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                                <input type="checkbox" name="active_alerts[]" value="low_stock" <?php echo in_array('low_stock', $active_alerts) ? 'checked' : ''; ?>> Low Stock
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                                <input type="checkbox" name="active_alerts[]" value="overstock" <?php echo in_array('overstock', $active_alerts) ? 'checked' : ''; ?>> Overstock
-                            </label>
-                        </div>
+                        <input type="number" name="overstock" value="<?php echo $overstock_limit; ?>" min="1" class="form-input" style="height: 40px; padding: 0 10px; background: #fff;">
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <button type="submit" name="update_thresholds" class="button-primary" style="padding: 12px 32px;">Save Intelligence Preferences</button>
+                    <button type="submit" name="update_thresholds" class="button-primary" style="padding: 10px 18px; font-size: 12px;">Save thresholds</button>
                     <?php if (isset($_GET['updated'])): ?>
                         <span style="font-size: 13px; color: var(--colors-success); font-weight: 600;">✓ Configuration updated successfully.</span>
                     <?php endif; ?>
@@ -153,7 +144,7 @@ include '../includes/header.php';
         </div>
 
         <!-- Filters -->
-        <div style="display: flex; gap: 12px; margin-bottom: 32px; border-top: 1px solid var(--colors-hairline); padding-top: 32px; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; margin-bottom: 18px; border-top: 1px solid var(--colors-hairline); padding-top: 18px; align-items: center; flex-wrap: wrap;">
             <a href="alerts_center.php?priority=all" class="button-secondary <?php echo $filter_priority == 'all' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px;">All Levels</a>
             <a href="alerts_center.php?priority=critical" class="button-secondary <?php echo $filter_priority == 'critical' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px; color: var(--colors-error);">Critical</a>
             <a href="alerts_center.php?priority=warning" class="button-secondary <?php echo $filter_priority == 'warning' ? 'active' : ''; ?>" style="padding: 8px 16px; font-size: 12px; color: #f59e0b;">Warning</a>

@@ -107,6 +107,80 @@ include $include_path . 'header.php';
 .status-refund_requested { background: #fff7ed; color: #c2410c; }
 .status-cancelled { background: #fef2f2; color: #dc2626; }
 .status-refunded { background: #fff7ed; color: #c2410c; }
+.orders-compact-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.orders-compact-header h1 {
+    margin: 0;
+    font-size: 34px;
+    letter-spacing: 0;
+}
+.orders-filter-panel {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--colors-hairline-soft);
+    border-radius: 8px;
+    background: var(--colors-surface-soft);
+}
+.orders-filter-form {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
+    gap: 10px;
+    align-items: end;
+}
+.orders-filter-form .form-input {
+    height: 38px;
+    padding: 0 10px;
+    background: var(--colors-surface);
+}
+.orders-filter-action {
+    display: inline-flex;
+    height: 38px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+.orders-table-shell {
+    max-height: min(540px, calc(100vh - 285px));
+    overflow: auto;
+    border: 1px solid var(--colors-hairline-soft);
+    border-radius: 8px;
+    background: var(--colors-surface);
+}
+.orders-table-shell .data-table {
+    min-width: 980px;
+    margin: 0;
+}
+.orders-table-shell .data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding: 11px 14px;
+    background: var(--colors-surface-soft);
+}
+.orders-table-shell .data-table td {
+    padding: 11px 14px;
+}
+.orders-count {
+    color: var(--colors-muted);
+    font-size: 12px;
+}
+@media (max-width: 900px) {
+    .orders-filter-form { grid-template-columns: 1fr 1fr; }
+    .orders-filter-action { width: 100%; }
+}
+@media (max-width: 600px) {
+    .orders-filter-form { grid-template-columns: 1fr; }
+    .orders-table-shell { max-height: 520px; }
+}
 </style>
 
 <?php require_once '../includes/sidebar.php'; ?>
@@ -114,19 +188,20 @@ include $include_path . 'header.php';
     <?php renderSidebar('manager'); ?>
 
     <div class="dashboard-main fade-in-up">
-        <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
+        <header class="orders-compact-header">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">HypeThread Logistics</div>
-                <h1 style="margin: 0; font-size: 40px;">Order Flow</h1>
+                <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0; margin-bottom: 4px; font-weight: 700;">HypeThread Logistics</div>
+                <h1>Order Flow</h1>
             </div>
+            <div class="orders-count"><?php echo count($orders); ?> orders shown</div>
         </header>
 
         <!-- Filters -->
-        <div class="surface-card" style="padding: 24px; margin-bottom: 32px; border: 1px solid var(--colors-hairline);">
-            <form method="GET" style="display: flex; gap: 24px; align-items: flex-end;">
-                <div class="form-group" style="margin: 0; flex: 1;">
+        <div class="orders-filter-panel">
+            <form method="GET" class="orders-filter-form">
+                <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 11px;">Shipment Status</label>
-                    <select name="status" class="form-input" style="padding: 10px;">
+                    <select name="status" class="form-input">
                         <option value="all" <?php echo $filter_status == 'all' ? 'selected' : ''; ?>>All Status</option>
                         <option value="pending" <?php echo $filter_status == 'pending' ? 'selected' : ''; ?>>Pending</option>
                         <option value="processing" <?php echo $filter_status == 'processing' ? 'selected' : ''; ?>>Processing</option>
@@ -137,22 +212,24 @@ include $include_path . 'header.php';
                         <option value="refunded" <?php echo $filter_status == 'refunded' ? 'selected' : ''; ?>>Refunded</option>
                     </select>
                 </div>
-                <div class="form-group" style="margin: 0; flex: 1;">
+                <div class="form-group" style="margin: 0;">
                     <label class="form-label" style="font-size: 11px;">Reporting Period</label>
-                    <select name="date" class="form-input" style="padding: 10px;">
+                    <select name="date" class="form-input">
                         <option value="all" <?php echo $filter_date == 'all' ? 'selected' : ''; ?>>All Period</option>
                         <option value="today" <?php echo $filter_date == 'today' ? 'selected' : ''; ?>>Today</option>
                         <option value="week" <?php echo $filter_date == 'week' ? 'selected' : ''; ?>>Last 7 Days</option>
                     </select>
                 </div>
-                <button type="submit" class="button-secondary" style="padding: 12px 24px;">Filter</button>
+                <button type="submit" class="button-primary orders-filter-action">Apply</button>
                 <?php if ($filter_status != 'all' || $filter_date != 'all'): ?>
-                    <a href="orders_list.php" class="button-secondary" style="padding: 12px 24px; text-decoration: none;">Reset Filters</a>
+                    <a href="orders_list.php" class="button-secondary orders-filter-action" style="text-decoration: none;">Reset</a>
+                <?php else: ?>
+                    <span aria-hidden="true"></span>
                 <?php endif; ?>
             </form>
         </div>
 
-        <div class="table-container">
+        <div class="orders-table-shell">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -166,6 +243,9 @@ include $include_path . 'header.php';
                     </tr>
                 </thead>
                 <tbody>
+                    <?php if (!$orders): ?>
+                        <tr><td colspan="7" style="padding: 32px; text-align: center; color: var(--colors-muted);">No orders match these filters.</td></tr>
+                    <?php endif; ?>
                     <?php foreach ($orders as $o): ?>
                         <tr>
                             <td style="font-size: 13px; color: var(--colors-muted);"><?php echo date('M d, Y', strtotime($o['created_at'])); ?></td>
