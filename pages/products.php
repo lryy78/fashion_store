@@ -11,7 +11,7 @@ $selected_size = $_GET['size'] ?? '';
 $selected_color = $_GET['color'] ?? '';
 $selected_gender = $_GET['gender'] ?? '';
 $in_stock = isset($_GET['in_stock']);
-$on_sale = isset($_GET['on_sale']);
+
 
 $sort_rating = $_GET['sort_rating'] ?? '';
 
@@ -46,9 +46,6 @@ if ($selected_color) {
 }
 if ($in_stock) {
     $query .= " AND pv.stock_quantity > 0";
-}
-if ($on_sale) {
-    $query .= " AND p.discount_price IS NOT NULL";
 }
 
 $query .= " AND p.price BETWEEN ? AND ?";
@@ -139,21 +136,6 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
 
 .product-card-studio:hover img {
     transform: scale(1.05);
-}
-
-.sale-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: var(--colors-primary);
-    color: #fff;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border-radius: 2px;
-    z-index: 10;
 }
 
 .product-card-studio .meta {
@@ -287,10 +269,6 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                     <input type="checkbox" name="in_stock" <?php echo $in_stock ? 'checked' : ''; ?>>
                     Available Now
                 </label>
-                <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
-                    <input type="checkbox" name="on_sale" <?php echo $on_sale ? 'checked' : ''; ?>>
-                    Special Offers
-                </label>
             </div>
 
             <div class="filter-group" style="margin-bottom: 32px;">
@@ -303,7 +281,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
             </div>
 
             <button type="submit" class="button-primary" style="width: 100%; padding: 16px;">Apply Filters</button>
-            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $on_sale || $sort_rating): ?>
+            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $sort_rating): ?>
                 <a href="products.php" style="display: block; text-align: center; margin-top: 16px; font-size: 13px; text-decoration: underline; color: var(--colors-muted);">Reset Filters</a>
             <?php endif; ?>
         </form>
@@ -311,7 +289,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
 
     <main class="shop-main">
         <div class="shop-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; border-bottom: 1px solid var(--colors-hairline); padding-bottom: 16px;">
-            <h2 style="font-size: 24px; font-weight: 400;"><?php echo $category ? htmlspecialchars($category) : ($on_sale ? 'Special Offers' : 'All Arrivals'); ?></h2>
+            <h2 style="font-size: 24px; font-weight: 400;"><?php echo $category ? htmlspecialchars($category) : ('All Arrivals'); ?></h2>
             <span style="color: var(--colors-muted); font-size: 14px;"><?php echo count($products); ?> Pieces Found</span>
         </div>
         
@@ -320,21 +298,13 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 <?php foreach ($products as $index => $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
-                            <?php if ($product['discount_price']): ?>
-                                <div class="sale-badge">Sale</div>
-                            <?php endif; ?>
                             <img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
                             <div class="price-container">
-                                <?php if ($product['discount_price']): ?>
-                                    <span class="current-price">RM <?php echo number_format($product['discount_price'], 2); ?></span>
-                                    <span class="old-price">RM <?php echo number_format($product['price'], 2); ?></span>
-                                <?php else: ?>
-                                    <span class="current-price">RM <?php echo number_format($product['price'], 2); ?></span>
-                                <?php endif; ?>
+                                <span class="current-price">RM <?php echo number_format($product['price'], 2); ?></span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; min-height: 18px;">
                                 <span style="color: #fbbf24; letter-spacing: 2px; font-size: 12px;">

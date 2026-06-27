@@ -9,7 +9,6 @@ try {
         ['Outerwear', 'Coats, jackets, and blazers'],
         ['Footwear', 'Shoes, boots, and sneakers'],
         ['Loungewear', 'Comfortable home wear'],
-        ['Sale', 'Discounted items from all categories']
     ];
     $stmt = $pdo->prepare("INSERT IGNORE INTO categories (name, description) VALUES (?, ?)");
     foreach ($categories as $cat) {
