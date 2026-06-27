@@ -23,6 +23,31 @@ if ($selected_gender) {
 $stmt->execute();
 $featured_products = $stmt->fetchAll();
 
+// If no featured products, fetch best sellers and new arrivals
+if (empty($featured_products)) {
+    // Best sellers based on total quantity sold
+    $best_sellers_stmt = $pdo->query("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+           SUM(oi.quantity) AS total_sold
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN order_items oi ON p.id = oi.product_id
+        WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+        GROUP BY p.id
+        ORDER BY total_sold DESC
+        LIMIT 8");
+    $best_sellers = $best_sellers_stmt->fetchAll();
+
+    // New arrivals based on creation date
+    $new_products_stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+        ORDER BY p.created_at DESC
+        LIMIT 8");
+    $new_products_stmt->execute();
+    $new_products = $new_products_stmt->fetchAll();
+}
+
 // Helper to fetch products by category and gender
 function getProductsByCategory($category_name, $gender = '', $limit = 8) {
     global $pdo;
@@ -45,13 +70,25 @@ function getProductsByCategory($category_name, $gender = '', $limit = 8) {
     return $stmt->fetchAll();
 }
 
-// Fetch products for gender sections if on main page
+// Fetch products for gender sections with priority: featured > best seller > rating > new
 function getProductsByGender($gender, $limit = 8) {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id 
-                          FROM products p 
-                          LEFT JOIN categories c ON p.category_id = c.id 
-                          WHERE p.gender = ? AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW())) LIMIT ?");
+    $stmt = $pdo->prepare(
+        "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+                COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id),0) as avg_rating,
+                (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count,
+                SUM(oi.quantity) AS total_sold,
+                p.created_at,
+                p.is_featured
+         FROM products p
+          LEFT JOIN categories c ON p.category_id = c.id
+          LEFT JOIN product_variations pv ON pv.product_id = p.id
+          LEFT JOIN order_items oi ON oi.variation_id = pv.id
+         WHERE p.gender = ? AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+         GROUP BY p.id
+         ORDER BY p.is_featured DESC, total_sold DESC, avg_rating DESC, p.created_at DESC
+         LIMIT ?"
+    );
     $stmt->execute([$gender, $limit]);
     return $stmt->fetchAll();
 }
@@ -306,23 +343,24 @@ if (!$selected_gender) {
     <?php endif; ?>
 </div>
 
-<!-- Featured Products -->
-<section style="padding: 80px 0; background: #fff;">
-    <div class="container">
-        <div class="section-header-studio">
-            <h2 style="font-family: var(--typography-display-font);">Featured Selections <?php echo $selected_gender ? '('.$selected_gender.')' : ''; ?></h2>
-            <a href="products.php?is_featured=1<?php echo $selected_gender ? '&gender='.$selected_gender : ''; ?>" style="font-size: 14px; font-weight: 600; text-decoration: underline;">View All</a>
-        </div>
-        <div class="product-grid-horizontal">
-            <?php foreach ($featured_products as $product): ?>
-                <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                    <div class="image-wrapper">
-                        <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                    </div>
-                    <div class="meta">
-                        <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
-                        <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
-                        <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+<?php if (!empty($featured_products)): ?>
+    <!-- Featured Products -->
+    <section style="padding: 80px 0; background: #fff;">
+        <div class="container">
+            <div class="section-header-studio">
+                <h2 style="font-family: var(--typography-display-font);">Featured Selections <?php echo $selected_gender ? '(' . $selected_gender . ')' : ''; ?></h2>
+                <a href="products.php?is_featured=1<?php echo $selected_gender ? '&gender=' . $selected_gender : ''; ?>" style="font-size: 14px; font-weight: 600; text-decoration: underline;">View All</a>
+            </div>
+            <div class="product-grid-horizontal">
+                <?php foreach ($featured_products as $product): ?>
+                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                        <div class="image-wrapper">
+                            <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        </div>
+                        <div class="meta">
+                            <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
                             <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                                 <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
                                     <?php 
@@ -346,12 +384,104 @@ if (!$selected_gender) {
                                     <?php endif; ?>
                                 </span>
                             </div>
+                        </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+<?php else: ?>
+    <!-- Best Sellers -->
+    <section style="padding: 80px 0; background: #fff;">
+        <div class="container">
+            <div class="section-header-studio">
+                <h2 style="font-family: var(--typography-display-font);">Best Sellers</h2>
+            </div>
+            <div class="product-grid-horizontal">
+                <?php foreach ($best_sellers as $product): ?>
+                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                        <div class="image-wrapper">
+                            <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        </div>
+                        <div class="meta">
+                            <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                            <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                                <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+                                    <?php 
+                                    if ($product['review_count'] > 0) {
+                                        $avg = round($product['avg_rating'] * 2) / 2;
+                                        $full = floor($avg);
+                                        $half = ($avg - $full) >= 0.5 ? 1 : 0;
+                                        echo str_repeat('★', $full);
+                                        if ($half) echo '½';
+                                        echo str_repeat('☆', 5 - $full - $half);
+                                    } else {
+                                        echo '☆☆☆☆☆';
+                                    }
+                                    ?>
+                                </span>
+                                <span style="color: var(--colors-muted); font-size: 10px;">
+                                    <?php if ($product['review_count'] > 0): ?>
+                                        (<?php echo $product['review_count']; ?>)
+                                    <?php else: ?>
+                                        No ratings
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+    <!-- New Arrivals -->
+    <section style="padding: 80px 0; background: #fff;">
+        <div class="container">
+            <div class="section-header-studio">
+                <h2 style="font-family: var(--typography-display-font);">New Arrivals</h2>
+            </div>
+            <div class="product-grid-horizontal">
+                <?php foreach ($new_products as $product): ?>
+                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                        <div class="image-wrapper">
+                            <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        </div>
+                        <div class="meta">
+                            <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                            <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                                <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+                                    <?php 
+                                    if ($product['review_count'] > 0) {
+                                        $avg = round($product['avg_rating'] * 2) / 2;
+                                        $full = floor($avg);
+                                        $half = ($avg - $full) >= 0.5 ? 1 : 0;
+                                        echo str_repeat('★', $full);
+                                        if ($half) echo '½';
+                                        echo str_repeat('☆', 5 - $full - $half);
+                                    } else {
+                                        echo '☆☆☆☆☆';
+                                    }
+                                    ?>
+                                </span>
+                                <span style="color: var(--colors-muted); font-size: 10px;">
+                                    <?php if ($product['review_count'] > 0): ?>
+                                        (<?php echo $product['review_count']; ?>)
+                                    <?php else: ?>
+                                        No ratings
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+<?php endif; ?>
 
 <?php if (!$selected_gender): ?>
     <!-- Women's Section -->
@@ -362,18 +492,84 @@ if (!$selected_gender) {
                 <a href="index.php?gender=Women" style="font-size: 14px; font-weight: 600; text-decoration: underline;">Explore Women</a>
             </div>
             <div class="product-grid-horizontal">
-                <?php foreach ($women_products as $product): ?>
-                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
-                        <div class="meta">
-                            <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
-                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
-                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                <?php if (!empty($women_products)): ?>
+    <?php foreach ($women_products as $product): ?>
+        <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+            <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+            <div class="meta">
+                <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                    <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+<?php
+            $reviewCount = $product['review_count'] ?? 0;
+            $avgRating = $product['avg_rating'] ?? 0;
+            if ($reviewCount > 0) {
+                $avg = round($avgRating * 2) / 2;
+                $full = floor($avg);
+                $half = ($avg - $full) >= 0.5 ? 1 : 0;
+                echo str_repeat('★', $full);
+                if ($half) echo '½';
+                echo str_repeat('☆', 5 - $full - $half);
+            } else {
+                echo '☆☆☆☆☆';
+            }
+?>
+</span>
+<span style="color: var(--colors-muted); font-size: 10px;">
+<?php
+            if ($reviewCount > 0) {
+                echo '(' . $reviewCount . ')';
+            } else {
+                echo 'No ratings';
+            }
+?>
+                    </span>
+                </div>
             </div>
         </div>
+    <?php endforeach; ?>
+<?php else: ?>
+    <!-- Women Best Sellers -->
+    <?php
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN order_items oi ON p.id = oi.product_id WHERE p.gender = 'Women' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
+        $stmt->execute();
+        $women_best = $stmt->fetchAll();
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.gender = 'Women' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) ORDER BY p.created_at DESC LIMIT 8");
+        $stmt->execute();
+        $women_new = $stmt->fetchAll();
+    ?>
+    <div class="section-header-studio"><h2>Best Sellers</h2></div>
+    <div class="product-grid-horizontal">
+        <?php foreach ($women_best as $product): ?>
+            <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="meta">
+                    <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                    <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                    <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <div class="section-header-studio"><h2>New Arrivals</h2></div>
+    <div class="product-grid-horizontal">
+        <?php foreach ($women_new as $product): ?>
+            <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="meta">
+                    <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                    <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                    <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+
+
     </section>
 
     <!-- Men's Section -->
@@ -384,16 +580,87 @@ if (!$selected_gender) {
                 <a href="index.php?gender=Men" style="font-size: 14px; font-weight: 600; text-decoration: underline;">Explore Men</a>
             </div>
             <div class="product-grid-horizontal">
-                <?php foreach ($men_products as $product): ?>
-                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div>
-                        <div class="meta">
-                            <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
-                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
-                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                <?php if (!empty($men_products)): ?>
+    <?php foreach ($men_products as $product): ?>
+        <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+            <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+            <div class="meta">
+                <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                    <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+<?php
+$reviewCount = $product['review_count'] ?? 0;
+$avgRating = $product['avg_rating'] ?? 0;
+if ($reviewCount > 0) {
+    $avg = round($avgRating * 2) / 2;
+    $full = floor($avg);
+    $half = ($avg - $full) >= 0.5 ? 1 : 0;
+    echo str_repeat('★', $full);
+    if ($half) echo '½';
+    echo str_repeat('☆', 5 - $full - $half);
+} else {
+    echo '☆☆☆☆☆';
+}
+?>
+<?php
+if ($reviewCount > 0) {
+    echo '(' . $reviewCount . ')';
+} else {
+    echo 'No ratings';
+}
+?>
+                    </span>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+<?php else: ?>
+    <?php
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN order_items oi ON p.id = oi.product_id WHERE p.gender = 'Men' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
+        $stmt->execute();
+        $men_best = $stmt->fetchAll();
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.gender = 'Men' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) ORDER BY p.created_at DESC LIMIT 8");
+        $stmt->execute();
+        $men_new = $stmt->fetchAll();
+    ?>
+    <div class="section-header-studio"><h2>Best Sellers</h2></div>
+    <div class="product-grid-horizontal">
+        <?php foreach ($men_best as $product): ?>
+            <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="meta">
+                    <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                    <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                    <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <div class="section-header-studio"><h2>New Arrivals</h2></div>
+    <div class="product-grid-horizontal">
+        <?php foreach ($men_new as $product): ?>
+            <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="meta">
+                    <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                    <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                    <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+
+
+
+
+
+
+
+
             </div>
         </div>
     </section>
@@ -406,16 +673,90 @@ if (!$selected_gender) {
                 <a href="index.php?gender=Kids" style="font-size: 14px; font-weight: 600; text-decoration: underline;">Explore Kids</a>
             </div>
             <div class="product-grid-horizontal">
-                <?php foreach ($kids_products as $product): ?>
-                    <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
-                        <div class="meta">
-                            <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
-                            <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
-                            <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
-                        </div>
+                <?php if (!empty($kids_products)): ?>
+    <?php foreach ($kids_products as $product): ?>
+        <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+            <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+            <div class="meta">
+                <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                    <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+<?php
+$reviewCount = $product['review_count'] ?? 0;
+$avgRating = $product['avg_rating'] ?? 0;
+if ($reviewCount > 0) {
+    $avg = round($avgRating * 2) / 2;
+    $full = floor($avg);
+    $half = ($avg - $full) >= 0.5 ? 1 : 0;
+    echo str_repeat('★', $full);
+    if ($half) echo '½';
+    echo str_repeat('☆', 5 - $full - $half);
+} else {
+    echo '☆☆☆☆☆';
+}
+?>
+                    </span>
+                    <span style="color: var(--colors-muted); font-size: 10px;">
+                        <?php if ($reviewCount > 0): ?>(<?php echo $reviewCount; ?>)<?php else: ?>No ratings<?php endif; ?>
+                    </span>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+<?php else: ?>
+    <?php
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN order_items oi ON p.id = oi.product_id WHERE p.gender = 'Kids' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
+        $stmt->execute();
+        $kids_best = $stmt->fetchAll();
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.gender = 'Kids' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) ORDER BY p.created_at DESC LIMIT 8");
+        $stmt->execute();
+        $kids_new = $stmt->fetchAll();
+    ?>
+    <div class="section-header-studio"><h2>Best Sellers</h2></div>
+    <div class="product-grid-horizontal">
+        <?php foreach ($kids_best as $product): ?>
+            <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="meta">
+                    <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                    <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                    <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                    <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                        <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+                            <?php if ($product['review_count'] > 0) { $avg = round($product['avg_rating'] * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
+                        </span>
+                        <span style="color: var(--colors-muted); font-size: 10px;">
+                            <?php if ($product['review_count'] > 0): ?>(<?php echo $product['review_count']; ?>)<?php else: ?>No ratings<?php endif; ?>
+                        </span>
                     </div>
-                <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <div class="section-header-studio"><h2>New Arrivals</h2></div>
+    <div class="product-grid-horizontal">
+        <?php foreach ($kids_new as $product): ?>
+            <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
+                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="meta">
+                    <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
+                    <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
+                    <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+                    <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
+                        <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
+                            <?php if ($product['review_count'] > 0) { $avg = round($product['avg_rating'] * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
+                        </span>
+                        <span style="color: var(--colors-muted); font-size: 10px;">
+                            <?php if ($product['review_count'] > 0): ?>(<?php echo $product['review_count']; ?>)<?php else: ?>No ratings<?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
             </div>
         </div>
     </section>
