@@ -94,10 +94,15 @@ include '../includes/header.php';
 
 .config-section {
     background: var(--colors-surface-soft);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 48px;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
     border: 1px solid var(--colors-hairline);
+}
+.alerts-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 </style>
 
@@ -119,36 +124,20 @@ include '../includes/header.php';
         <div class="config-section">
             <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 24px; font-family: var(--typography-body-font);">Threshold & Dashboard Configuration</h3>
             <form method="POST">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px;">
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" style="font-size: 11px;">Low Stock Limit</label>
-                        <input type="number" name="low_stock" value="<?php echo $low_stock_limit; ?>" class="form-input" style="padding: 12px; background: #fff;">
-                    </div>
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" style="font-size: 11px;">Overstock Limit</label>
-                        <input type="number" name="overstock" value="<?php echo $overstock_limit; ?>" class="form-input" style="padding: 12px; background: #fff;">
-                    </div>
-                    <div class="form-group" style="margin: 0;">
-                        <label class="form-label" style="font-size: 11px; margin-bottom: 12px; display: block;">Dashboard Display</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                                <input type="checkbox" name="active_alerts[]" value="out_of_stock" <?php echo in_array('out_of_stock', $active_alerts) ? 'checked' : ''; ?>> Stockouts
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                                <input type="checkbox" name="active_alerts[]" value="low_stock" <?php echo in_array('low_stock', $active_alerts) ? 'checked' : ''; ?>> Low Stock
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
-                                <input type="checkbox" name="active_alerts[]" value="overstock" <?php echo in_array('overstock', $active_alerts) ? 'checked' : ''; ?>> Overstock
-                            </label>
+                    <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" style="font-size:11px;">Low Stock Limit</label>
+                            <input type="number" name="low_stock" value="<?php echo $low_stock_limit; ?>" class="form-input" style="padding:8px; background:#fff;">
                         </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label" style="font-size:11px;">Overstock Limit</label>
+                            <input type="number" name="overstock" value="<?php echo $overstock_limit; ?>" class="form-input" style="padding:8px; background:#fff;">
+                        </div>
+                        <button type="submit" name="update_thresholds" class="button-primary" style="padding:8px 16px;">Save</button>
+                        <?php if (isset($_GET['updated'])): ?>
+                            <span style="font-size:12px; color:var(--colors-success); font-weight:600;">✓ Updated</span>
+                        <?php endif; ?>
                     </div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <button type="submit" name="update_thresholds" class="button-primary" style="padding: 12px 32px;">Save Intelligence Preferences</button>
-                    <?php if (isset($_GET['updated'])): ?>
-                        <span style="font-size: 13px; color: var(--colors-success); font-weight: 600;">✓ Configuration updated successfully.</span>
-                    <?php endif; ?>
-                </div>
             </form>
         </div>
 
