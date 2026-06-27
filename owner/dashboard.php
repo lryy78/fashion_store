@@ -10,26 +10,36 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'owner') {
 $range = $_GET['range'] ?? 30; // 7, 30, 90
 $range = (int)$range;
 
-// 1. High-Level KPIs
+
+// 1. High-Level KPIs — revenue/orders from orders table only (no JOIN duplication)
 $stats_current = $pdo->prepare("
     SELECT 
-        SUM(o.total_amount) as total_rev,
-        COUNT(DISTINCT o.id) as total_ord,
-        COUNT(DISTINCT o.user_id) as total_cust,
-        SUM(oi.quantity * (oi.price - p.cost_price)) as net_profit
-    FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-    LEFT JOIN products p ON pv.product_id = p.id
-    WHERE o.status NOT IN ('cancelled','refunded')
-    AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+        SUM(total_amount) as total_rev,
+        COUNT(DISTINCT id) as total_ord,
+        COUNT(DISTINCT user_id) as total_cust
+    FROM orders
+    WHERE status NOT IN ('cancelled','refunded')
+    AND created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
 ");
 $stats_current->execute([$range - 1]);
 $curr = $stats_current->fetch();
 $total_revenue = $curr['total_rev'] ?: 0;
 $total_orders = $curr['total_ord'] ?: 0;
 $total_customers = $curr['total_cust'] ?: 0;
-$net_profit = $curr['net_profit'] ?: 0;
+
+$profit_stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(oi.quantity * (oi.price - p.cost_price)), 0) as net_profit
+    FROM orders o
+    JOIN order_items oi ON o.id = oi.order_id
+    LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+    LEFT JOIN products p ON pv.product_id = p.id
+    WHERE o.status NOT IN ('cancelled','refunded')
+    AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+");
+$profit_stmt->execute([$range - 1]);
+$net_profit = $profit_stmt->fetchColumn() ?: 0;
+
+
 
 $stats_prev = $pdo->prepare("
     SELECT SUM(o.total_amount) as total_rev
@@ -42,18 +52,22 @@ $stats_prev->execute([($range * 2) - 1, $range - 1]);
 $prev_revenue = $stats_prev->fetchColumn() ?: 0;
 $growth_percent = $prev_revenue > 0 ? (($total_revenue - $prev_revenue) / $prev_revenue) * 100 : ($total_revenue > 0 ? 100 : 0);
 
-// 2. Daily Analytics for Chart.js
+// 2. Daily Analytics for Chart.js (revenue from orders, profit from subquery — no JOIN inflation)
 $stmt = $pdo->prepare("
     SELECT 
         DATE(o.created_at) as date, 
         SUM(o.total_amount) as total,
-        SUM(oi.quantity * (oi.price - p.cost_price)) as profit
+        COALESCE(pf.profit, 0) as profit
     FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-    LEFT JOIN products p ON pv.product_id = p.id
+    LEFT JOIN (
+        SELECT oi.order_id, SUM(oi.quantity * (oi.price - p.cost_price)) as profit
+        FROM order_items oi
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN products p ON pv.product_id = p.id
+        GROUP BY oi.order_id
+    ) pf ON o.id = pf.order_id
     WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-    GROUP BY date
+    GROUP BY DATE(o.created_at)
     ORDER BY date ASC
 ");
 $stmt->execute([$range - 1]);

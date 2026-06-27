@@ -140,7 +140,7 @@ include $include_path . 'header.php';
                     $active_campaigns = $pdo->query("SELECT COUNT(DISTINCT campaign) FROM vouchers WHERE campaign IS NOT NULL")->fetchColumn();
                     ?>
                     <div class="surface-card" style="padding: 20px; text-align: center;">
-                        <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Total Revenue</div>
+                        <div style="font-size: 11px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">All-Time Revenue</div>
                         <div style="font-family: var(--typography-code-font); font-size: 22px; font-weight: 700; color: var(--colors-success);">RM <?php echo number_format($total_revenue ?: 0, 2); ?></div>
                     </div>
                     <div class="surface-card" style="padding: 20px; text-align: center;">
