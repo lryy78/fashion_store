@@ -27,8 +27,9 @@ $total_revenue = $curr['total_rev'] ?: 0;
 $total_orders = $curr['total_ord'] ?: 0;
 $total_customers = $curr['total_cust'] ?: 0;
 
-$profit_stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(oi.quantity * (oi.price - p.cost_price)), 0) as net_profit
+// Net profit needs cost — calculate as: total_revenue - total_cost (total_amount already includes discount)
+$cost_stmt = $pdo->prepare("
+    SELECT COALESCE(SUM(oi.quantity * p.cost_price), 0)
     FROM orders o
     JOIN order_items oi ON o.id = oi.order_id
     LEFT JOIN product_variations pv ON oi.variation_id = pv.id
@@ -36,8 +37,9 @@ $profit_stmt = $pdo->prepare("
     WHERE o.status NOT IN ('cancelled','refunded')
     AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
 ");
-$profit_stmt->execute([$range - 1]);
-$net_profit = $profit_stmt->fetchColumn() ?: 0;
+$cost_stmt->execute([$range - 1]);
+$total_cost = $cost_stmt->fetchColumn() ?: 0;
+$net_profit = $total_revenue - $total_cost;
 
 
 
@@ -57,10 +59,10 @@ $stmt = $pdo->prepare("
     SELECT 
         DATE(o.created_at) as date, 
         SUM(o.total_amount) as total,
-        COALESCE(pf.profit, 0) as profit
+        SUM(o.total_amount) - SUM(COALESCE(pf.total_cost, 0)) as profit
     FROM orders o
     LEFT JOIN (
-        SELECT oi.order_id, SUM(oi.quantity * (oi.price - p.cost_price)) as profit
+        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) as total_cost
         FROM order_items oi
         LEFT JOIN product_variations pv ON oi.variation_id = pv.id
         LEFT JOIN products p ON pv.product_id = p.id

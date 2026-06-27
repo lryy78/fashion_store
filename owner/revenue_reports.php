@@ -11,12 +11,16 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'owner') {
 $total_revenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
 
 $net_profit = $pdo->query("
-    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
-    FROM order_items oi 
-    JOIN product_variations pv ON oi.variation_id = pv.id 
-    JOIN products p ON pv.product_id = p.id 
-    JOIN orders o ON oi.order_id = o.id 
-    WHERE o.status NOT IN ('cancelled','refunded')
+    SELECT (SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded'))
+           - COALESCE(SUM(pc.total_cost), 0)
+    FROM (
+        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) AS total_cost
+        FROM order_items oi
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN products p ON pv.product_id = p.id
+        WHERE oi.order_id IN (SELECT id FROM orders WHERE status NOT IN ('cancelled','refunded'))
+        GROUP BY oi.order_id
+    ) pc
 ")->fetchColumn() ?: 0;
 
 $total_orders = $pdo->query("SELECT COUNT(*) FROM orders WHERE status NOT IN ('cancelled','refunded')")->fetchColumn() ?: 0;
@@ -26,21 +30,29 @@ $this_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status
 $last_month_rev = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))")->fetchColumn() ?: 0;
 
 $this_month_profit = $pdo->query("
-    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
-    FROM order_items oi 
-    JOIN product_variations pv ON oi.variation_id = pv.id 
-    JOIN products p ON pv.product_id = p.id 
-    JOIN orders o ON oi.order_id = o.id 
-    WHERE o.status NOT IN ('cancelled','refunded') AND MONTH(o.created_at) = MONTH(NOW()) AND YEAR(o.created_at) = YEAR(NOW())
+    SELECT (SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW()))
+           - COALESCE(SUM(pc.total_cost), 0)
+    FROM (
+        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) AS total_cost
+        FROM order_items oi
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN products p ON pv.product_id = p.id
+        WHERE oi.order_id IN (SELECT id FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW()))
+        GROUP BY oi.order_id
+    ) pc
 ")->fetchColumn() ?: 0;
 
 $last_month_profit = $pdo->query("
-    SELECT SUM(oi.quantity * (oi.price - p.cost_price)) 
-    FROM order_items oi 
-    JOIN product_variations pv ON oi.variation_id = pv.id 
-    JOIN products p ON pv.product_id = p.id 
-    JOIN orders o ON oi.order_id = o.id 
-    WHERE o.status NOT IN ('cancelled','refunded') AND MONTH(o.created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(o.created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH))
+    SELECT (SELECT SUM(total_amount) FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH)))
+           - COALESCE(SUM(pc.total_cost), 0)
+    FROM (
+        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) AS total_cost
+        FROM order_items oi
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN products p ON pv.product_id = p.id
+        WHERE oi.order_id IN (SELECT id FROM orders WHERE status NOT IN ('cancelled','refunded') AND MONTH(created_at) = MONTH(DATE_SUB(NOW(), INTERVAL 1 MONTH)) AND YEAR(created_at) = YEAR(DATE_SUB(NOW(), INTERVAL 1 MONTH)))
+        GROUP BY oi.order_id
+    ) pc
 ")->fetchColumn() ?: 0;
 
 $mom_growth = $last_month_rev > 0 ? (($this_month_rev - $last_month_rev) / $last_month_rev) * 100 : ($this_month_rev > 0 ? 100 : 0);
@@ -50,11 +62,15 @@ $monthly_raw = $pdo->query("
     SELECT 
         DATE_FORMAT(o.created_at, '%Y-%m') as month, 
         SUM(o.total_amount) as total,
-        SUM(oi.quantity * (oi.price - p.cost_price)) as profit
+        SUM(o.total_amount) - SUM(COALESCE(pc.total_cost, 0)) as profit
     FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-    LEFT JOIN products p ON pv.product_id = p.id
+    LEFT JOIN (
+        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) as total_cost
+        FROM order_items oi
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN products p ON pv.product_id = p.id
+        GROUP BY oi.order_id
+    ) pc ON o.id = pc.order_id
     WHERE o.status NOT IN ('cancelled','refunded')
     GROUP BY month
     ORDER BY month ASC
@@ -76,11 +92,15 @@ $daily_raw = $pdo->query("
         DATE(o.created_at) as date, 
         SUM(o.total_amount) as total, 
         COUNT(DISTINCT o.id) as volume,
-        SUM(oi.quantity * (oi.price - p.cost_price)) as profit
+        SUM(o.total_amount) - SUM(COALESCE(pc.total_cost, 0)) as profit
     FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN product_variations pv ON oi.variation_id = pv.id
-    LEFT JOIN products p ON pv.product_id = p.id
+    LEFT JOIN (
+        SELECT oi.order_id, SUM(oi.quantity * p.cost_price) as total_cost
+        FROM order_items oi
+        LEFT JOIN product_variations pv ON oi.variation_id = pv.id
+        LEFT JOIN products p ON pv.product_id = p.id
+        GROUP BY oi.order_id
+    ) pc ON o.id = pc.order_id
     WHERE o.status NOT IN ('cancelled','refunded') AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 4 DAY)
     GROUP BY date
     ORDER BY date ASC
