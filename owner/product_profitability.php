@@ -130,6 +130,18 @@ include $include_path . 'header.php';
                 </div>
             </div>
             <div style="background: var(--colors-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
+                <div style="font-size: 12px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Break Even</div>
+                <div style="font-size: 32px; font-weight: 700; color: var(--colors-muted); font-family: var(--typography-display-font);">
+                    <?php 
+                    $breakeven = 0;
+                    foreach ($products as $p) {
+                        if ($p['price'] == $p['cost_price']) $breakeven++;
+                    }
+                    echo $breakeven;
+                    ?>
+                </div>
+            </div>
+            <div style="background: var(--colors-surface); padding: 20px; border-radius: 12px; border: 1px solid var(--colors-hairline-soft);">
                 <div style="font-size: 12px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Avg. Margin</div>
                 <div style="font-size: 32px; font-weight: 700; color: var(--colors-primary); font-family: var(--typography-display-font);">
                     <?php

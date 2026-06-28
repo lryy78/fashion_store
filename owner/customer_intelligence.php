@@ -331,32 +331,6 @@ include $include_path . 'header.php';
                         </div>
                     </div>
                 </div>
-
-                <!-- Behavioral Signals -->
-                <!-- <div class="chart-container">
-                 <h3 class="chart-header" style="margin-bottom: 12px;">Customer Behavior</h3>
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                                <span style="color: var(--colors-muted); font-weight: 600;">Returning Customer %</span>   
-                                <strong style="color: var(--colors-primary); font-size: 13px;"><?php echo number_format($repeat_rate, 1); ?>%</strong>
-                            </div>
-                            <div style="height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; overflow: hidden;">
-                                <div style="height: 100%; width: <?php echo min(100, $repeat_rate); ?>%; background: var(--colors-primary);"></div>
-                            </div>
-                        </div>
-                        <hr style="border: 0; border-top: 1px solid var(--colors-hairline-soft); margin: 0;">
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; align-items: center;">
-                            <span style="color: var(--colors-muted); font-weight: 600;">Avg Spent Per Order</span>
-                            <span style="font-weight: 700; font-family: var(--typography-code-font);">RM <?php echo number_format($aov, 2); ?></span>
-                        </div>
-                        <hr style="border: 0; border-top: 1px solid var(--colors-hairline-soft); margin: 0;">
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; align-items: center;">
-                            <span style="color: var(--colors-muted); font-weight: 600;">Customer Loss Risk</span>
-                            <span style="font-size: 10px; padding: 3px 6px; font-weight: 700; border-radius: 4px; <?php echo $churn_style; ?>"><?php echo $churn_risk_label; ?></span>
-                        </div>
-                    </div>
-                </div> -->
             </div>
         </div>
     </div>
