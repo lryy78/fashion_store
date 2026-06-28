@@ -139,10 +139,10 @@ $is_visual_mode = ($is_manager && !$is_in_manager_dir && isset($_SESSION['visual
                 <ul class="nav-menu">
                     <li><a href="/fashion_store/owner/dashboard.php"<?php echo nav_active('/owner/dashboard'); ?>>Dashboard</a></li>
                     <li><a href="/fashion_store/owner/business_analytics.php"<?php echo nav_active('/owner/business_analytics'); ?>>Analytics</a></li>
+                    <li><a href="/fashion_store/owner/product_insights.php"<?php echo nav_active('/owner/product_insights'); ?>>Insight</a></li>
+                    <li><a href="/fashion_store/owner/product_profitability.php"<?php echo nav_active('/owner/product_profitability'); ?>>Profitability</a></li>
                     <li><a href="/fashion_store/owner/customer_intelligence.php"<?php echo nav_active('/owner/customer_intelligence'); ?>>Customers</a></li>
-                    <li><a href="/fashion_store/owner/product_insights.php"<?php echo nav_active('/owner/product_insights'); ?>>Products</a></li>
                     <li><a href="/fashion_store/owner/vouchers.php"<?php echo nav_active('/owner/vouchers'); ?>>Vouchers</a></li>
-                    <li><a href="/fashion_store/owner/revenue_reports.php"<?php echo nav_active('/owner/revenue_reports'); ?>>Reports</a></li>
                 </ul>
                 <?php else: ?>
                 <ul class="nav-menu">

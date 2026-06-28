@@ -71,7 +71,7 @@ include $include_path . 'header.php';
                         <th>Customer</th>
                         <th>Timestamp</th>
                         <th>Transaction</th>
-                        <th style="text-align: right;">System Status</th>
+                        <th style="text-align: right;">Order Status</th>
                     </tr>
                 </thead>
                 <tbody>

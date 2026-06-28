@@ -267,31 +267,7 @@ include $include_path . 'header.php';
                     <div class="rev-kpi-hint">Margin: <?php echo number_format($profit_margin, 1); ?>%</div>
                 </div>
 
-                <!-- This Month -->
-                <div class="rev-kpi-card">
-                    <div class="rev-kpi-icon rev-kpi-icon--month">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
-                    <div class="rev-kpi-label">Selected Period</div>
-                    <div class="rev-kpi-value">RM <?php echo number_format($this_month_rev, 2); ?></div>
-                    <div class="rev-kpi-sub">Profit: RM <?php echo number_format($this_month_profit, 2); ?></div>
-                    <?php if ($mom_growth >= 0): ?>
-                        <div class="stat-trend trend-up">↑ <?php echo number_format($mom_growth, 1); ?>% vs previous period</div>
-                    <?php else: ?>
-                        <div class="stat-trend trend-down">↓ <?php echo number_format(abs($mom_growth), 1); ?>% vs previous period</div>
-                    <?php endif; ?>
-                </div>
 
-                <!-- Last Month -->
-                <div class="rev-kpi-card">
-                    <div class="rev-kpi-icon rev-kpi-icon--last">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div class="rev-kpi-label">Previous Period</div>
-                    <div class="rev-kpi-value">RM <?php echo number_format($last_month_rev, 2); ?></div>
-                    <div class="rev-kpi-sub">Profit: RM <?php echo number_format($last_month_profit, 2); ?></div>
-                    <div class="rev-kpi-hint">Previous period baseline</div>
-                </div>
 
                 <!-- Avg Order Value -->
                 <div class="rev-kpi-card">
@@ -455,13 +431,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 {
                     label: 'Net Profit',
                     data: <?php echo json_encode($month_profit); ?>,
-                    borderColor: '#5db872',
-                    backgroundColor: 'rgba(93,184,114,0.06)',
+                    borderColor: '#181715',
+                    backgroundColor: 'rgba(24,23,21,0.06)',
                     borderWidth: 2,
                     borderDash: [6, 4],
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#5db872',
+                    pointBackgroundColor: '#181715',
                     pointRadius: 3,
                     pointHoverRadius: 5
                 }
@@ -489,12 +465,16 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             scales: {
                 y: {
+                    title: { display: true, text: 'Amount (RM)', font: { weight: 'bold' } },
                     beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: true },
+                    border: { display: true, color: '#000000', width: 1 },
                     ticks: { callback: v => 'RM ' + v.toLocaleString(), padding: 10, font: { size: 11 } }
                 },
                 x: {
-                    grid: { display: false },
+                    title: { display: true, text: 'Date', font: { weight: 'bold' } },
+                    grid: { display: false, drawBorder: true },
+                    border: { display: true, color: '#000000', width: 1 },
                     ticks: { padding: 10, font: { size: 11 } }
                 }
             }

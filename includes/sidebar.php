@@ -24,7 +24,7 @@ function renderSidebar($role) {
     } elseif ($role == 'owner') {
         $menu = [
             ['label' => 'Dashboard', 'link' => '/fashion_store/owner/dashboard.php', 'icon' => '⊞'],
-            ['label' => 'Business Analytics', 'link' => '/fashion_store/owner/Business Analytics.php', 'icon' => '💰'],
+            ['label' => 'Business Analytics', 'link' => '/fashion_store/owner/business_analytics.php', 'icon' => '💰'],
             ['label' => 'Product Insights', 'link' => '/fashion_store/owner/product_insights.php', 'icon' => '🛍'],
             ['label' => 'Product Profitability', 'link' => '/fashion_store/owner/product_profitability.php', 'icon' => '📊'],
             ['label' => 'Customer Intelligence', 'link' => '/fashion_store/owner/customer_intelligence.php', 'icon' => '👥'],

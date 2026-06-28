@@ -406,8 +406,18 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-                y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { callback: v => 'RM ' + v } },
-                x: { grid: { display: false } }
+                y: { 
+                    title: { display: true, text: 'Revenue (RM)', font: { weight: 'bold' } },
+                    beginAtZero: true, 
+                    grid: { color: '#f0f0f0', drawBorder: true }, 
+                    border: { display: true, color: '#000000', width: 1 },
+                    ticks: { callback: v => 'RM ' + v } 
+                },
+                x: { 
+                    title: { display: true, text: 'Campaign', font: { weight: 'bold' } },
+                    grid: { display: false, drawBorder: true }, 
+                    border: { display: true, color: '#000000', width: 1 }
+                }
             }
         }
     });
