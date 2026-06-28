@@ -41,8 +41,7 @@ include $include_path . 'header.php';
     <div class="dashboard-main fade-in-up">
         <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--spacing-xxl);">
             <div>
-                <div style="font-size: 14px; color: var(--colors-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-weight: 600;">System Monitor</div>
-                <h1 style="margin: 0; font-size: 40px;">Global Transaction Feed</h1>
+                <h1 style="margin: 0; font-size: 40px;">Order Monitor</h1>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-end;">
                 <form method="GET" style="display: flex; gap: 8px;">

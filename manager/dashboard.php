@@ -78,31 +78,6 @@ include '../includes/header.php';
 
         <div class="dashboard-split" style="grid-template-columns: 1fr; gap: 32px; align-items: start;">
             <div style="display: flex; flex-direction: column; gap: 32px;">
-                
-                <!-- Compact Alerts Center -->
-                <?php if (!empty($urgent_alerts)): ?>
-                <div class="surface-card" style="border: 1px solid var(--colors-hairline); padding: 0; overflow: hidden;">
-                    <div style="background: var(--colors-surface-soft); padding: 12px 24px; border-bottom: 1px solid var(--colors-hairline); display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--colors-error);">Operational Alerts</div>
-                        <a href="alerts_center.php" style="font-size: 11px; font-weight: 600; text-decoration: underline;">Alerts Center</a>
-                    </div>
-                    <div style="padding: 16px 24px;">
-                        <?php foreach ($urgent_alerts as $alert): 
-                            $msg = htmlspecialchars($alert['message']);
-                            if (preg_match('/Critical: (.*?) has/', $msg, $matches)) {
-                                $display_msg = "🔴 <strong>" . $matches[1] . "</strong><br><span style='font-size:12px; color:var(--colors-muted)'>7 variations out of stock</span>";
-                            } else {
-                                $display_msg = $msg;
-                            }
-                        ?>
-                            <div onclick="location.href='products_list.php'" style="cursor:pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--colors-hairline-soft); last-child: {border-bottom: none};">
-                                <div style="font-size: 13px;"><?php echo $display_msg; ?></div>
-                                <span class="button-secondary" style="font-size: 10px; padding: 4px 10px;">View Inventory</span>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
 
                 <!-- KPI Intelligence Row -->
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
