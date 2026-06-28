@@ -69,205 +69,205 @@ if (!$selected_gender) {
 
 <!-- Index specific editorial styles -->
 <style>
-.hero-section-studio {
-    background-color: var(--colors-canvas);
-    padding: 80px 0;
-    border-bottom: 1px solid var(--colors-hairline-soft);
-}
+    .hero-section-studio {
+        background-color: var(--colors-canvas);
+        padding: 80px 0;
+        border-bottom: 1px solid var(--colors-hairline-soft);
+    }
 
-.hero-studio-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
-    align-items: center;
-}
-
-.hero-studio-content h1 {
-    font-size: clamp(48px, 6vw, 84px);
-    line-height: 0.95;
-    margin-bottom: 32px;
-    letter-spacing: -0.04em;
-}
-
-.hero-studio-content p {
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--colors-muted);
-    max-width: 480px;
-    margin-bottom: 40px;
-}
-
-.category-grid-studio {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    background-color: var(--colors-hairline);
-    border: 1px solid var(--colors-hairline);
-    margin-top: -1px;
-}
-
-.category-card-studio {
-    background: #fff;
-    padding: 64px 32px;
-    text-align: center;
-    text-decoration: none;
-    transition: background 0.3s ease;
-}
-
-.category-card-studio:hover {
-    background: var(--colors-surface-soft);
-}
-
-.category-card-studio .icon {
-    font-size: 32px;
-    margin-bottom: 24px;
-    display: block;
-}
-
-.category-card-studio h3 {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 600;
-    color: var(--colors-ink);
-}
-
-.promo-banner-studio {
-    background-color: var(--colors-surface-card);
-    color: var(--colors-ink);
-    padding: 120px 0;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    border-top: 1px solid var(--colors-hairline-soft);
-    border-bottom: 1px solid var(--colors-hairline-soft);
-}
-
-.promo-banner-studio::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(204, 120, 92, 0.05) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-.promo-banner-studio h2 {
-    font-size: 56px;
-    margin-bottom: 24px;
-    font-family: var(--typography-display-font);
-    letter-spacing: -0.04em;
-    color: var(--colors-ink);
-}
-
-.promo-banner-studio p {
-    font-size: 18px;
-    color: var(--colors-muted);
-    margin-bottom: 48px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.6;
-}
-
-.section-header-studio {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 32px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--colors-hairline-soft);
-}
-
-.section-header-studio h2 {
-    font-size: 32px;
-    margin: 0;
-}
-
-/* Horizontal Scroll Layout */
-.product-grid-horizontal {
-    display: flex;
-    overflow-x: auto;
-    gap: 32px;
-    padding-bottom: 32px;
-    scroll-snap-type: x mandatory;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.product-grid-horizontal::-webkit-scrollbar {
-    display: none;
-}
-
-.product-grid-horizontal .product-card-studio {
-    flex: 0 0 280px;
-    scroll-snap-align: start;
-}
-
-/* Product Card Studio Styles */
-.product-card-studio {
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-.product-card-studio:hover {
-    transform: translateY(-4px);
-}
-
-.product-card-studio .image-wrapper {
-    aspect-ratio: 4/5;
-    background: var(--colors-surface-soft);
-    margin-bottom: 16px;
-    overflow: hidden;
-    position: relative;
-    border-radius: var(--rounded-lg);
-}
-
-.product-card-studio img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.product-card-studio .meta {
-    padding: 0 4px;
-}
-
-.product-card-studio .cat {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--colors-muted);
-    margin-bottom: 4px;
-}
-
-.product-card-studio .name {
-    font-size: 15px;
-    font-weight: 500;
-    margin-bottom: 4px;
-    color: var(--colors-ink);
-}
-
-.product-card-studio .price {
-    font-size: 14px;
-    color: var(--colors-ink);
-    font-weight: 400;
-}
-
-@media (max-width: 992px) {
     .hero-studio-grid {
-        grid-template-columns: 1fr;
-        gap: 48px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
     }
+
+    .hero-studio-content h1 {
+        font-size: clamp(48px, 6vw, 84px);
+        line-height: 0.95;
+        margin-bottom: 32px;
+        letter-spacing: -0.04em;
+    }
+
+    .hero-studio-content p {
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--colors-muted);
+        max-width: 480px;
+        margin-bottom: 40px;
+    }
+
     .category-grid-studio {
-        grid-template-columns: repeat(2, 1fr);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        background-color: var(--colors-hairline);
+        border: 1px solid var(--colors-hairline);
+        margin-top: -1px;
     }
+
+    .category-card-studio {
+        background: #fff;
+        padding: 64px 32px;
+        text-align: center;
+        text-decoration: none;
+        transition: background 0.3s ease;
+    }
+
+    .category-card-studio:hover {
+        background: var(--colors-surface-soft);
+    }
+
+    .category-card-studio .icon {
+        font-size: 32px;
+        margin-bottom: 24px;
+        display: block;
+    }
+
+    .category-card-studio h3 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+        color: var(--colors-ink);
+    }
+
+    .promo-banner-studio {
+        background-color: var(--colors-surface-card);
+        color: var(--colors-ink);
+        padding: 120px 0;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border-top: 1px solid var(--colors-hairline-soft);
+        border-bottom: 1px solid var(--colors-hairline-soft);
+    }
+
+    .promo-banner-studio::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(204, 120, 92, 0.05) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .promo-banner-studio h2 {
+        font-size: 56px;
+        margin-bottom: 24px;
+        font-family: var(--typography-display-font);
+        letter-spacing: -0.04em;
+        color: var(--colors-ink);
+    }
+
+    .promo-banner-studio p {
+        font-size: 18px;
+        color: var(--colors-muted);
+        margin-bottom: 48px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+
+    .section-header-studio {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--colors-hairline-soft);
+    }
+
+    .section-header-studio h2 {
+        font-size: 32px;
+        margin: 0;
+    }
+
+    /* Horizontal Scroll Layout */
+    .product-grid-horizontal {
+        display: flex;
+        overflow-x: auto;
+        gap: 32px;
+        padding-bottom: 32px;
+        scroll-snap-type: x mandatory;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .product-grid-horizontal::-webkit-scrollbar {
+        display: none;
+    }
+
     .product-grid-horizontal .product-card-studio {
-        flex: 0 0 240px;
+        flex: 0 0 280px;
+        scroll-snap-align: start;
     }
-}
+
+    /* Product Card Studio Styles */
+    .product-card-studio {
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card-studio:hover {
+        transform: translateY(-4px);
+    }
+
+    .product-card-studio .image-wrapper {
+        aspect-ratio: 4/5;
+        background: var(--colors-surface-soft);
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        border-radius: var(--rounded-lg);
+    }
+
+    .product-card-studio img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .product-card-studio .meta {
+        padding: 0 4px;
+    }
+
+    .product-card-studio .cat {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--colors-muted);
+        margin-bottom: 4px;
+    }
+
+    .product-card-studio .name {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 4px;
+        color: var(--colors-ink);
+    }
+
+    .product-card-studio .price {
+        font-size: 14px;
+        color: var(--colors-ink);
+        font-weight: 400;
+    }
+
+    @media (max-width: 992px) {
+        .hero-studio-grid {
+            grid-template-columns: 1fr;
+            gap: 48px;
+        }
+        .category-grid-studio {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .product-grid-horizontal .product-card-studio {
+            flex: 0 0 240px;
+        }
+    }
 </style>
 
 <section class="hero-section-studio" style="padding: 0; position: relative;">
@@ -317,8 +317,8 @@ if (!$selected_gender) {
             <?php foreach ($featured_products as $product): ?>
                 <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                     <div class="image-wrapper">
-                        <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                    </div>
+                        <img src="get_image.php?id=<?php echo $product['image_id']; ?>">
+                    </div>    
                     <div class="meta">
                         <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                         <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -331,7 +331,8 @@ if (!$selected_gender) {
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
-                                        if ($half) echo '½';
+                                        // if ($half) echo '½';
+                                        if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:50%;">★</span>☆</span>';
                                         echo str_repeat('☆', 5 - $full - $half);
                                     } else {
                                         echo '☆☆☆☆☆';
@@ -364,7 +365,9 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($women_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
+                        <div class="image-wrapper">
+                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>">
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -386,7 +389,9 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($men_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div>
+                        <div class="image-wrapper">
+                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>">
+                        </div>   
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -419,6 +424,7 @@ if (!$selected_gender) {
             </div>
         </div>
     </section>
+
 <?php else: ?>
     <!-- Gender Specific Category Sections -->
     <section style="padding: 80px 0; background: var(--colors-surface-soft);">
@@ -430,7 +436,7 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($tops_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
+                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>  
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -472,7 +478,10 @@ if (!$selected_gender) {
             <div class="product-grid-horizontal">
                 <?php foreach ($acc_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div>
+                        <!-- <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div> -->
+                         <div class="image-wrapper">
+                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>">
+                        </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>

@@ -24,12 +24,12 @@ function renderSidebar($role) {
     } elseif ($role == 'owner') {
         $menu = [
             ['label' => 'Dashboard', 'link' => '/fashion_store/owner/dashboard.php', 'icon' => '⊞'],
-            ['label' => 'Business Analytics', 'link' => '/fashion_store/owner/business_analytics.php', 'icon' => '📈'],
-            ['label' => 'Customer Intelligence', 'link' => '/fashion_store/owner/customer_intelligence.php', 'icon' => '👥'],
+            ['label' => 'Business Analytics', 'link' => '/fashion_store/owner/Business Analytics.php', 'icon' => '💰'],
             ['label' => 'Product Insights', 'link' => '/fashion_store/owner/product_insights.php', 'icon' => '🛍'],
-            ['label' => 'Voucher Management', 'link' => '/fashion_store/owner/vouchers.php', 'icon' => '🎟'],
-            ['label' => 'Revenue Reports', 'link' => '/fashion_store/owner/revenue_reports.php', 'icon' => '💰'],
             ['label' => 'Product Profitability', 'link' => '/fashion_store/owner/product_profitability.php', 'icon' => '📊'],
+            ['label' => 'Customer Intelligence', 'link' => '/fashion_store/owner/customer_intelligence.php', 'icon' => '👥'],
+            ['label' => 'Voucher Management', 'link' => '/fashion_store/owner/vouchers.php', 'icon' => '🎟'],
+            // ['label' => 'Business Analytics', 'link' => '/fashion_store/owner/business_analytics.php', 'icon' => '📈'],
         ];
     } elseif ($role == 'buyer') {
         $menu = [
@@ -52,9 +52,6 @@ function renderSidebar($role) {
                     <a href="<?php echo $item['link']; ?>" class="<?php echo $isActive ? 'active' : ''; ?>">
                         <span style="font-size: 1.1rem; opacity: 0.8;"><?php echo $item['icon']; ?></span>
                         <?php echo $item['label']; ?>
-                        <?php if ($item['label'] == 'Alerts Center'): ?>
-                            <span class="badge badge-error" style="font-size: 10px; margin-left: 4px; padding: 2px 6px; background: #ff6b6b; color: white; border-radius: 4px;">New</span>
-                        <?php endif; ?>
                     </a>
                 </li>
             <?php endforeach; ?>

@@ -10,15 +10,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin') {
 if (isset($_POST['update_role'])) {
     $user_id = $_POST['user_id'];
     $role = $_POST['role'];
-    $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ?");
-    $stmt->execute([$role, $user_id]);
+    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $current = $stmt->fetch();
+    if ($current && $current['role'] === 'owner') {
+        $reg_error = "Owner role cannot be modified.";
+    } else {
+        $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ?");
+        $stmt->execute([$role, $user_id]);
+    }
 }
 
 if (isset($_POST['toggle_status'])) {
     $user_id = $_POST['user_id'];
     $is_active = $_POST['is_active'] ? 1 : 0;
-    $stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ?");
-    $stmt->execute([$is_active, $user_id]);
+    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $current = $stmt->fetch();
+    if ($current && $current['role'] === 'owner') {
+        $reg_error = "Owner status cannot be modified.";
+    } else {
+        $stmt = $pdo->prepare("UPDATE users SET is_active = ? WHERE id = ?");
+        $stmt->execute([$is_active, $user_id]);
+    }
 }
 
 $reg_error = '';
@@ -123,7 +137,6 @@ include $include_path . 'header.php';
                             <option value="buyer">Buyer</option>
                             <option value="manager">Manager</option>
                             <option value="admin">Admin</option>
-                            <option value="owner">Owner</option>
                         </select>
                     </div>
                     <button type="submit" name="register_user" class="button-primary" style="height: 44px; padding: 0 20px; white-space: nowrap;">Register</button>
@@ -150,16 +163,19 @@ include $include_path . 'header.php';
                             </td>
                             <td style="font-size: 14px;"><?php echo htmlspecialchars($u['email']); ?></td>
                             <td>
+                                <?php if ($u['role'] === 'owner'): ?>
+                                    <span class="badge" style="background: var(--colors-ink); color: #fff; padding: 6px 12px; font-size: 11px;">Owner</span>
+                                <?php else: ?>
                                 <form method="POST" style="display: flex; gap: 8px; align-items: center;">
                                     <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
                                     <select name="role" style="width: auto; padding: 6px 30px 6px 12px; font-size: 12px; height: 32px;">
                                         <option value="buyer" <?php echo $u['role'] == 'buyer' ? 'selected' : ''; ?>>Buyer</option>
                                         <option value="manager" <?php echo $u['role'] == 'manager' ? 'selected' : ''; ?>>Manager</option>
                                         <option value="admin" <?php echo $u['role'] == 'admin' ? 'selected' : ''; ?>>Admin</option>
-                                        <option value="owner" <?php echo $u['role'] == 'owner' ? 'selected' : ''; ?>>Owner</option>
                                     </select>
                                     <button type="submit" name="update_role" class="button-primary" style="padding: 0 12px; height: 32px; font-size: 11px;">Save</button>
                                 </form>
+                                <?php endif; ?>
                             </td>
                             <td style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                                 <?php if (isset($u['is_active']) && !$u['is_active']): ?>
@@ -168,6 +184,7 @@ include $include_path . 'header.php';
                                     <span class="badge badge-success" style="font-size: 10px;">ACTIVE</span>
                                 <?php endif; ?>
                                 
+                                <?php if ($u['role'] !== 'owner'): ?>
                                 <form method="POST">
                                     <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
                                     <?php if (isset($u['is_active']) && !$u['is_active']): ?>
@@ -178,6 +195,7 @@ include $include_path . 'header.php';
                                         <button type="submit" name="toggle_status" class="button-secondary" style="padding: 4px 8px; font-size: 10px; border-color: var(--colors-error); color: var(--colors-error);">Deactivate</button>
                                     <?php endif; ?>
                                 </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

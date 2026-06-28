@@ -224,18 +224,7 @@ include $include_path . 'header.php';
             </div>
         </header>
 
-        <!-- Insights Banner -->
-        <?php if ($top_20_pct > 0): ?>
-        <div style="margin-bottom: 24px;">
-            <div style="display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: linear-gradient(90deg, rgba(204,120,92,0.1) 0%, rgba(204,120,92,0.02) 100%); border-left: 4px solid var(--colors-primary); border-radius: 8px; margin-bottom: 8px;">
-                <div style="font-size: 24px; animation: pulse 2s infinite;">💡</div>
-                <div style="flex: 1;">
-                    <span style="font-weight: 700; font-size: 14px; color: var(--colors-ink); margin-right: 8px;">AI Insight: VIP Dependency</span>
-                    <span style="font-size: 13px; color: var(--colors-body);">Top <?php echo ceil(0.2 * 100); ?>% of customers generate <strong><?php echo $top_20_pct; ?>%</strong> of total lifetime revenue. Consider launching a VIP loyalty tier.</span>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
+
 
         <!-- KPIs -->
         <div class="stats-grid">
@@ -263,13 +252,6 @@ include $include_path . 'header.php';
                 <div class="stat-desc">Acquired in selected period</div>
             </div>
             
-            <div class="stat-card-premium">
-                <div>
-                    <div class="stat-title">True VIPs</div>
-                    <div class="stat-value"><?php echo number_format($high_value); ?></div>
-                </div>
-                <div class="stat-desc">Customers > RM 1,000 all-time LTV</div>
-            </div>
         </div>
 
          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
@@ -330,7 +312,7 @@ include $include_path . 'header.php';
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 <!-- Customer Segmentation Chart -->
                 <div class="chart-container">
-                    <h3 class="chart-header" style="margin-bottom: 8px;">Segmentation (All-Time)</h3>
+                    <h3 class="chart-header" style="margin-bottom: 8px;">Tier Segmentation</h3>
                     <div style="height: 140px; width: 100%; display: flex; justify-content: center; margin-bottom: 16px;">
                         <canvas id="segmentChart"></canvas>
                     </div>
@@ -351,7 +333,7 @@ include $include_path . 'header.php';
                 </div>
 
                 <!-- Behavioral Signals -->
-                <div class="chart-container">
+                <!-- <div class="chart-container">
                  <h3 class="chart-header" style="margin-bottom: 12px;">Customer Behavior</h3>
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -374,7 +356,7 @@ include $include_path . 'header.php';
                             <span style="font-size: 10px; padding: 3px 6px; font-weight: 700; border-radius: 4px; <?php echo $churn_style; ?>"><?php echo $churn_risk_label; ?></span>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>

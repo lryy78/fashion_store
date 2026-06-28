@@ -72,123 +72,123 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
 
 <!-- Shop specific layout styles -->
 <style>
-.shop-layout {
-    display: flex;
-    gap: 48px;
-    margin-bottom: var(--spacing-section);
-    padding-top: var(--spacing-xl);
-}
-
-.filter-sidebar {
-    width: 220px;
-    flex-shrink: 0;
-}
-
-.filter-group h4 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--colors-muted);
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.price-inputs {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.shop-main {
-    flex: 1;
-}
-
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 48px 32px;
-}
-
-.product-card-studio {
-    cursor: pointer;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.product-card-studio:hover {
-    transform: translateY(-8px);
-}
-
-.product-card-studio .image-wrapper {
-    aspect-ratio: 4/5;
-    background: var(--colors-surface-soft);
-    margin-bottom: 16px;
-    overflow: hidden;
-    position: relative;
-    border-radius: var(--rounded-md);
-}
-
-.product-card-studio img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-
-.product-card-studio:hover img {
-    transform: scale(1.05);
-}
-
-.product-card-studio .meta {
-    padding: 0 4px;
-}
-
-.product-card-studio .cat {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--colors-muted);
-    margin-bottom: 4px;
-}
-
-.product-card-studio .name {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: var(--colors-ink);
-    font-family: var(--typography-display-font);
-}
-
-.product-card-studio .price-container {
-    display: flex;
-    gap: 12px;
-    align-items: baseline;
-}
-
-.product-card-studio .current-price {
-    font-size: 14px;
-    color: var(--colors-ink);
-    font-weight: 600;
-}
-
-.product-card-studio .old-price {
-    font-size: 13px;
-    color: var(--colors-muted);
-    text-decoration: line-through;
-}
-
-@media (max-width: 768px) {
     .shop-layout {
-        flex-direction: column;
-        gap: 32px;
+        display: flex;
+        gap: 48px;
+        margin-bottom: var(--spacing-section);
+        padding-top: var(--spacing-xl);
     }
+
     .filter-sidebar {
-        width: 100%;
+        width: 220px;
+        flex-shrink: 0;
     }
+
+    .filter-group h4 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--colors-muted);
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    .price-inputs {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .shop-main {
+        flex: 1;
+    }
+
     .product-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 48px 32px;
     }
-}
+
+    .product-card-studio {
+        cursor: pointer;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .product-card-studio:hover {
+        transform: translateY(-8px);
+    }
+
+    .product-card-studio .image-wrapper {
+        aspect-ratio: 4/5;
+        background: var(--colors-surface-soft);
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        border-radius: var(--rounded-md);
+    }
+
+    .product-card-studio img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+
+    .product-card-studio:hover img {
+        transform: scale(1.05);
+    }
+
+    .product-card-studio .meta {
+        padding: 0 4px;
+    }
+
+    .product-card-studio .cat {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--colors-muted);
+        margin-bottom: 4px;
+    }
+
+    .product-card-studio .name {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 6px;
+        color: var(--colors-ink);
+        font-family: var(--typography-display-font);
+    }
+
+    .product-card-studio .price-container {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+    }
+
+    .product-card-studio .current-price {
+        font-size: 14px;
+        color: var(--colors-ink);
+        font-weight: 600;
+    }
+
+    .product-card-studio .old-price {
+        font-size: 13px;
+        color: var(--colors-muted);
+        text-decoration: line-through;
+    }
+
+    @media (max-width: 768px) {
+        .shop-layout {
+            flex-direction: column;
+            gap: 32px;
+        }
+        .filter-sidebar {
+            width: 100%;
+        }
+        .product-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+    }
 </style>
 
 <div class="shop-banner" style="background: var(--colors-surface-soft); padding: 80px 0; border-bottom: 1px solid var(--colors-hairline);">
@@ -314,7 +314,8 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
-                                        if ($half) echo '½';
+                                        // if ($half) echo '½';
+                                        if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
                                         echo str_repeat('☆', 5 - $full - $half);
                                     } else {
                                         echo '☆☆☆☆☆';

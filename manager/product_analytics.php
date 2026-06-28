@@ -123,7 +123,7 @@ include '../includes/header.php';
         <!-- Row 2: Low Conversion (Horizontal Bar) -->
         <div style="margin-bottom: 24px;">
             <div class="surface-card" style="padding: 24px; display: flex; flex-direction: column;">
-                <h3 style="font-size: 16px; margin-bottom: 16px;">Low Conversion Items (Action Needed)</h3>
+                <h3 style="font-size: 16px; margin-bottom: 16px;">Low Conversion Items</h3>
                 <p style="font-size: 11px; color: var(--colors-muted); margin-bottom: 12px;">Products with >10 views and lowest checkout rates. Conversion = (Sales ÷ Views) × 100</p>
                 <div style="position: relative; height: 250px;">
                     <canvas id="lowConversionChart"></canvas>
@@ -215,11 +215,15 @@ new Chart(mostViewedCtx, {
         },
         scales: {
             x: {
-                grid: { color: 'rgba(0,0,0,0.04)' },
+                title: { display: true, text: 'Views', font: { weight: 'bold' } },
+                grid: { color: 'rgba(0,0,0,0.04)', drawBorder: true, drawOnChartArea: true },
+                border: { display: true, color: '#000000', width: 1 },
                 ticks: { font: { size: 11 } }
             },
             y: {
-                grid: { display: false },
+                title: { display: true, text: 'Product', font: { weight: 'bold' } },
+                grid: { display: false, drawBorder: true, drawOnChartArea: false },
+                border: { display: true, color: '#000000', width: 1 },
                 ticks: {
                     font: { size: 11 },
                     autoSkip: false
@@ -243,7 +247,10 @@ new Chart(lowConvCtx, {
                 borderColor: '#6366f1',
                 borderWidth: 1,
                 borderRadius: 4,
-                barPercentage: 0.5
+                barPercentage: 0.6,
+                categoryPercentage: 0.5,
+                maxBarThickness: 50,
+                grouped: false
             },
             {
                 label: 'Sales',
@@ -252,7 +259,10 @@ new Chart(lowConvCtx, {
                 borderColor: '#ef4444',
                 borderWidth: 1,
                 borderRadius: 4,
-                barPercentage: 0.5
+                barPercentage: 0.6,
+                categoryPercentage: 0.5,
+                maxBarThickness: 50,
+                grouped: false
             }
         ]
     },
@@ -277,7 +287,9 @@ new Chart(lowConvCtx, {
         },
         scales: {
             x: {
-                grid: { display: false },
+                title: { display: true, text: 'Product', font: { weight: 'bold' } },
+                grid: { display: false, drawBorder: true, drawOnChartArea: false },
+                border: { display: true, color: '#000000', width: 1 },
                 ticks: {
                     font: { size: 11 },
                     autoSkip: false,
@@ -285,11 +297,37 @@ new Chart(lowConvCtx, {
                 }
             },
             y: {
-                grid: { color: 'rgba(0,0,0,0.04)' },
+                title: { display: true, text: 'Views', font: { weight: 'bold' } },
+                grid: { color: 'rgba(0,0,0,0.04)', drawBorder: true, drawOnChartArea: true },
+                border: { display: true, color: '#000000', width: 1 },
                 ticks: { font: { size: 11 } }
             }
         }
-    }
+    },
+    plugins: [{
+        id: 'conversionLabels',
+        afterDatasetsDraw(chart, args, pluginOptions) {
+            const { ctx } = chart;
+            const rates = <?php echo json_encode(array_map(function($p) { return round($p['conversion_rate'], 1); }, $low_conversion)); ?>;
+            const meta = chart.getDatasetMeta(0);
+            
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#4f46e5';
+            ctx.font = '600 12px Inter, sans-serif';
+            
+            meta.data.forEach((bar, index) => {
+                const rate = rates[index];
+                if (rate !== undefined && bar.height > 20) {
+                    ctx.fillText(rate + '%', bar.x, bar.y + 16);
+                } else if (rate !== undefined) {
+                    ctx.fillText(rate + '%', bar.x, bar.y - 10);
+                }
+            });
+            ctx.restore();
+        }
+    }]
 });
 </script>
 
