@@ -122,7 +122,7 @@ include $include_path . 'header.php';
                                     <?php if (!$review['admin_reply']): ?>
                                         <button class="button-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openReplyModal(<?php echo $review['id']; ?>, '<?php echo htmlspecialchars(addslashes($review['product_name'])); ?>', <?php echo $review['user_id']; ?>)">Reply</button>
                                     <?php else: ?>
-                                        <button class="button-secondary" style="padding: 6px 12px; font-size: 12px; opacity: 0.5;" onclick="openReplyModal(<?php echo $review['id']; ?>, '<?php echo htmlspecialchars(addslashes($review['product_name'])); ?>', <?php echo $review['user_id']; ?>, '<?php echo htmlspecialchars(addslashes($review['admin_reply'])); ?>')">Edit Reply</button>
+                                        <button class="button-secondary" style="padding: 6px 12px; font-size: 12px; opacity: 0.5; cursor: not-allowed;" disabled>Edit Reply</button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
