@@ -340,7 +340,7 @@ include $include_path . 'header.php';
                 <!-- Top Products Table -->
                 <div class="chart-container" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
                     <div style="padding: 16px 20px 8px 20px;">
-                        <h3 class="chart-header" style="margin: 0; font-size: 13px;">Top Products</h3>
+                        <h3 class="chart-header" style="margin: 0; font-size: 13px;">Top Sales Products</h3>
                     </div>
                     <table class="data-table" style="margin: 0; width: 100%;">
                         <tbody>
