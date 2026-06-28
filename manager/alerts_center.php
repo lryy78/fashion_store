@@ -94,10 +94,15 @@ include '../includes/header.php';
 
 .config-section {
     background: var(--colors-surface-soft);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 48px;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
     border: 1px solid var(--colors-hairline);
+}
+.alerts-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 </style>
 
@@ -127,6 +132,20 @@ include '../includes/header.php';
                     <div class="form-group" style="margin: 0;">
                         <label class="form-label" style="font-size: 11px;">Overstock Limit</label>
                         <input type="number" name="overstock" value="<?php echo $overstock_limit; ?>" class="form-input" style="padding: 12px; background: #fff;">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 11px; margin-bottom: 12px; display: block;">Dashboard Display</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+                                <input type="checkbox" name="active_alerts[]" value="out_of_stock" <?php echo in_array('out_of_stock', $active_alerts) ? 'checked' : ''; ?>> Stockouts
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+                                <input type="checkbox" name="active_alerts[]" value="low_stock" <?php echo in_array('low_stock', $active_alerts) ? 'checked' : ''; ?>> Low Stock
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer;">
+                                <input type="checkbox" name="active_alerts[]" value="overstock" <?php echo in_array('overstock', $active_alerts) ? 'checked' : ''; ?>> Overstock
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">

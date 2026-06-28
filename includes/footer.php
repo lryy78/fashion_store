@@ -87,7 +87,11 @@
                 <div class="footer-col">
                     <h4>Shop & Company</h4>
                     <ul>
-                        <li><a href="/fashion_store/products.php">Collections</a></li>
+                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'buyer'): ?>
+    <li><a href="/fashion_store/products.php">Collections</a></li>
+<?php else: ?>
+    <li><a href="/fashion_store/login.php">Collections</a></li>
+<?php endif; ?>
                         <li><a href="/fashion_store/about_group.php">About Us</a></li>
                     </ul>
                 </div>
