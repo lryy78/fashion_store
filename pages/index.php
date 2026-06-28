@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__ . '/../config/db.php';
 include __DIR__ . '/../includes/header.php';
 
-$selected_gender = $_GET['gender'] ?? '';
+$selected_gender = strtolower($_GET['gender'] ?? '');
 
 // Featured Products Query
 $featured_query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
@@ -26,25 +26,62 @@ $featured_products = $stmt->fetchAll();
 // If no featured products, fetch best sellers and new arrivals
 if (empty($featured_products)) {
     // Best sellers based on total quantity sold
-    $best_sellers_stmt = $pdo->query("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
-           SUM(oi.quantity) AS total_sold
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN order_items oi ON p.id = oi.product_id
-        WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
-        GROUP BY p.id
-        ORDER BY total_sold DESC
-        LIMIT 8");
+    if ($selected_gender) {
+        $best_sellers_stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+            SUM(oi.quantity) AS total_sold,
+            COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id),0) as avg_rating,
+            (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
+         FROM products p
+         LEFT JOIN categories c ON p.category_id = c.id
+         LEFT JOIN product_variations pv ON p.id = pv.product_id
+         LEFT JOIN order_items oi ON pv.id = oi.variation_id
+         WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+         AND p.gender = :gender
+         GROUP BY p.id
+         ORDER BY total_sold DESC, avg_rating DESC
+         LIMIT 8");
+        $best_sellers_stmt->bindValue(':gender', $selected_gender);
+        $best_sellers_stmt->execute();
+    } else {
+        $best_sellers_stmt = $pdo->query("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+            SUM(oi.quantity) AS total_sold,
+            COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id),0) as avg_rating,
+            (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
+         FROM products p
+         LEFT JOIN categories c ON p.category_id = c.id
+         LEFT JOIN product_variations pv ON p.id = pv.product_id
+         LEFT JOIN order_items oi ON pv.id = oi.variation_id
+         WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+         GROUP BY p.id
+         ORDER BY total_sold DESC, avg_rating DESC
+         LIMIT 8");
+    }
     $best_sellers = $best_sellers_stmt->fetchAll();
 
     // New arrivals based on creation date
-    $new_products_stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id
-        FROM products p
-        LEFT JOIN categories c ON p.category_id = c.id
-        WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
-        ORDER BY p.created_at DESC
-        LIMIT 8");
-    $new_products_stmt->execute();
+    if ($selected_gender) {
+        $new_products_stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+            COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
+            (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+            AND p.gender = :gender
+            ORDER BY p.created_at DESC
+            LIMIT 8");
+        $new_products_stmt->bindValue(':gender', $selected_gender);
+        $new_products_stmt->execute();
+    } else {
+        $new_products_stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
+            COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
+            (SELECT COUNT(*) FROM reviews WHERE product_id = p.id) as review_count
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
+            ORDER BY p.created_at DESC
+            LIMIT 8");
+        $new_products_stmt->execute();
+    }
     $new_products = $new_products_stmt->fetchAll();
 }
 
@@ -83,7 +120,7 @@ function getProductsByGender($gender, $limit = 8) {
          FROM products p
           LEFT JOIN categories c ON p.category_id = c.id
           LEFT JOIN product_variations pv ON pv.product_id = p.id
-          LEFT JOIN order_items oi ON oi.variation_id = pv.id
+           LEFT JOIN order_items oi ON oi.variation_id = pv.id
          WHERE p.gender = ? AND (p.status = 'published' OR (p.status = 'scheduled' AND p.publish_at <= NOW()))
          GROUP BY p.id
          ORDER BY p.is_featured DESC, total_sold DESC, avg_rating DESC, p.created_at DESC
@@ -309,12 +346,12 @@ if (!$selected_gender) {
 
 <section class="hero-section-studio" style="padding: 0; position: relative;">
     <div style="height: 80vh; width: 100%; position: relative; overflow: hidden; background: var(--colors-canvas);">
-        <img src="<?php 
-            if ($selected_gender == 'Women') echo 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2000';
-            elseif ($selected_gender == 'Men') echo 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=2000';
-            elseif ($selected_gender == 'Kids') echo 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?q=80&w=2000';
-            else echo 'assets/img/hero.png'; 
-        ?>" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
+<img src="<?php 
+    if ($selected_gender == 'women') echo 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2000';
+    elseif ($selected_gender == 'men') echo 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=2000';
+    elseif ($selected_gender == 'kids') echo 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?q=80&w=2000';
+    else echo 'assets/img/home.png'; 
+?>" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(250, 249, 245, 0.9) 0%, rgba(250, 249, 245, 0) 60%);"></div>
         <div style="position: absolute; top: 50%; left: 10%; transform: translateY(-50%); color: var(--colors-ink);">
             <div style="font-size: 14px; letter-spacing: 0.3em; margin-bottom: 24px; color: var(--colors-muted); font-weight: 600;">
@@ -355,7 +392,7 @@ if (!$selected_gender) {
                 <?php foreach ($featured_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
-                            <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
@@ -364,8 +401,10 @@ if (!$selected_gender) {
                             <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                                 <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
                                     <?php 
-                                    if ($product['review_count'] > 0) {
-                                        $avg = round($product['avg_rating'] * 2) / 2;
+                                    $reviewCount = $product['review_count'] ?? 0;
+                                    $avgRating = $product['avg_rating'] ?? 0;
+                                    if ($reviewCount > 0) {
+                                        $avg = round($avgRating * 2) / 2;
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
@@ -377,8 +416,8 @@ if (!$selected_gender) {
                                     ?>
                                 </span>
                                 <span style="color: var(--colors-muted); font-size: 10px;">
-                                    <?php if ($product['review_count'] > 0): ?>
-                                        (<?php echo $product['review_count']; ?>)
+                                    <?php if (($product['review_count'] ?? 0) > 0): ?>
+                                        (<?php echo $reviewCount; ?>)
                                     <?php else: ?>
                                         No ratings
                                     <?php endif; ?>
@@ -401,7 +440,7 @@ if (!$selected_gender) {
                 <?php foreach ($best_sellers as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
-                            <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
@@ -409,22 +448,24 @@ if (!$selected_gender) {
                             <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
                             <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                                 <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
-                                    <?php 
-                                    if ($product['review_count'] > 0) {
-                                        $avg = round($product['avg_rating'] * 2) / 2;
-                                        $full = floor($avg);
-                                        $half = ($avg - $full) >= 0.5 ? 1 : 0;
-                                        echo str_repeat('★', $full);
-                                        if ($half) echo '½';
-                                        echo str_repeat('☆', 5 - $full - $half);
+                                    <?php
+                                    $reviewCount = $product['review_count'] ?? 0;
+                                    $avgRating = $product['avg_rating'] ?? 0;
+                                    if ($reviewCount > 0) {
+                                        $rounded = round($avgRating * 2) / 2;
+                                        $fullStars = floor($rounded);
+                                        $halfStar = ($rounded - $fullStars) == 0.5;
+                                        echo str_repeat('★', $fullStars);
+                                        if ($halfStar) echo '½';
+                                        echo str_repeat('☆', 5 - $fullStars - ($halfStar ? 1 : 0));
                                     } else {
                                         echo '☆☆☆☆☆';
                                     }
                                     ?>
                                 </span>
                                 <span style="color: var(--colors-muted); font-size: 10px;">
-                                    <?php if ($product['review_count'] > 0): ?>
-                                        (<?php echo $product['review_count']; ?>)
+                                    <?php if (($product['review_count'] ?? 0) > 0): ?>
+                                        (<?php echo $reviewCount; ?>)
                                     <?php else: ?>
                                         No ratings
                                     <?php endif; ?>
@@ -446,7 +487,7 @@ if (!$selected_gender) {
                 <?php foreach ($new_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
                         <div class="image-wrapper">
-                            <img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
                         </div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
@@ -455,8 +496,10 @@ if (!$selected_gender) {
                             <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                                 <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
                                     <?php 
-                                    if ($product['review_count'] > 0) {
-                                        $avg = round($product['avg_rating'] * 2) / 2;
+                                    $reviewCount = $product['review_count'] ?? 0;
+                                    $avgRating = $product['avg_rating'] ?? 0;
+                                    if ($reviewCount > 0) {
+                                        $avg = round($avgRating * 2) / 2;
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
@@ -468,8 +511,8 @@ if (!$selected_gender) {
                                     ?>
                                 </span>
                                 <span style="color: var(--colors-muted); font-size: 10px;">
-                                    <?php if ($product['review_count'] > 0): ?>
-                                        (<?php echo $product['review_count']; ?>)
+                                    <?php if (($product['review_count'] ?? 0) > 0): ?>
+                                        (<?php echo $reviewCount; ?>)
                                     <?php else: ?>
                                         No ratings
                                     <?php endif; ?>
@@ -495,7 +538,7 @@ if (!$selected_gender) {
                 <?php if (!empty($women_products)): ?>
     <?php foreach ($women_products as $product): ?>
         <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-            <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+            <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
             <div class="meta">
                 <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                 <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -533,7 +576,8 @@ if (!$selected_gender) {
 <?php else: ?>
     <!-- Women Best Sellers -->
     <?php
-        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN order_items oi ON p.id = oi.product_id WHERE p.gender = 'Women' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN product_variations pv ON p.id = pv.product_id
+        LEFT JOIN order_items oi ON pv.id = oi.variation_id WHERE p.gender = 'Women' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
         $stmt->execute();
         $women_best = $stmt->fetchAll();
         $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.gender = 'Women' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) ORDER BY p.created_at DESC LIMIT 8");
@@ -544,7 +588,7 @@ if (!$selected_gender) {
     <div class="product-grid-horizontal">
         <?php foreach ($women_best as $product): ?>
             <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
                 <div class="meta">
                     <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                     <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -557,7 +601,7 @@ if (!$selected_gender) {
     <div class="product-grid-horizontal">
         <?php foreach ($women_new as $product): ?>
             <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
                 <div class="meta">
                     <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                     <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -583,7 +627,7 @@ if (!$selected_gender) {
                 <?php if (!empty($men_products)): ?>
     <?php foreach ($men_products as $product): ?>
         <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-            <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+            <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
             <div class="meta">
                 <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                 <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -618,7 +662,8 @@ if ($reviewCount > 0) {
     <?php endforeach; ?>
 <?php else: ?>
     <?php
-        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN order_items oi ON p.id = oi.product_id WHERE p.gender = 'Men' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN product_variations pv ON p.id = pv.product_id
+        LEFT JOIN order_items oi ON pv.id = oi.variation_id WHERE p.gender = 'Men' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
         $stmt->execute();
         $men_best = $stmt->fetchAll();
         $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.gender = 'Men' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) ORDER BY p.created_at DESC LIMIT 8");
@@ -629,7 +674,7 @@ if ($reviewCount > 0) {
     <div class="product-grid-horizontal">
         <?php foreach ($men_best as $product): ?>
             <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
                 <div class="meta">
                     <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                     <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -642,7 +687,7 @@ if ($reviewCount > 0) {
     <div class="product-grid-horizontal">
         <?php foreach ($men_new as $product): ?>
             <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
                 <div class="meta">
                     <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                     <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -676,7 +721,7 @@ if ($reviewCount > 0) {
                 <?php if (!empty($kids_products)): ?>
     <?php foreach ($kids_products as $product): ?>
         <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-            <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+            <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
             <div class="meta">
                 <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                 <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -707,7 +752,8 @@ if ($reviewCount > 0) {
     <?php endforeach; ?>
 <?php else: ?>
     <?php
-        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN order_items oi ON p.id = oi.product_id WHERE p.gender = 'Kids' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
+        $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id, SUM(oi.quantity) AS total_sold FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN product_variations pv ON p.id = pv.product_id
+        LEFT JOIN order_items oi ON pv.id = oi.variation_id WHERE p.gender = 'Kids' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) GROUP BY p.id ORDER BY total_sold DESC LIMIT 8");
         $stmt->execute();
         $kids_best = $stmt->fetchAll();
         $stmt = $pdo->prepare("SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.gender = 'Kids' AND (p.status='published' OR (p.status='scheduled' AND p.publish_at <= NOW())) ORDER BY p.created_at DESC LIMIT 8");
@@ -718,17 +764,19 @@ if ($reviewCount > 0) {
     <div class="product-grid-horizontal">
         <?php foreach ($kids_best as $product): ?>
             <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
                 <div class="meta">
                     <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                     <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
                     <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
                     <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                         <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
-                            <?php if ($product['review_count'] > 0) { $avg = round($product['avg_rating'] * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
+                            <?php $reviewCount = $product['review_count'] ?? 0;
+                                    $avgRating = $product['avg_rating'] ?? 0;
+                                    if ($reviewCount > 0) { $avg = round($avgRating * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
                         </span>
                         <span style="color: var(--colors-muted); font-size: 10px;">
-                            <?php if ($product['review_count'] > 0): ?>(<?php echo $product['review_count']; ?>)<?php else: ?>No ratings<?php endif; ?>
+                            <?php if (($product['review_count'] ?? 0) > 0): ?>(<?php echo $reviewCount; ?>)<?php else: ?>No ratings<?php endif; ?>
                         </span>
                     </div>
                 </div>
@@ -739,17 +787,19 @@ if ($reviewCount > 0) {
     <div class="product-grid-horizontal">
         <?php foreach ($kids_new as $product): ?>
             <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/dress.png'; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
+                <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>" alt="<?php echo htmlspecialchars($product['name']); ?>"></div>
                 <div class="meta">
                     <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                     <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
                     <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
                     <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                         <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
-                            <?php if ($product['review_count'] > 0) { $avg = round($product['avg_rating'] * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
+                            <?php $reviewCount = $product['review_count'] ?? 0;
+                                    $avgRating = $product['avg_rating'] ?? 0;
+                                    if ($reviewCount > 0) { $avg = round($avgRating * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
                         </span>
                         <span style="color: var(--colors-muted); font-size: 10px;">
-                            <?php if ($product['review_count'] > 0): ?>(<?php echo $product['review_count']; ?>)<?php else: ?>No ratings<?php endif; ?>
+                            <?php if (($product['review_count'] ?? 0) > 0): ?>(<?php echo $reviewCount; ?>)<?php else: ?>No ratings<?php endif; ?>
                         </span>
                     </div>
                 </div>
@@ -813,7 +863,7 @@ if ($reviewCount > 0) {
             <div class="product-grid-horizontal">
                 <?php foreach ($acc_products as $product): ?>
                     <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                        <div class="image-wrapper"><img src="<?php echo $product['image'] ?? 'assets/img/bag.png'; ?>"></div>
+                        <div class="image-wrapper"><img src="get_image.php?id=<?php echo $product['image_id']; ?>"></div>
                         <div class="meta">
                             <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
                             <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
@@ -838,3 +888,5 @@ if ($reviewCount > 0) {
 <?php endif; ?>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
+
+
