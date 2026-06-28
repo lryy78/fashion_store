@@ -107,6 +107,10 @@ include $include_path . 'header.php';
 .status-refund_requested { background: #fff7ed; color: #c2410c; }
 .status-cancelled { background: #fef2f2; color: #dc2626; }
 .status-refunded { background: #fff7ed; color: #c2410c; }
+.table-container {
+    max-height: 500px;
+    overflow-y: auto;
+}
 </style>
 
 <?php require_once '../includes/sidebar.php'; ?>

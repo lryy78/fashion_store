@@ -49,10 +49,9 @@ include $include_path . 'header.php';
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 16px; border-radius: 8px; margin-bottom: 24px;">✓ <?php echo $success_msg; ?></div>
         <?php endif; ?>
 
-        <div style="max-width: 800px;">
+        <div class="faq-container" style="display: flex; flex-wrap: wrap; gap: 24px; max-width: 1000px; margin: auto;">
             <!-- FAQ List & Form -->
-            <div class="surface-card" style="padding: 32px; border-radius: 16px; margin-bottom: 32px;">
-                <h2 style="font-size: 20px; margin-bottom: 24px;">Add New FAQ</h2>
+            <div class="surface-card" style="padding: 32px; border-radius: 16px; margin-bottom: 32px; flex: 1; min-width: 300px; border: 1px solid #ddd;">                <h2 style="font-size: 20px; margin-bottom: 24px;">Add New FAQ</h2>
                 <form method="POST">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--colors-muted);">Question</label>
@@ -66,12 +65,12 @@ include $include_path . 'header.php';
                 </form>
             </div>
 
-            <div class="surface-card" style="padding: 32px; border-radius: 16px;">
+            <div class="surface-card" style="padding: 32px; border-radius: 16px; flex: 1; min-width: 300px; border: 1px solid #ddd;">
                 <h2 style="font-size: 20px; margin-bottom: 24px;">Existing FAQs</h2>
                 <?php if ($faqs): ?>
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="faq-list" style="max-height:400px; overflow-y:auto;">
                         <?php foreach ($faqs as $f): ?>
-                            <div style="padding: 16px; border: 1px solid var(--colors-hairline-soft); border-radius: 12px;">
+                            <div style="padding: 16px; border: 1px solid var(--colors-hairline-soft); border-radius: 12px; margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                     <div style="font-weight: 600; font-size: 14px;"><?php echo htmlspecialchars($f['question']); ?></div>
                                     <form method="POST" onsubmit="return confirm('Delete this FAQ?')">
@@ -82,6 +81,7 @@ include $include_path . 'header.php';
                                 <div style="font-size: 13px; color: var(--colors-muted);"><?php echo nl2br(htmlspecialchars($f['answer'])); ?></div>
                             </div>
                         <?php endforeach; ?>
+                    </div>
                     </div>
                 <?php else: ?>
                     <p style="text-align: center; color: var(--colors-muted); font-size: 14px;">No FAQs created yet.</p>

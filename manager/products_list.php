@@ -130,6 +130,9 @@ include '../includes/header.php';
     border-radius: 12px;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
+    display: block;
+    max-height: 500px;
+    overflow-y: auto;
 }
 .inventory-table th {
     background: var(--colors-surface-soft);

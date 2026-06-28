@@ -28,7 +28,7 @@ function syncAlerts($pdo) {
         // 3. OR the last alert is older than 24 hours
         $stmt = $pdo->prepare("INSERT INTO system_alerts (type, priority, message, reference_id) 
                                SELECT 'out_of_stock', 'critical', ?, ? 
-                               WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE type='out_of_stock' AND reference_id = ? AND is_read = 0)
+                               WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE type='out_of_stock' AND reference_id = ?) 
                                AND NOT EXISTS (SELECT 1 FROM system_alerts WHERE type='out_of_stock' AND reference_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL 1 DAY))");
         $stmt->execute([$msg, $group['product_id'], $group['product_id'], $group['product_id']]);
     }
@@ -47,7 +47,7 @@ function syncAlerts($pdo) {
         // 2. AND No unread alert exists for this product (don't stack unread alerts for same product)
         $stmt = $pdo->prepare("INSERT INTO system_alerts (type, priority, message, reference_id) 
                                SELECT 'low_stock', 'warning', ?, ? 
-                               WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE type='low_stock' AND reference_id = ? AND is_read = 0)
+                               WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE type='low_stock' AND reference_id = ?) 
                                AND NOT EXISTS (SELECT 1 FROM system_alerts WHERE type='low_stock' AND reference_id = ? AND message = ?)");
         $stmt->execute([$msg, $group['product_id'], $group['product_id'], $group['product_id'], $msg]);
     }

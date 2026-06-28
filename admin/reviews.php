@@ -88,7 +88,7 @@ include $include_path . 'header.php';
             </div>
         <?php endif; ?>
 
-        <div class="table-container">
+        <div class="table-container" style="max-height:500px; overflow-y:auto;">
             <?php if ($reviews): ?>
                 <table class="data-table">
                     <thead>

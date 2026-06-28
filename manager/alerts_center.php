@@ -20,12 +20,14 @@ if (isset($_GET['action'])) {
     } elseif ($_GET['action'] == 'read_all') {
         $pdo->query("UPDATE system_alerts SET is_read = 1");
     }
-    header("Location: alerts_center.php");
+    header("Location: alerts_center.php?skip_sync=1");
     exit();
 }
 
 // Sync alerts after actions
-syncAlerts($pdo);
+if (!isset($_GET['action']) && !isset($_GET['skip_sync'])) {
+    syncAlerts($pdo);
+}
 
 // Fetch Thresholds and Active Alerts for the form below
 $settings = $pdo->query("SELECT setting_key, setting_value FROM system_settings")->fetchAll(PDO::FETCH_KEY_PAIR);

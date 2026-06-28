@@ -103,7 +103,7 @@ include $include_path . 'header.php';
         </div>
 
         <!-- Chat Area -->
-        <div style="flex: 1; display: flex; flex-direction: column; background: #fafafa; overflow: hidden;">
+        <div style="flex: 1; display: flex; flex-direction: column; background: #fafafa; overflow-y: scroll; max-height: 700px;">
             <?php if ($selected_enquiry_id && $current_enquiry): ?>
                 <div style="padding: 20px 40px; background: #fff; border-bottom: 1px solid var(--colors-hairline-soft); display: flex; justify-content: space-between; align-items: center;">
                     <div>

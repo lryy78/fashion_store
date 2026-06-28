@@ -13,7 +13,7 @@ $selected_gender = $_GET['gender'] ?? '';
 $in_stock = isset($_GET['in_stock']);
 
 
-$sort_rating = $_GET['sort_rating'] ?? '';
+$sort = $_GET['sort'] ?? 'newest';
 
 $query = "SELECT p.*, c.name as category_name, (SELECT id FROM product_images WHERE product_id = p.id LIMIT 1) as image_id,
           COALESCE((SELECT AVG(rating) FROM reviews WHERE product_id = p.id), 0) as avg_rating,
@@ -54,11 +54,27 @@ $params[] = $max_price;
 
 $query .= " GROUP BY p.id";
 
-// Apply rating sort
-if ($sort_rating === 'high') {
-    $query .= " ORDER BY avg_rating DESC, review_count DESC";
-} elseif ($sort_rating === 'low') {
-    $query .= " ORDER BY avg_rating ASC, review_count DESC";
+// Apply sorting based on selected criteria
+if ($sort) {
+    switch ($sort) {
+        case 'newest':
+            $query .= " ORDER BY p.created_at DESC";
+            break;
+        case 'price_low':
+            $query .= " ORDER BY p.price ASC";
+            break;
+        case 'price_high':
+            $query .= " ORDER BY p.price DESC";
+            break;
+        case 'rating_high':
+            $query .= " ORDER BY avg_rating DESC, review_count DESC";
+            break;
+        case 'rating_low':
+            $query .= " ORDER BY avg_rating ASC, review_count DESC";
+            break;
+        default:
+            $query .= " ORDER BY p.created_at DESC";
+    }
 }
 
 $stmt = $pdo->prepare($query);
@@ -82,6 +98,20 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
 .filter-sidebar {
     width: 220px;
     flex-shrink: 0;
+    position: sticky;
+    top: 88px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding-right: 8px; /* Room for scrollbar */
+}
+
+/* Optional thin scrollbar for a clean look */
+.filter-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.filter-sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--colors-hairline);
+    border-radius: 4px;
 }
 
 .filter-group h4 {
@@ -201,13 +231,13 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
 <div class="container shop-layout">
     <aside class="filter-sidebar">
         <h3 style="margin-bottom: 32px; font-size: 18px; font-weight: 400;">Refine Pieces</h3>
-        <form method="GET">
-            <div class="filter-group" style="margin-bottom: 24px;">
+        <form method="GET" id="filterForm">
+            <div class="filter-group" style="margin-bottom: 16px;">
                 <h4>Search</h4>
                 <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Keywords..." style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
             </div>
 
-            <div class="filter-group" style="margin-bottom: 24px;">
+            <div class="filter-group" style="margin-bottom: 16px;">
                 <h4>Gender</h4>
                 <select name="gender" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
                     <option value="">All Genders</option>
@@ -218,7 +248,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </select>
             </div>
 
-            <div class="filter-group" style="margin-bottom: 24px;">
+            <div class="filter-group" style="margin-bottom: 16px;">
                 <h4>Category</h4>
                 <select name="category" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
                     <option value="">All Categories</option>
@@ -230,7 +260,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </select>
             </div>
 
-            <div class="filter-group" style="margin-bottom: 24px;">
+            <div class="filter-group" style="margin-bottom: 16px;">
                 <h4>Price Range</h4>
                 <div class="price-inputs">
                     <input type="number" name="min_price" placeholder="Min" value="<?php echo htmlspecialchars($min_price); ?>" style="width: 80px; padding: 8px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
@@ -239,7 +269,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </div>
             </div>
             
-            <div class="filter-group" style="margin-bottom: 24px;">
+            <div class="filter-group" style="margin-bottom: 16px;">
                 <h4>Size</h4>
                 <select name="size" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
                     <option value="">All Sizes</option>
@@ -251,7 +281,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </select>
             </div>
 
-            <div class="filter-group" style="margin-bottom: 24px;">
+            <div class="filter-group" style="margin-bottom: 16px;">
                 <h4>Color</h4>
                 <select name="color" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
                     <option value="">All Colors</option>
@@ -263,7 +293,7 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </select>
             </div>
 
-            <div class="filter-group" style="margin-bottom: 32px;">
+            <div class="filter-group" style="margin-bottom: 20px;">
                 <h4>Offerings</h4>
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-bottom: 8px;">
                     <input type="checkbox" name="in_stock" <?php echo $in_stock ? 'checked' : ''; ?>>
@@ -271,26 +301,27 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                 </label>
             </div>
 
-            <div class="filter-group" style="margin-bottom: 32px;">
-                <h4>Sort by Rating</h4>
-                <select name="sort_rating" style="width: 100%; padding: 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md);">
-                    <option value="" <?php echo $sort_rating == '' ? 'selected' : ''; ?>>Default</option>
-                    <option value="high" <?php echo $sort_rating == 'high' ? 'selected' : ''; ?>>Highest Rated</option>
-                    <option value="low" <?php echo $sort_rating == 'low' ? 'selected' : ''; ?>>Lowest Rated</option>
-                </select>
-            </div>
 
             <button type="submit" class="button-primary" style="width: 100%; padding: 16px;">Apply Filters</button>
-            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $sort_rating): ?>
+            <?php if($search || $category || $min_price != 0 || $max_price != 1000 || $selected_size || $selected_color || $in_stock || $sort): ?>
                 <a href="products.php" style="display: block; text-align: center; margin-top: 16px; font-size: 13px; text-decoration: underline; color: var(--colors-muted);">Reset Filters</a>
             <?php endif; ?>
         </form>
     </aside>
 
     <main class="shop-main">
-        <div class="shop-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; border-bottom: 1px solid var(--colors-hairline); padding-bottom: 16px;">
-            <h2 style="font-size: 24px; font-weight: 400;"><?php echo $category ? htmlspecialchars($category) : ('All Arrivals'); ?></h2>
-            <span style="color: var(--colors-muted); font-size: 14px;"><?php echo count($products); ?> Pieces Found</span>
+        <div class="shop-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--colors-hairline); padding-bottom: 16px; padding-top: 24px; position: sticky; top: 64px; background: var(--colors-canvas, #fff); z-index: 10; margin-top: -24px;">
+            <h2 style="font-size: 24px; font-weight: 400; margin: 0;"><?php echo $category ? htmlspecialchars($category) : ('All Arrivals'); ?></h2>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span style="color: var(--colors-muted); font-size: 14px;"><?php echo count($products); ?> Pieces Found</span>
+                <select name="sort" form="filterForm" onchange="document.getElementById('filterForm').submit();" style="padding: 8px 12px; border: 1px solid var(--colors-hairline); border-radius: var(--rounded-md); font-size: 14px; color: var(--colors-ink); cursor: pointer;">
+                    <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Newest Arrivals</option>
+                    <option value="price_low" <?php echo $sort == 'price_low' ? 'selected' : ''; ?>>Price: Low to High</option>
+                    <option value="price_high" <?php echo $sort == 'price_high' ? 'selected' : ''; ?>>Price: High to Low</option>
+                    <option value="rating_high" <?php echo $sort == 'rating_high' ? 'selected' : ''; ?>>Highest Rated</option>
+                    <option value="rating_low" <?php echo $sort == 'rating_low' ? 'selected' : ''; ?>>Lowest Rated</option>
+                </select>
+            </div>
         </div>
         
         <div class="product-grid">

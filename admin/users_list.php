@@ -131,7 +131,7 @@ include $include_path . 'header.php';
             </div>
         </div>
 
-        <div class="table-container">
+        <div class="table-container" style="max-height:500px; overflow-y:auto;">
             <table class="data-table">
                 <thead>
                     <tr>
