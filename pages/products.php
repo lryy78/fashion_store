@@ -345,7 +345,8 @@ $all_sizes = $pdo->query("SELECT DISTINCT size FROM product_variations WHERE siz
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
-                                        if ($half) echo '½';
+                                        // if ($half) echo '½';
+                                        if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
                                         echo str_repeat('☆', 5 - $full - $half);
                                     } else {
                                         echo '☆☆☆☆☆';

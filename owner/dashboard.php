@@ -137,21 +137,6 @@ $top_customers->execute([$range - 1]);
 $top_customers = $top_customers->fetchAll();
 
 
-// 5. Decision Recommendation Engine
-$recommendations = [];
-if ($growth_percent > 10) {
-    $recommendations[] = [
-        'icon' => '🚀',
-        'title' => 'Momentum Strong',
-        'desc' => 'Revenue is up ' . number_format($growth_percent, 1) . '% vs previous period. <strong>Recommendation:</strong> Maintain current acquisition strategy.'
-    ];
-} elseif ($growth_percent < 0) {
-    $recommendations[] = [
-        'icon' => '⚠️',
-        'title' => 'Revenue Contraction',
-        'desc' => 'Revenue dropped ' . number_format(abs($growth_percent), 1) . '% vs previous period. <strong>Recommendation:</strong> Analyze top product margins in Profitability section.'
-    ];
-}
 
 $include_path = '../includes/';
 include $include_path . 'header.php';
@@ -303,28 +288,6 @@ include $include_path . 'header.php';
             </div>
         </div>
 
-        <!-- Decision Recommendation Engine -->
-        <div style="margin-bottom: 24px;">
-            <?php foreach ($recommendations as $rec): ?>
-                <div style="display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: linear-gradient(90deg, rgba(204,120,92,0.1) 0%, rgba(204,120,92,0.02) 100%); border-left: 4px solid var(--colors-primary); border-radius: 8px; margin-bottom: 8px;">
-                    <div style="font-size: 24px; animation: pulse 2s infinite;"><?php echo $rec['icon']; ?></div>
-                    <div style="flex: 1;">
-                        <span style="font-weight: 700; font-size: 14px; color: var(--colors-ink); margin-right: 8px;">AI Insight: <?php echo htmlspecialchars($rec['title']); ?></span>
-                        <span style="font-size: 13px; color: var(--colors-body);"><?php echo $rec['desc']; ?></span>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-            
-            <?php if (empty($recommendations)): ?>
-                <div style="display: flex; align-items: center; gap: 16px; padding: 16px 24px; background: #fafafa; border-left: 4px solid var(--colors-muted); border-radius: 8px;">
-                    <div style="font-size: 24px; opacity: 0.5;">🧠</div>
-                    <div style="flex: 1;">
-                        <span style="font-weight: 600; font-size: 14px; color: var(--colors-muted); margin-right: 8px;">AI Insight: Stable</span>
-                        <span style="font-size: 13px; color: var(--colors-muted);">No immediate actions or anomalies detected in the current period.</span>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
 
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: stretch;">
             <!-- Main Chart -->
@@ -340,7 +303,7 @@ include $include_path . 'header.php';
                 <!-- Top Products Table -->
                 <div class="chart-container" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
                     <div style="padding: 16px 20px 8px 20px;">
-                        <h3 class="chart-header" style="margin: 0; font-size: 13px;">Top Sales Products</h3>
+                        <h3 class="chart-header" style="margin: 0; font-size: 13px;">Top 3 Products</h3>
                     </div>
                     <table class="data-table" style="margin: 0; width: 100%;">
                         <tbody>
@@ -360,7 +323,7 @@ include $include_path . 'header.php';
                 <!-- Top Customers Table -->
                 <div class="chart-container" style="padding: 0; overflow: hidden;">
                     <div style="padding: 16px 20px 8px 20px;">
-                        <h3 class="chart-header" style="margin: 0; font-size: 13px;">Top Customers</h3>
+                        <h3 class="chart-header" style="margin: 0; font-size: 13px;">Top 3 Customers</h3>
                     </div>
                     <table class="data-table" style="margin: 0; width: 100%;">
                         <tbody>
@@ -388,13 +351,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const commonScales = {
         y: {
+            title: { display: true, text: 'Amount (RM)', font: { weight: 'bold' } },
             beginAtZero: true,
-            grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: false },
-            border: { display: false }
+            grid: { color: 'rgba(0, 0, 0, 0.04)', drawBorder: true },
+            border: { display: true, color: '#000000', width: 1 }
         },
         x: {
-            grid: { display: false },
-            border: { display: false },
+            title: { display: true, text: 'Date', font: { weight: 'bold' } },
+            grid: { display: false, drawBorder: true },
+            border: { display: true, color: '#000000', width: 1 },
             ticks: {
                 maxTicksLimit: 10,
                 maxRotation: 45,

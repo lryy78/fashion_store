@@ -114,9 +114,7 @@ include $include_path . 'header.php';
             <button class="tab-btn <?php echo $active_tab == 'zero-sales' ? 'active' : ''; ?>" onclick="switchTab('zero-sales')" style="padding: 12px 24px; background: none; border: none; border-bottom: 2px solid <?php echo $active_tab == 'zero-sales' ? 'var(--colors-primary)' : 'transparent'; ?>; font-weight: 600; font-size: 14px; cursor: pointer; color: <?php echo $active_tab == 'zero-sales' ? 'var(--colors-ink)' : 'var(--colors-muted)'; ?>; transition: 0.2s;">
                 📉 Zero Sales (<?php echo count($zero_sales); ?>)
             </button>
-            <button class="tab-btn <?php echo $active_tab == 'category-breakdown' ? 'active' : ''; ?>" onclick="switchTab('category-breakdown')" style="padding: 12px 24px; background: none; border: none; border-bottom: 2px solid <?php echo $active_tab == 'category-breakdown' ? 'var(--colors-primary)' : 'transparent'; ?>; font-weight: 600; font-size: 14px; cursor: pointer; color: <?php echo $active_tab == 'category-breakdown' ? 'var(--colors-ink)' : 'var(--colors-muted)'; ?>; transition: 0.2s;">
-                📊 Market Share
-            </button>
+
         </div>
 
         <!-- Tab Content: Top Products -->
@@ -228,56 +226,7 @@ include $include_path . 'header.php';
             </div>
         </div>
 
-        <!-- Tab Content: Category Breakdown -->
-        <div id="category-breakdown" class="tab-content" style="display: <?php echo $active_tab == 'category-breakdown' ? 'block' : 'none'; ?>;">
-            <div class="dashboard-split" style="grid-template-columns: 400px 1fr; align-items: stretch; gap: 24px;">
-                <!-- Chart -->
-                <div class="surface-card" style="padding: 24px;">
-                    <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 24px;">Market Share by Category</h3>
-                    <div style="height: 350px;">
-                        <canvas id="catChart"></canvas>
-                    </div>
-                </div>
 
-                <!-- Table -->
-                <div class="surface-card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 20px 24px; border-bottom: 1px solid var(--colors-hairline-soft);">
-                        <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Category Performance Detail</h3>
-                    </div>
-                    <div class="table-container" style="margin: 0; box-shadow: none; border: none; border-radius: 0; max-height: 350px; overflow-y: auto;">
-                        <table class="data-table" style="margin: 0;">
-                            <thead style="position: sticky; top: 0; z-index: 10; background: var(--colors-surface);">
-                                <tr>
-                                    <th>Category</th>
-                                    <th>Units Sold</th>
-                                    <th>Revenue Share</th>
-                                    <th style="text-align: right;">Total Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($categories_raw as $cat): 
-                                    $pct = round(($cat['revenue'] / $total_cat_rev) * 100);
-                                ?>
-                                    <tr>
-                                        <td style="font-weight: 700; color: var(--colors-ink);"><?php echo htmlspecialchars($cat['name']); ?></td>
-                                        <td style="font-family: var(--typography-code-font);"><?php echo number_format($cat['qty']); ?></td>
-                                        <td>
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <div style="flex: 1; height: 6px; background: var(--colors-hairline); border-radius: 3px; overflow: hidden;">
-                                                    <div style="height: 100%; width: <?php echo $pct; ?>%; background: var(--colors-primary);"></div>
-                                                </div>
-                                                <span style="font-size: 12px; color: var(--colors-muted); font-weight: 600; width: 35px;"><?php echo $pct; ?>%</span>
-                                            </div>
-                                        </td>
-                                        <td style="text-align: right; font-family: var(--typography-code-font); font-weight: 700; color: var(--colors-ink);">RM <?php echo number_format($cat['revenue'], 2); ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -302,37 +251,7 @@ function switchTab(tabId) {
     activeBtn.style.borderBottomColor = 'var(--colors-primary)';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('catChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: <?php echo json_encode($cat_labels); ?>,
-            datasets: [{
-                label: 'Revenue (RM)',
-                data: <?php echo json_encode($cat_revenues); ?>,
-                backgroundColor: ['#181715', '#cc785c', '#efe9de', '#6c6a64', '#8e8b82', '#faf9f5'],
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: { 
-                legend: { 
-                    position: 'bottom',
-                    labels: {
-                        font: { family: 'Inter, sans-serif' },
-                        usePointStyle: true,
-                        padding: 20
-                    }
-                } 
-            }
-        }
-    });
-});
+
 </script>
 
 <?php include $include_path . 'footer.php'; ?>

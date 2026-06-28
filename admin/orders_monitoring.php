@@ -47,7 +47,7 @@ include $include_path . 'header.php';
             <div style="display: flex; flex-direction: column; gap: 12px; align-items: flex-end;">
                 <form method="GET" style="display: flex; gap: 8px;">
                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($filter_status); ?>">
-                    <input type="text" name="search" placeholder="Search customer or Order ID..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 8px 16px; border-radius: 20px; font-size: 13px; width: 250px;">
+                    <input type="text" name="search" placeholder="Search customer ..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 8px 16px; border-radius: 20px; font-size: 13px; width: 250px;">
                     <button type="submit" class="button-secondary" style="padding: 8px 16px; border-radius: 20px;">Search</button>
                 </form>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 400px; align-items: center;">

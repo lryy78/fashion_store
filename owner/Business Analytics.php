@@ -191,7 +191,7 @@ $avg_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
 $include_path = '../includes/';
 include $include_path . 'header.php';
 ?>
-<link rel="stylesheet" href="/fashion_store/assets/css/revenue_reports.css">
+<link rel="stylesheet" href="/fashion_store/assets/css/Business Analytics.css">
 
 <div class="dashboard-layout">
     <?php require_once '../includes/sidebar.php'; renderSidebar('owner'); ?>
@@ -204,8 +204,8 @@ include $include_path . 'header.php';
         <header class="rev-page-header">
             <div>
                 <div class="rev-page-eyebrow">Financial Overview</div>
-                <h1 class="rev-page-title">Revenue Reports</h1>
-                <p class="rev-page-subtitle">All figures exclude cancelled &amp; refunded orders · Profit = Revenue − Cost Price</p>
+                <h1 class="rev-page-title">Business Analytics</h1>
+                <p class="rev-page-subtitle">Profit = Revenue - Cost Price</p>
             </div>
         </header>
 
@@ -236,7 +236,7 @@ include $include_path . 'header.php';
                     <input type="month" id="end-month" name="end_month" value="<?php echo htmlspecialchars($requested_end_month); ?>" required>
                 </div>
                 <button type="submit" class="button-primary rev-filter-submit">Apply range</button>
-                <a href="revenue_reports.php" class="button-secondary rev-filter-reset">Full year</a>
+                <a href="Business Analytics.php" class="button-secondary rev-filter-reset">Full year</a>
             </form>
         </section>
 
