@@ -69,26 +69,26 @@ include $include_path . 'header.php';
 ?>
 
 <style>
-.star-rating {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 4px;
-}
-.star-rating input {
-    display: none;
-}
-.star-rating label {
-    font-size: 24px;
-    color: #e5e7eb;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-.star-rating label:hover,
-.star-rating label:hover ~ label,
-.star-rating input:checked ~ label {
-    color: #fbbf24;
-}
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+    .star-rating input {
+        display: none;
+    }
+    .star-rating label {
+        font-size: 24px;
+        color: #e5e7eb;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: #fbbf24;
+    }
 </style>
 
 <div class="dashboard-layout">

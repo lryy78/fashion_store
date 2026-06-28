@@ -380,23 +380,7 @@ if (!$selected_gender) {
     <?php endif; ?>
 </div>
 
-<!-- Featured Products -->
-<section style="padding: 80px 0; background: #fff;">
-    <div class="container">
-        <div class="section-header-studio">
-            <h2 style="font-family: var(--typography-display-font);">Featured Selections <?php echo $selected_gender ? '('.$selected_gender.')' : ''; ?></h2>
-            <a href="products.php?is_featured=1<?php echo $selected_gender ? '&gender='.$selected_gender : ''; ?>" style="font-size: 14px; font-weight: 600; text-decoration: underline;">View All</a>
-        </div>
-        <div class="product-grid-horizontal">
-            <?php foreach ($featured_products as $product): ?>
-                <div class="product-card-studio" onclick="window.location.href='product_detail.php?id=<?php echo $product['id']; ?>'">
-                    <div class="image-wrapper">
-                        <img src="get_image.php?id=<?php echo $product['image_id']; ?>">
-                    </div>    
-                    <div class="meta">
-                        <div class="cat"><?php echo htmlspecialchars($product['category_name']); ?></div>
-                        <div class="name"><?php echo htmlspecialchars($product['name']); ?></div>
-                        <div class="price">RM <?php echo number_format($product['price'], 2); ?></div>
+
 <?php if (!empty($featured_products)): ?>
     <!-- Featured Products -->
     <section style="padding: 80px 0; background: #fff;">
@@ -425,7 +409,8 @@ if (!$selected_gender) {
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
-                                        if ($half) echo '½';
+                                        // if ($half) echo '½';
+                                        if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
                                         echo str_repeat('☆', 5 - $full - $half);
                                     } else {
                                         echo '☆☆☆☆☆';
@@ -473,7 +458,8 @@ if (!$selected_gender) {
                                         $fullStars = floor($rounded);
                                         $halfStar = ($rounded - $fullStars) == 0.5;
                                         echo str_repeat('★', $fullStars);
-                                        if ($halfStar) echo '½';
+                                        // if ($halfStar) echo '½';
+                                        if ($halfStar) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
                                         echo str_repeat('☆', 5 - $fullStars - ($halfStar ? 1 : 0));
                                     } else {
                                         echo '☆☆☆☆☆';
@@ -520,7 +506,8 @@ if (!$selected_gender) {
                                         $full = floor($avg);
                                         $half = ($avg - $full) >= 0.5 ? 1 : 0;
                                         echo str_repeat('★', $full);
-                                        if ($half) echo '½';
+                                        // if ($half) echo '½';
+                                        if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
                                         echo str_repeat('☆', 5 - $full - $half);
                                     } else {
                                         echo '☆☆☆☆☆';
@@ -570,7 +557,8 @@ if (!$selected_gender) {
                 $full = floor($avg);
                 $half = ($avg - $full) >= 0.5 ? 1 : 0;
                 echo str_repeat('★', $full);
-                if ($half) echo '½';
+                // if ($half) echo '½';
+                if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
                 echo str_repeat('☆', 5 - $full - $half);
             } else {
                 echo '☆☆☆☆☆';
@@ -659,7 +647,8 @@ if ($reviewCount > 0) {
     $full = floor($avg);
     $half = ($avg - $full) >= 0.5 ? 1 : 0;
     echo str_repeat('★', $full);
-    if ($half) echo '½';
+    // if ($half) echo '½';
+    if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
     echo str_repeat('☆', 5 - $full - $half);
 } else {
     echo '☆☆☆☆☆';
@@ -753,7 +742,8 @@ if ($reviewCount > 0) {
     $full = floor($avg);
     $half = ($avg - $full) >= 0.5 ? 1 : 0;
     echo str_repeat('★', $full);
-    if ($half) echo '½';
+    // if ($half) echo '½';
+    if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
     echo str_repeat('☆', 5 - $full - $half);
 } else {
     echo '☆☆☆☆☆';
@@ -789,8 +779,17 @@ if ($reviewCount > 0) {
                     <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px; min-height: 16px;">
                         <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
                             <?php $reviewCount = $product['review_count'] ?? 0;
-                                    $avgRating = $product['avg_rating'] ?? 0;
-                                    if ($reviewCount > 0) { $avg = round($avgRating * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
+                                $avgRating = $product['avg_rating'] ?? 0;
+                                if ($reviewCount > 0) { 
+                                    $avg = round($avgRating * 2) / 2; 
+                                    $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); 
+                                    // if ($half) echo '½'; 
+                                    if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
+                                    echo str_repeat('☆', 5 - $full - $half); 
+                                } else {
+                                    echo '☆☆☆☆☆';
+                                } 
+                            ?>
                         </span>
                         <span style="color: var(--colors-muted); font-size: 10px;">
                             <?php if (($product['review_count'] ?? 0) > 0): ?>(<?php echo $reviewCount; ?>)<?php else: ?>No ratings<?php endif; ?>
@@ -813,7 +812,16 @@ if ($reviewCount > 0) {
                         <span style="color: #fbbf24; letter-spacing: 1px; font-size: 11px;">
                             <?php $reviewCount = $product['review_count'] ?? 0;
                                     $avgRating = $product['avg_rating'] ?? 0;
-                                    if ($reviewCount > 0) { $avg = round($avgRating * 2) / 2; $full = floor($avg); $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); if ($half) echo '½'; echo str_repeat('☆', 5 - $full - $half); } else { echo '☆☆☆☆☆'; } ?>
+                                    if ($reviewCount > 0) { 
+                                        $avg = round($avgRating * 2) / 2; $full = floor($avg); 
+                                        $half = ($avg - $full) >= 0.5 ? 1 : 0; echo str_repeat('★', $full); 
+                                        // if ($half) echo '½';
+                                        if ($half) echo '<span style="position:relative;display:inline-block;"><span style="position:absolute;overflow:hidden;width:45%;">★</span>☆</span>';
+                                        echo str_repeat('☆', 5 - $full - $half); 
+                                    } else {
+                                        echo '☆☆☆☆☆';
+                                    } 
+                            ?>
                         </span>
                         <span style="color: var(--colors-muted); font-size: 10px;">
                             <?php if (($product['review_count'] ?? 0) > 0): ?>(<?php echo $reviewCount; ?>)<?php else: ?>No ratings<?php endif; ?>
@@ -906,5 +914,3 @@ if ($reviewCount > 0) {
 <?php endif; ?>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>
-
-
