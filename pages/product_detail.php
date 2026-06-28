@@ -456,7 +456,7 @@ $reviews = $stmt->fetchAll();
         <span class="close-modal" onclick="toggleSizeChart(false)">&times;</span>
         <h2 style="margin-bottom: 24px; font-family: var(--typography-display-font);">Sizing Architecture</h2>
         <div style="font-size: 14px; line-height: 1.8; white-space: pre-wrap; font-family: var(--typography-body-font); color: var(--colors-ink);">
-            <?php echo htmlspecialchars($product['size_chart']); ?>
+            <?php echo htmlspecialchars(str_replace('\n', "\n", $product['size_chart'])); ?>
         </div>
     </div>
 </div>

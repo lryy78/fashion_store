@@ -80,6 +80,7 @@ include $include_path . 'header.php';
                     <?php endif; ?>
                     <input type="text" name="search" placeholder="Search buyer..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 6px 12px; border-radius: 6px; font-size: 12px; flex: 1;">
                     <button type="submit" class="button-secondary" style="padding: 6px 12px; font-size: 12px;">Go</button>
+                    <a href="help_center_manage.php" class="button-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">Reset</a>
                 </form>
 
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">

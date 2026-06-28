@@ -48,6 +48,7 @@ include $include_path . 'header.php';
                     <input type="hidden" name="status" value="<?php echo htmlspecialchars($filter_status); ?>">
                     <input type="text" name="search" placeholder="Search customer ..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 8px 16px; border-radius: 20px; font-size: 13px; width: 250px;">
                     <button type="submit" class="button-secondary" style="padding: 8px 16px; border-radius: 20px;">Search</button>
+                    <a href="orders_monitoring.php" class="button-secondary" style="padding: 8px 16px; border-radius: 20px; text-decoration: none;">Reset</a>
                 </form>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; max-width: 400px; align-items: center;">
                     <a href="orders_monitoring.php?status=all&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_status == 'all' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">All</a>

@@ -93,6 +93,7 @@ include $include_path . 'header.php';
                     <input type="hidden" name="role" value="<?php echo htmlspecialchars($filter_role); ?>">
                     <input type="text" name="search" placeholder="Search username or email..." value="<?php echo htmlspecialchars($search_query); ?>" class="form-input" style="padding: 8px 16px; border-radius: 20px; font-size: 13px; width: 250px;">
                     <button type="submit" class="button-secondary" style="padding: 8px 16px; border-radius: 20px;">Search</button>
+                    <a href="users_list.php" class="button-secondary" style="padding: 8px 16px; border-radius: 20px; text-decoration: none;">Reset</a>
                 </form>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <a href="users_list.php?role=all&search=<?php echo urlencode($search_query); ?>" class="badge <?php echo $filter_role == 'all' ? 'badge-pill-dark' : 'badge-info'; ?>" style="text-decoration: none;">All</a>
