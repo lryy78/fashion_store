@@ -236,7 +236,7 @@ include $include_path . 'header.php';
                     <input type="month" id="end-month" name="end_month" value="<?php echo htmlspecialchars($requested_end_month); ?>" required>
                 </div>
                 <button type="submit" class="button-primary rev-filter-submit">Apply range</button>
-                <a href="Business Analytics.php" class="button-secondary rev-filter-reset">Full year</a>
+                <a href="business_analytics.php" class="button-secondary rev-filter-reset">Full year</a>
             </form>
         </section>
 
