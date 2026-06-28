@@ -28,9 +28,19 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
    - Open the **XAMPP Control Panel**.
    - Start **Apache** and **MySQL**.
 3. **Setup Database**:
-   - Go to `http://localhost/phpmyadmin`.
-   - Create a new database named **`fashion_store`**.
-   - Import **`database/schema.sql`**, then **`database/migrations/001_compatibility.sql`**, and finally **`database/seed.sql`**.
+   - You can set up the database instantly by visiting: **[http://127.0.0.1/fashion_store/setup_db.php](http://127.0.0.1/fashion_store/setup_db.php)** – this script will create the `fashion_store` database and import all seed data.
+   - Or do it manually:
+     - Open **phpMyAdmin** at `http://localhost/phpmyadmin` (or use the MySQL command line).
+     - Create a new database named **`fashion_store`** (if it does not already exist):
+       ```sql
+       CREATE DATABASE IF NOT EXISTS fashion_store;
+       ```
+     - Import the seed data:
+       * Using phpMyAdmin: select the `fashion_store` database → **Import** → choose `database/data.sql` and click **Go**.
+       * Or from the command line:
+         ```bash
+         mysql -u root -p fashion_store < c:/xampp/htdocs/fashion_store/database/data.sql
+         ```
 4. **Run the Application**:
    - Open your browser and navigate to: **`http://localhost/fashion_store/`**.
 

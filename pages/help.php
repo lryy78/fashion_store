@@ -200,7 +200,7 @@ include __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
             </div>
             
-            <div id="chat-messages" style="flex: 1; padding: 32px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+            <div id="chat-messages" style="height: 500px; padding: 32px 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
                 <?php foreach ($messages as $m): ?>
                     <?php 
                         $is_me = ($m['sender_id'] == $user_id); 

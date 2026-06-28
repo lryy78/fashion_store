@@ -17,15 +17,27 @@ if ($range == 'month') $interval = "INTERVAL 1 MONTH";
 // 1. Enhanced Alerts Logic (Compact summary)
 $urgent_alerts = $pdo->query("SELECT * FROM system_alerts WHERE is_read = 0 ORDER BY priority='critical' DESC, created_at DESC LIMIT 3")->fetchAll();
 
+// Fetch System Settings
+$settings = $pdo->query("SELECT setting_key, setting_value FROM system_settings")->fetchAll(PDO::FETCH_KEY_PAIR);
+$low_stock_threshold = (int)($settings['low_stock_threshold'] ?? 10);
+$overstock_threshold = (int)($settings['overstock_threshold'] ?? 100);
+
 // 2. Inventory Health
 $total_skus = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $health_out = $pdo->query("SELECT COUNT(DISTINCT product_id) FROM product_variations WHERE stock_quantity = 0")->fetchColumn();
-$health_low = $pdo->query("SELECT COUNT(DISTINCT product_id) FROM product_variations WHERE stock_quantity > 0 AND stock_quantity <= 10")->fetchColumn();
+$health_low = $pdo->query("SELECT COUNT(DISTINCT product_id) FROM product_variations WHERE stock_quantity > 0 AND stock_quantity <= $low_stock_threshold")->fetchColumn();
 $health_healthy = $total_skus - $health_out - $health_low;
 
 $health_out_pct = ($total_skus > 0) ? round(($health_out / $total_skus) * 100) : 0;
 $health_low_pct = ($total_skus > 0) ? round(($health_low / $total_skus) * 100) : 0;
 $health_healthy_pct = 100 - $health_out_pct - $health_low_pct;
+
+// KPI Intelligence Calculations
+$stockout_recent = $pdo->query("SELECT COUNT(*) FROM system_alerts WHERE type = 'out_of_stock' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 1 DAY)")->fetchColumn();
+$stockout_text = $stockout_recent > 0 ? "+$stockout_recent since yesterday" : "No recent stockouts";
+
+$low_stock_urgent = $pdo->query("SELECT COUNT(DISTINCT product_id) FROM product_variations WHERE stock_quantity > 0 AND stock_quantity <= " . max(1, floor($low_stock_threshold / 2)))->fetchColumn();
+$low_stock_text = $low_stock_urgent > 0 ? "$low_stock_urgent require urgent restock" : "Threshold: <= $low_stock_threshold";
 
 
 //
@@ -97,12 +109,12 @@ include '../includes/header.php';
                     <div onclick="location.href='products_list.php?stock_status=out'" class="surface-card" style="cursor:pointer; padding: 24px; border-left: 4px solid var(--colors-error);">
                         <div style="font-size: 11px; font-weight: 700; color: var(--colors-error); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Stockouts</div>
                         <div style="font-size: 28px; font-weight: 600;">🔴 <?php echo $health_out; ?> <span style="font-size:12px; color:var(--colors-muted)">Variations</span></div>
-                        <div style="font-size: 11px; color: var(--colors-muted); margin-top: 8px;">+5 since yesterday</div>
+                        <div style="font-size: 11px; color: var(--colors-muted); margin-top: 8px;"><?php echo htmlspecialchars($stockout_text); ?></div>
                     </div>
                     <div onclick="location.href='products_list.php?stock_status=low'" class="surface-card" style="cursor:pointer; padding: 24px; border-left: 4px solid #f59e0b;">
                         <div style="font-size: 11px; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Low Stock</div>
                         <div style="font-size: 28px; font-weight: 600;">🟠 <?php echo $health_low; ?> <span style="font-size:12px; color:var(--colors-muted)">Products</span></div>
-                        <div style="font-size: 11px; color: var(--colors-muted); margin-top: 8px;">3 require urgent restock</div>
+                        <div style="font-size: 11px; color: var(--colors-muted); margin-top: 8px;"><?php echo htmlspecialchars($low_stock_text); ?></div>
                     </div>
                     <div class="surface-card" style="padding: 24px; border-left: 4px solid #3b82f6;">
                         <div style="font-size: 11px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Inventory Health</div>
