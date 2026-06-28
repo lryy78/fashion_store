@@ -2,7 +2,7 @@
 
 HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL, featuring a custom "Anthropic Editorial" design system. The platform supports multiple user roles, robust inventory management, and a comprehensive profitability analysis tool for business owners.
 
-## ✨ Features
+##  Features
 
 - **Multi-Role System**: Dedicated modules for Buyers, Managers, Admins, and Owners.
 - **Product Profitability**: Advanced tool for owners to set cost prices and monitor margins.
@@ -10,14 +10,14 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
 - **Dynamic Dashboards**: Real-time business insights and revenue reporting.
 - **Voucher System**: Marketing tools for creating and distributing targeted vouchers.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Backend**: PHP 8.x
 - **Database**: MySQL / MariaDB
 - **Frontend**: Vanilla CSS (Anthropic Editorial Design System), Javascript
 - **Icons/Graphics**: Custom SVG & Unsplash integration
 
-## 🚀 Getting Started
+##  Getting Started
 
 1. **Clone the repository using VS Code**:
    - Open **VS Code**.
@@ -44,7 +44,7 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
 4. **Run the Application**:
    - Open your browser and navigate to: **`http://localhost/fashion_store/`**.
 
-## 🔑 Demo Credentials
+##  Demo Credentials
 
 | Role | Username | Password |
 | :--- | :--- | :--- |
@@ -53,14 +53,3 @@ HypeThread is a full-stack fashion e-commerce platform built with PHP and MySQL,
 | **Manager** | `manager_demo` | `password123` |
 | **Admin** | `admin_demo` | `password123` |
 
-## 📐 Design Philosophy
-
-HypeThread follows the **Anthropic Editorial** system:
-- **Canvas**: Cream surfaces (`#faf9f5`)
-- **Accent**: Coral/Sienna (`#cc785c`)
-- **Ink**: Dark Navy/Charcoal (`#141413`)
-- **Typography**: Cormorant Garamond for display, Inter for body.
-
----
-
-*Developed for the HypeThread Retail Modernization project.*
